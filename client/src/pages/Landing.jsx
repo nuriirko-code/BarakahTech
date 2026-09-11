@@ -1,7 +1,13 @@
+import Navbar from "../components/common/Navbar"
+import Hero from "../components/landing/Hero"
+import About from "../components/landing/About"
+
 const Landing = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center text-green-700 text-3xl font-bold">
-      Landing Page
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <Hero />
+      <About />
     </div>
   )
 }
