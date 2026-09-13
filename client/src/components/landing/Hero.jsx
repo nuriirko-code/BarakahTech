@@ -2,7 +2,7 @@ import { Link } from "react-router-dom"
 
 const Hero = () => {
   return (
-    <section className="flex-grow overflow-hidden bg-gradient-to-br from-green-50/70 via-white to-white">
+   <section className="flex-grow overflow-hidden bg-gradient-to-br from-green-50 via-emerald-50 to-green-100">
       <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 py-16 sm:px-10 lg:grid-cols-2 lg:px-12 lg:py-24">
         <div className="max-w-2xl">
           <p className="mb-5 border-l-4 border-green-600 pl-3 text-sm font-bold uppercase tracking-widest text-green-800">

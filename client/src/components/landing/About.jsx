@@ -1,18 +1,18 @@
 const pillars = [
   {
-    title: "Structured Tech & Language Paths",
+    title: "Structured Courses",
     description:
-      "Build confidence through clear learning paths designed around practical, useful skills.",
+      "Enroll in teacher-led courses, progress through organized lessons, and earn BarakahTech Academy certification when you complete your learning path.",
   },
   {
-    title: "Interactive Group & Live Learning",
+    title: "Live Learning",
     description:
-      "Learn alongside others, ask questions, and stay motivated through shared learning experiences.",
+      "Learn in one-to-one or small-group sessions, with teachers providing real-time guidance, feedback, and support.",
   },
   {
-    title: "Verified Tutors & Mentorship",
+    title: "Learn Across Disciplines",
     description:
-      "Get personalized guidance from trusted tutors who help you make meaningful progress.",
+      "Explore useful subjects including technology, languages, mathematics, humanities, business, health education, and more.",
   },
 ]
 
@@ -20,7 +20,7 @@ const About = () => {
   return (
     <section className="bg-white px-6 py-16 sm:px-10 lg:px-12 lg:py-24">
       <div className="mx-auto max-w-7xl">
-        <div className="mx-auto max-w-3xl text-center">
+        <div className="max-w-3xl">
           <p className="inline-flex rounded-full bg-green-100 px-4 py-2 text-sm font-bold uppercase tracking-widest text-green-800">
             About BarakahTech Academy
           </p>
@@ -28,11 +28,11 @@ const About = () => {
             Empowering Students Through Practical Education
           </h2>
           <p className="mt-6 text-lg leading-8 text-gray-600">
-            BarakahTech Academy is built to bridge the gap between education
-            and real-world skills. Whether you are mastering full-stack web
-            development, learning English for your career, or preparing for
-            academic success, our platform provides structured guidance,
-            interactive group learning, and personalized tutor support.
+            BarakahTech Academy is a hybrid learning platform that combines
+            structured courses with live tutoring. Students can learn
+            progressively through teacher-organized content, join one-to-one
+            or small-group sessions, and develop skills across a wide range of
+            practical subjects.
           </p>
         </div>
 
