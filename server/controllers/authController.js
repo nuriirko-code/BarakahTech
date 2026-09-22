@@ -104,4 +104,28 @@ const loginUser = async (req, res) => {
   }
 }
 
-module.exports = { registerUser, loginUser }
+// This endpoint confirms that the JWT still identifies an existing user.
+// authMiddleware has already verified the token and placed its userId on
+// req.user.userId. The database lookup lets us return the user's current data.
+const getMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId).select('-password')
+
+    if (!user) {
+      return res.status(404).json({
+        message: 'User not found'
+      })
+    }
+
+    // Excluding password prevents this identity-check endpoint from returning
+    // a stored credential hash, even though the request is authenticated.
+    return res.status(200).json({ user })
+  } catch (error) {
+    console.error('Get current user error:', error)
+    return res.status(500).json({
+      message: 'Server error while fetching user'
+    })
+  }
+}
+
+module.exports = { registerUser, loginUser, getMe }
