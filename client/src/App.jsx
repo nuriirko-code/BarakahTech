@@ -6,6 +6,7 @@ import Landing from './pages/Landing'
 import RoleSelection from './pages/auth/RoleSelection'
 import StudentRegister from './pages/auth/StudentRegister'
 import TeacherRegister from './pages/auth/TeacherRegister'
+import ApplicationSubmitted from './pages/auth/ApplicationSubmitted'
 import Login from './pages/auth/Login'
 import StudentDashboard from './pages/dashboard/StudentDashboard'
 import TeacherDashboard from './pages/dashboard/TeacherDashboard'
@@ -27,6 +28,9 @@ function App() {
 
           {/* Teacher registration page for users applying to become teachers. */}
           <Route path="/register/teacher" element={<TeacherRegister />} />
+
+          {/* Confirmation page for teachers whose application was submitted successfully. */}
+          <Route path="/application-submitted" element={<ApplicationSubmitted />} />
 
           {/* Login page for existing users signing into their accounts. */}
           <Route path="/login" element={<Login />} />

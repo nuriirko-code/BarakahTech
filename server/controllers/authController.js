@@ -39,9 +39,21 @@ const registerUser = async (req, res) => {
       role: safeRole,
     })
 
+    // Return a token so teacher applicants can immediately authenticate the
+    // protected application submission after their pending_teacher account is created.
+    const token = jwt.sign(
+      {
+        userId: user._id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    )
+
     // 6. Return success
     res.status(201).json({
       message: 'Account created successfully',
+      token,
       user: {
         id: user._id,
         name: user.name,
