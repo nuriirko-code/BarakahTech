@@ -7,6 +7,7 @@ const {
   getMyApplication,
   getAllApplications,
   reviewApplication,
+  updateTeacherProfile,
 } = require('../controllers/teacherApplicationController')
 
 // Only pending teacher applicants may submit; other roles have not entered or
@@ -25,6 +26,9 @@ router.get('/all', authMiddleware, authorize('admin'), getAllApplications)
 
 // Express places the URL's :id segment into req.params.id for this review.
 router.put('/:id/review', authMiddleware, authorize('admin'), reviewApplication)
+
+// Only approved teacher accounts may update the limited public profile fields.
+router.put('/update-profile', authMiddleware, authorize('teacher'), updateTeacherProfile)
 
 // Mounted in server.js at /api/teacher-applications, forming each full API path.
 module.exports = router

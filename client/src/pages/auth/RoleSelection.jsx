@@ -32,7 +32,7 @@ const RoleSelection = () => {
 
           <button
             type="button"
-            onClick={() => navigate('/register/teacher')}
+            onClick={() => navigate('/become-a-teacher')}
             className="group flex-1 rounded-2xl bg-white p-10 text-left shadow-lg transition-transform hover:-translate-y-2 hover:shadow-xl"
           >
             <span className="text-6xl" aria-hidden="true">📚</span>

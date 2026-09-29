@@ -50,6 +50,7 @@ const availableDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', '
 const TeacherRegister = () => {
   // Keeping all step values together makes it straightforward to preserve data
   // while moving between steps and submit one complete application at the end.
+  //react keeps one big object called formdata. Every input on the form will write into this object.
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -89,10 +90,15 @@ const TeacherRegister = () => {
 
   // This single updater handles ordinary inputs and also clears answers when
   // the subject changes, because answers to the former subject no longer apply.
+  // when we type in any input this function runs. eg: handleChange('name', 'John') will update formData.name to 'John'
+  //...currentData is a spread operator that copies the current formData object and then updates the field with the new value. This way, we can update any field in the formData object without losing the other fields' values.
   const handleChange = (field, value) => {
     setFormData((currentData) => ({
       ...currentData,
       [field]: value,
+      // if the field being updated is 'specificSubject', we also reset the assessmentAnswers array to an empty array. This is because changing the subject means that the previous answers are no longer relevant, and we want to start fresh with new questions for the new subject.
+      //eg: if the user changes the subject from 'Math' to 'Science', we want to clear the previous answers related to 'Math' and prepare for new answers related to 'Science'.
+      
       ...(field === 'specificSubject' ? { assessmentAnswers: [] } : {}),
     }))
   }
@@ -129,10 +135,52 @@ const TeacherRegister = () => {
       ]
       if (personalFields.some((field) => !String(formData[field]).trim())) {
         message = 'Please complete all personal information fields.'
+      } else if (formData.name.trim().length < 3) {
+        message = 'Please enter your full name using at least 3 characters.'
+      } else if (!/^\p{L}[\p{L}\p{M} ]*$/u.test(formData.name.trim())) {
+        message = 'Your name can contain letters and spaces only.'
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+        message = 'Please enter a valid email address.'
       } else if (formData.password !== formData.confirmPassword) {
         message = 'Passwords do not match.'
-      } else if (formData.password.length < 6) {
-        message = 'Password must be at least 6 characters.'
+      } else if (formData.password.length < 8 || !/\p{L}/u.test(formData.password) || !/\d/.test(formData.password)) {
+        message = 'Use a password with at least 8 characters, including a letter and a number.'
+      } else if (!/^\+251\d{9}$/.test(formData.phone.trim())) {
+        message = 'Enter an Ethiopian phone number starting with +251 followed by 9 digits.'
+      } else if (formData.city.trim().length < 2 || !/^\p{L}[\p{L}\p{M} ]*$/u.test(formData.city.trim())) {
+        message = 'City must be at least 2 characters and contain letters and spaces only.'
+      } else if (formData.region.trim().length < 2 || !/^\p{L}[\p{L}\p{M} ]*$/u.test(formData.region.trim())) {
+        message = 'Region must be at least 2 characters and contain letters and spaces only.'
+      } else {
+        const [year, month, day] = formData.dateOfBirth.split('-').map(Number)
+        const birthDate = new Date(year, month - 1, day)
+        const dateIsValid = birthDate.getFullYear() === year
+          && birthDate.getMonth() === month - 1
+          && birthDate.getDate() === day
+
+        if (!dateIsValid) {
+          message = 'Please enter a valid date of birth.'
+        } else {
+          const today = new Date()
+          today.setHours(0, 0, 0, 0)
+
+          if (birthDate >= today) {
+            message = 'Date of birth must be in the past.'
+          } else {
+            let age = today.getFullYear() - year
+            const birthdayHasPassed = today.getMonth() > month - 1
+              || (today.getMonth() === month - 1 && today.getDate() >= day)
+            if (!birthdayHasPassed) age -= 1
+
+            if (age < 18 || age > 70) {
+              message = 'Applicants must be between 18 and 70 years old.'
+            }
+          }
+        }
+      }
+
+      if (!message && !/^\d{10,16}$/.test(formData.nationalId.trim())) {
+        message = 'Enter a valid Ethiopian national ID using 10 to 16 digits.'
       }
     }
 
@@ -200,12 +248,11 @@ const TeacherRegister = () => {
     setError('')
 
     try {
-      // Registration creates a pending_teacher account. Its returned JWT is
-      // required by the protected application endpoint, so register first.
-      // If the account was created but application submission failed, reuse its
-      // saved session on retry instead of attempting duplicate registration.
+     //If we already created the account on a previous try → reuse token
+     //Or if the user is already a pending_teacher → reuse token
+     //Otherwise → accessToken is null (we must register first)
       let accessToken = accountCreated || user?.role === 'pending_teacher' ? token : null
-
+       //If we don't have an access token, we need to register the user first. We send a POST request to the registration endpoint with the user's personal information. If the registration is successful, we extract the user and token from the response and log in the user. We also set accountCreated to true to indicate that the account has been created.
       if (!accessToken) {
         const registrationResponse = await axios.post('http://localhost:5000/api/auth/register', {
           name: formData.name,
@@ -213,24 +260,31 @@ const TeacherRegister = () => {
           password: formData.password,
           role: 'teacher',
         })
+        //Pull user and token out of the response. 
         const { user: registeredUser, token: registeredToken } = registrationResponse.data
 
         if (!registeredUser || !registeredToken) {
           throw new Error('Registration response did not include the account and authentication token.')
         }
-
+       //Set the access token to the registered token and log in the user. We also set accountCreated to true to indicate that the account has been created.so next retry will not register again
         accessToken = registeredToken
         login(registeredUser, registeredToken)
         setAccountCreated(true)
       }
-
+      // Set the Authorization header for subsequent requests using the access token. This ensures that the user is authenticated when submitting the application.
+      //Tell axios: every next request must include this token.
       axios.defaults.headers.common.Authorization = `Bearer ${accessToken}`
-
+     // Prepare the application data by filtering out personal information fields that are not needed for the application submission. We create a new object called applicationData that contains only the relevant fields for the teacher application.
+     //Take all fields from formData
+      //Remove name, email, password, confirmPassword
+      //(those belong to the User account, not the TeacherApplication)
+     //Keep phone, subject, bio, answers, agreements, etc.
       const applicationData = Object.fromEntries(
         Object.entries(formData).filter(([field]) => {
           return !['name', 'email', 'password', 'confirmPassword'].includes(field)
         })
       )
+      // this is the final step where we submit the teacher application. We send a POST request to the teacher applications endpoint with the prepared application data. We also convert certain fields to numbers as required by the backend. If the submission is successful, we navigate to the application submitted page. If there is an error, we display an appropriate error message.
       await axios.post('http://localhost:5000/api/teacher-applications', {
         ...applicationData,
         availableHoursPerWeek: Number(formData.availableHoursPerWeek),
@@ -238,7 +292,7 @@ const TeacherRegister = () => {
         yearsInSpecificSubject: Number(formData.yearsInSpecificSubject),
         hourlyRate: Number(formData.hourlyRate) || 0,
       })
-
+     
       navigate('/application-submitted')
     } catch (requestError) {
       setError(requestError.response?.data?.message || requestError.message || 'Unable to submit the application.')
@@ -275,7 +329,7 @@ const TeacherRegister = () => {
               <label className="space-y-2 text-sm font-medium">Email address<input className={inputClass} type="email" value={formData.email} onChange={(event) => handleChange('email', event.target.value)} autoComplete="email" /></label>
               <label className="space-y-2 text-sm font-medium">Password<input className={inputClass} type="password" value={formData.password} onChange={(event) => handleChange('password', event.target.value)} autoComplete="new-password" /></label>
               <label className="space-y-2 text-sm font-medium">Confirm password<input className={inputClass} type="password" value={formData.confirmPassword} onChange={(event) => handleChange('confirmPassword', event.target.value)} autoComplete="new-password" /></label>
-              <label className="space-y-2 text-sm font-medium">Phone<input className={inputClass} type="tel" value={formData.phone} onChange={(event) => handleChange('phone', event.target.value)} autoComplete="tel" /></label>
+              <label className="space-y-2 text-sm font-medium">Phone<input className={inputClass} type="tel" value={formData.phone} onChange={(event) => handleChange('phone', event.target.value)} autoComplete="tel" placeholder="+2519xxxxxxxx" /></label>
               <label className="space-y-2 text-sm font-medium">City<input className={inputClass} value={formData.city} onChange={(event) => handleChange('city', event.target.value)} autoComplete="address-level2" /></label>
               <label className="space-y-2 text-sm font-medium">Region<input className={inputClass} value={formData.region} onChange={(event) => handleChange('region', event.target.value)} autoComplete="address-level1" /></label>
               <label className="space-y-2 text-sm font-medium">Date of birth<input className={inputClass} type="date" value={formData.dateOfBirth} onChange={(event) => handleChange('dateOfBirth', event.target.value)} /></label>

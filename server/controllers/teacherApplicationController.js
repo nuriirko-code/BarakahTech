@@ -182,9 +182,59 @@ const reviewApplication = async (req, res) => {
   }
 }
 
+// Teachers may update public profile details after approval, but qualification
+// and subject fields stay tied to the reviewed application and admin decision.
+const updateTeacherProfile = async (req, res) => {
+  try {
+    const teacherId = req.user.userId
+    const {
+      bio,
+      hourlyRate,
+      availableHoursPerWeek,
+      availableDays,
+      portfolioLink,
+    } = req.body
+
+    // findOne is appropriate because the teacher is identified by the user
+    // reference, while findById would require the application document id.
+    const application = await TeacherApplication.findOne({ user: teacherId })
+
+    if (!application) {
+      return res.status(404).json({
+        message: 'No teacher application found'
+      })
+    }
+
+    const editableFields = {
+      bio,
+      hourlyRate,
+      availableHoursPerWeek,
+      availableDays,
+      portfolioLink,
+    }
+
+    Object.entries(editableFields).forEach(([field, value]) => {
+      if (value !== undefined) application[field] = value
+    })
+
+    await application.save()
+
+    return res.status(200).json({
+      message: 'Teacher profile updated successfully',
+      application,
+    })
+  } catch (error) {
+    console.error('Update teacher profile error:', error)
+    return res.status(500).json({
+      message: 'Server error while updating teacher profile'
+    })
+  }
+}
+
 module.exports = {
   submitApplication,
   getMyApplication,
   getAllApplications,
   reviewApplication,
+  updateTeacherProfile,
 }

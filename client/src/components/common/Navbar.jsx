@@ -17,6 +17,15 @@ const Navbar = () => {
             <span className="text-gray-700 font-medium">
               {user.name}
             </span>
+            {user.role === 'admin' && (
+              // Role-aware navigation helps admins find their workspace; server authorization remains the security boundary.
+              <Link
+                to="/dashboard/admin"
+                className="font-medium text-green-800 transition hover:text-green-950 hover:underline"
+              >
+                Admin Dashboard
+              </Link>
+            )}
             <button
               onClick={logout}
               className="rounded-lg bg-green-700 px-4 py-2 text-white transition hover:bg-green-800">
