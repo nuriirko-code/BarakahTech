@@ -12,19 +12,22 @@ const emptyStats = {
 
 const quickActions = [
 	{
-		icon: '📚',
+		icon: 'fas fa-book-open',
+		chip: 'bg-[#F0FDF4] text-[#16A34A]',
 		title: 'Create New Course',
 		description: 'Share a course with learners.',
 		to: '/dashboard/teacher/courses/create',
 	},
 	{
-		icon: '🎯',
+		icon: 'fas fa-calendar-check',
+		chip: 'bg-blue-50 text-blue-600',
 		title: 'Set Availability',
 		description: 'Manage your live teaching sessions.',
 		to: '/dashboard/teacher/sessions',
 	},
 	{
-		icon: '👤',
+		icon: 'fas fa-user',
+		chip: 'bg-violet-50 text-violet-600',
 		title: 'View Profile',
 		description: 'Review your public teacher profile.',
 		to: '/dashboard/teacher/profile',
@@ -75,10 +78,10 @@ const TeacherOverview = () => {
 	}).format(Number(stats.totalEarnings) || 0)
 
 	const statCards = [
-		{ icon: '📚', value: stats.totalCourses, label: 'Courses Created', to: '/dashboard/teacher/courses' },
-		{ icon: '👥', value: stats.totalStudents, label: 'Enrolled Students' },
-		{ icon: '🎯', value: stats.upcomingSessions, label: 'Upcoming Sessions', to: '/dashboard/teacher/sessions' },
-		{ icon: '💰', value: formattedEarnings, label: 'Total Earnings' },
+		{ icon: 'fas fa-book-open', chip: 'bg-[#F0FDF4] text-[#16A34A]', value: stats.totalCourses, label: 'Courses Created', to: '/dashboard/teacher/courses' },
+		{ icon: 'fas fa-user-graduate', chip: 'bg-blue-50 text-blue-600', value: stats.totalStudents, label: 'Enrolled Students' },
+		{ icon: 'fas fa-calendar-check', chip: 'bg-violet-50 text-violet-600', value: stats.upcomingSessions, label: 'Upcoming Sessions', to: '/dashboard/teacher/sessions' },
+		{ icon: 'fas fa-sack-dollar', chip: 'bg-amber-50 text-amber-600', value: formattedEarnings, label: 'Total Earnings' },
 	]
 
 	const gettingStartedSteps = [
@@ -103,31 +106,40 @@ const TeacherOverview = () => {
 	]
 
 	return (
-		<div className="mx-auto max-w-6xl space-y-8">
+		<div className="space-y-8">
+			{/* Page header */}
 			<header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
 				<div>
-					<p className="text-sm font-semibold text-green-700">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
-					<h1 className="mt-2 text-3xl font-bold text-gray-900">Welcome back, {user?.name || 'Teacher'}</h1>
-					<p className="mt-2 text-gray-600">Here is a snapshot of your teaching activity.</p>
+					<p className="text-sm font-bold uppercase tracking-wide text-[#16A34A]">
+						{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+					</p>
+					<h1 className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+						Welcome back, {user?.name || 'Teacher'}
+					</h1>
+					<p className="mt-2 text-slate-500">Here is a snapshot of your teaching activity.</p>
 				</div>
 				<button
 					type="button"
 					onClick={() => navigate('/dashboard/teacher/courses/create')}
-					className="inline-flex items-center justify-center rounded-lg bg-green-700 px-5 py-3 font-semibold text-white transition hover:bg-green-800"
+					className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#22C55E] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[#22C55E]/30 transition-all hover:bg-[#16A34A] hover:shadow-[#16A34A]/40 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22C55E] focus-visible:ring-offset-2 active:scale-[0.98]"
 				>
+					<i className="fas fa-plus" aria-hidden="true" />
 					Create New Course
 				</button>
 			</header>
 
+			{/* Stat cards */}
 			<section aria-label="Teacher statistics" className="grid grid-cols-2 gap-4 xl:grid-cols-4">
 				{statCards.map((card) => {
 					const content = (
-						<div className="h-full rounded-xl border border-gray-100 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-							<span className="text-2xl" aria-hidden="true">{card.icon}</span>
-							<p className="mt-4 text-2xl font-bold text-green-800">
+						<div className="h-full rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#22C55E]/30 hover:shadow-md">
+							<span className={`inline-flex h-10 w-10 items-center justify-center rounded-xl text-base ${card.chip}`}>
+								<i className={card.icon} aria-hidden="true" />
+							</span>
+							<p className="mt-4 text-2xl font-extrabold tracking-tight text-slate-900">
 								{loading && card.label !== 'Total Earnings' ? '—' : card.value}
 							</p>
-							<p className="mt-1 text-sm text-gray-600">{card.label}</p>
+							<p className="mt-1 text-sm font-medium text-slate-500">{card.label}</p>
 						</div>
 					)
 
@@ -139,45 +151,62 @@ const TeacherOverview = () => {
 				})}
 			</section>
 
+			{/* Quick actions */}
 			<section>
-				<h2 className="text-xl font-bold text-gray-900">Quick Actions</h2>
+				<h2 className="text-lg font-bold tracking-tight text-slate-900">Quick Actions</h2>
 				<div className="mt-4 grid gap-4 md:grid-cols-3">
 					{quickActions.map((action) => (
-						<Link key={action.title} to={action.to} className="group flex items-start gap-4 rounded-xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-							<span className="text-2xl" aria-hidden="true">{action.icon}</span>
-							<span className="min-w-0 flex-1">
-								<span className="block font-bold text-gray-900">{action.title}</span>
-								<span className="mt-1 block text-sm leading-5 text-gray-600">{action.description}</span>
+						<Link
+							key={action.title}
+							to={action.to}
+							className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-[#22C55E]/40 hover:shadow-md"
+						>
+							<span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-lg ${action.chip}`}>
+								<i className={action.icon} aria-hidden="true" />
 							</span>
-							<span className="text-lg text-green-700 transition-transform group-hover:translate-x-1" aria-hidden="true">→</span>
+							<span className="min-w-0 flex-1">
+								<span className="block font-bold text-slate-900">{action.title}</span>
+								<span className="mt-1 block text-sm leading-5 text-slate-500">{action.description}</span>
+							</span>
+							<i className="fas fa-arrow-right text-sm text-[#22C55E] opacity-0 transition-all duration-200 group-hover:translate-x-1 group-hover:opacity-100" aria-hidden="true" />
 						</Link>
 					))}
 				</div>
 			</section>
 
+			{/* Getting started checklist */}
 			{!loading && stats.totalCourses === 0 && (
-				<section className="rounded-xl border border-green-100 bg-white p-6 shadow-sm sm:p-8">
-					<h2 className="text-xl font-bold text-green-900">Getting started on BarakahTech</h2>
-					<p className="mt-2 text-gray-600">Take these first steps to help learners discover and book your teaching.</p>
-					<ol className="mt-6 grid gap-5 md:grid-cols-3">
+				<section className="overflow-hidden rounded-2xl border border-[#22C55E]/20 bg-gradient-to-br from-[#F0FDF4] to-white p-6 shadow-sm sm:p-8">
+					<h2 className="text-xl font-extrabold tracking-tight text-slate-900">Getting started on BarakahTech</h2>
+					<p className="mt-2 text-slate-500">Take these first steps to help learners discover and book your teaching.</p>
+					<ol className="mt-6 grid gap-4 md:grid-cols-3">
 						{gettingStartedSteps.map((step) => (
-							<li key={step.number} className="rounded-lg bg-green-50 p-5">
-								<span className="text-sm font-bold text-green-700">{step.number}</span>
-								<h3 className="mt-2 font-bold text-gray-900">{step.title}</h3>
-								<p className="mt-2 text-sm leading-5 text-gray-600">{step.description}</p>
-								<Link to={step.to} className="mt-4 inline-block text-sm font-semibold text-green-800 hover:underline">Go to step →</Link>
+							<li key={step.number} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+								<span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#22C55E] text-xs font-bold text-white shadow-md shadow-[#22C55E]/30">
+									{step.number}
+								</span>
+								<h3 className="mt-3 font-bold text-slate-900">{step.title}</h3>
+								<p className="mt-2 text-sm leading-5 text-slate-500">{step.description}</p>
+								<Link to={step.to} className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-[#16A34A] hover:text-[#15803D]">
+									Go to step
+									<i className="fas fa-arrow-right text-xs" aria-hidden="true" />
+								</Link>
 							</li>
 						))}
 					</ol>
 				</section>
 			)}
 
+			{/* Recent activity */}
 			{recentActivity.length > 0 && (
-				<section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-					<h2 className="text-xl font-bold text-gray-900">Recent Activity</h2>
-					<ul className="mt-4 divide-y divide-gray-100">
+				<section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+					<h2 className="text-lg font-bold tracking-tight text-slate-900">Recent Activity</h2>
+					<ul className="mt-4 divide-y divide-slate-100">
 						{recentActivity.map((activity, index) => (
-							<li key={activity._id || index} className="py-3 text-sm text-gray-700">{activity.message || activity.title}</li>
+							<li key={activity._id || index} className="flex items-center gap-3 py-3 text-sm text-slate-600">
+								<span className="h-2 w-2 shrink-0 rounded-full bg-[#22C55E]" aria-hidden="true" />
+								{activity.message || activity.title}
+							</li>
 						))}
 					</ul>
 				</section>

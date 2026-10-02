@@ -53,23 +53,26 @@ const Login = () => {
 
   return (
     <main className="min-h-screen bg-green-50 px-6 py-12 text-gray-900">
-      <div className="mx-auto max-w-lg rounded-2xl bg-white p-8 shadow-lg">
-        <p className="text-center text-2xl font-bold text-green-700">BarakahTech</p>
-        <h1 className="mt-6 text-center text-3xl font-bold text-green-900">Welcome back</h1>
+      <div className="mx-auto max-w-lg rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+        <p className="flex items-center justify-center gap-2 text-2xl font-extrabold tracking-tight text-slate-900">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#22C55E] text-sm text-white"><i className="fas fa-graduation-cap" aria-hidden="true" /></span>
+          BarakahTech
+        </p>
+        <h1 className="mt-6 text-center text-3xl font-extrabold tracking-tight text-slate-900">Welcome back</h1>
 
-        {successMessage && <div className="mt-6 rounded-lg bg-green-50 p-3 text-green-700">{successMessage}</div>}
-        {error && <div className="mt-6 rounded-lg bg-red-50 p-3 text-red-700">{error}</div>}
+        {successMessage && <div role="status" className="mt-6 rounded-xl border border-[#22C55E]/20 bg-[#F0FDF4] p-3 text-[#15803D]">{successMessage}</div>}
+        {error && <div role="alert" className="mt-6 rounded-xl border border-red-200 bg-red-50 p-3 text-red-700">{error}</div>}
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-          <input className="w-full rounded-lg border p-3" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address" type="email" autoComplete="email" />
-          <input className="w-full rounded-lg border p-3" name="password" value={formData.password} onChange={handleChange} placeholder="Password" type="password" autoComplete="current-password" />
-          <button className="w-full rounded-lg bg-green-700 p-3 font-semibold text-white disabled:opacity-60" type="submit" disabled={loading}>
+          <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address" type="email" autoComplete="email" />
+          <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="password" value={formData.password} onChange={handleChange} placeholder="Password" type="password" autoComplete="current-password" />
+          <button className="w-full rounded-xl bg-[#22C55E] p-3 font-bold text-white shadow-md shadow-[#22C55E]/25 transition hover:bg-[#16A34A] disabled:opacity-60" type="submit" disabled={loading}>
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
         <p className="mt-6 text-center text-gray-600">
-          Don&apos;t have an account? <Link to="/register" className="font-semibold text-green-700 hover:underline">Register</Link>
+          Don&apos;t have an account? <Link to="/register" className="font-bold text-[#15803D] hover:underline">Register</Link>
         </p>
       </div>
     </main>

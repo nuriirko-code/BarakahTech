@@ -4,9 +4,9 @@ import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 
 const statusStyles = {
-  pending: 'bg-amber-100 text-amber-900',
-  approved: 'bg-green-100 text-green-900',
-  rejected: 'bg-red-100 text-red-900',
+  pending: 'bg-amber-50 text-amber-800 ring-1 ring-amber-200',
+  approved: 'bg-[#F0FDF4] text-[#15803D] ring-1 ring-[#22C55E]/20',
+  rejected: 'bg-red-50 text-red-700 ring-1 ring-red-200',
 }
 
 const statusFilters = ['all', 'pending', 'approved', 'rejected']
@@ -150,9 +150,9 @@ const AdminDashboard = () => {
 
   if (!token) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-gray-50 px-5 text-gray-900">
-        <section className="max-w-md rounded-lg border border-gray-200 bg-white p-8 text-center">
-          <h1 className="text-xl font-bold">Admin session required</h1>
+      <main className="flex min-h-screen items-center justify-center bg-slate-50 px-5 text-slate-900">
+        <section className="max-w-md rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+          <h1 className="text-xl font-extrabold">Admin session required</h1>
           <p className="mt-3 text-gray-600">Please sign in again to review teacher applications.</p>
           <button onClick={handleLogout} className="mt-6 rounded-lg bg-green-700 px-5 py-2.5 font-semibold text-white hover:bg-green-800">Return to login</button>
         </section>
@@ -162,16 +162,16 @@ const AdminDashboard = () => {
 
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900">
-      <header className="border-b border-green-100 bg-white">
+      <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <div>
-            <p className="text-sm font-bold text-green-700">BarakahTech Academy</p>
-            <h1 className="mt-1 text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+            <p className="text-sm font-bold text-[#16A34A]">BarakahTech Academy</p>
+            <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900">Admin Dashboard</h1>
             <p className="mt-1 text-sm text-gray-600">Review teacher applications</p>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-700">{user?.name || 'Administrator'}</span>
-            <button onClick={handleLogout} className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold hover:bg-gray-50">
+            <button onClick={handleLogout} className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900">
               Logout
             </button>
           </div>
@@ -184,14 +184,14 @@ const AdminDashboard = () => {
 
         <section aria-label="Application summary" className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {statusFilters.map((status) => (
-            <div key={status} className="rounded-lg border border-gray-200 bg-white p-5">
+            <div key={status} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <p className="text-sm capitalize text-gray-600">{status === 'all' ? 'Total applications' : status}</p>
               <p className="mt-2 text-3xl font-bold text-gray-900">{counts[status]}</p>
             </div>
           ))}
         </section>
 
-        <section className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="flex flex-col gap-4 border-b border-gray-200 p-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-wrap gap-2" aria-label="Filter applications by status">
               {statusFilters.map((status) => (
@@ -200,7 +200,7 @@ const AdminDashboard = () => {
                   type="button"
                   aria-pressed={activeFilter === status}
                   onClick={() => setActiveFilter(status)}
-                  className={`rounded-lg px-3 py-2 text-sm font-semibold capitalize ${activeFilter === status ? 'bg-green-800 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                  className={`rounded-xl px-3 py-2 text-sm font-semibold capitalize transition-colors ${activeFilter === status ? 'bg-[#22C55E] text-white shadow-sm shadow-[#22C55E]/25' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
                 >
                   {status === 'all' ? 'All' : status}
                 </button>
@@ -213,7 +213,7 @@ const AdminDashboard = () => {
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder="Search name, email, or subject"
-                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:border-green-700 focus:ring-2 focus:ring-green-100"
+                className="w-full rounded-xl border border-slate-300 px-4 py-2.5 outline-none focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10"
               />
             </label>
           </div>
@@ -249,7 +249,7 @@ const AdminDashboard = () => {
                       <td className="px-5 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-bold capitalize ${statusStyles[application.status] || 'bg-gray-100 text-gray-700'}`}>{application.status}</span></td>
                       <td className="px-5 py-4 text-gray-600">{formatDate(application.createdAt)}</td>
                       <td className="px-5 py-4 text-right">
-                        <button onClick={() => openApplication(application)} className="rounded-lg border border-green-700 px-3 py-2 font-semibold text-green-800 hover:bg-green-50">
+                        <button onClick={() => openApplication(application)} className="rounded-xl border border-[#22C55E]/50 px-3 py-2 font-semibold text-[#15803D] transition hover:bg-[#F0FDF4]">
                           View / Review
                         </button>
                       </td>

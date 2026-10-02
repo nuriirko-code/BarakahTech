@@ -32,8 +32,8 @@ const ForStudentsTeachers = () => {
         </div>
 
         <div className="mt-12 grid gap-6 lg:grid-cols-2">
-          <article className="rounded-3xl border border-green-100 bg-white p-8 shadow-sm sm:p-10">
-            <p className="text-sm font-bold uppercase tracking-widest text-green-800">
+          <article className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm sm:p-10">
+            <p className="text-sm font-bold uppercase tracking-widest text-[#16A34A]">
               For Students
             </p>
             <h3 className="mt-4 text-3xl font-bold text-gray-900">
@@ -53,21 +53,21 @@ const ForStudentsTeachers = () => {
             </ul>
           </article>
 
-          <article className="rounded-3xl bg-green-700 p-8 shadow-lg shadow-green-900/15 sm:p-10">
-            <p className="text-sm font-bold uppercase tracking-widest text-green-100">
+          <article className="rounded-2xl border border-[#22C55E]/30 border-l-4 border-l-[#22C55E] bg-white p-8 shadow-sm sm:p-10">
+            <p className="text-sm font-bold uppercase tracking-widest text-[#16A34A]">
               For Teachers
             </p>
-            <h3 className="mt-4 text-3xl font-bold text-white">
+            <h3 className="mt-4 text-3xl font-bold text-slate-900">
               Turn your knowledge into impact.
             </h3>
-            <p className="mt-4 leading-7 text-green-50">
+            <p className="mt-4 leading-7 text-slate-600">
               Share what you know through courses and live learning experiences
               designed to reach the students who need you.
             </p>
             <ul className="mt-7 space-y-4">
               {teacherOpportunities.map((opportunity) => (
-                <li key={opportunity} className="flex gap-3 text-green-50">
-                  <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-green-200" />
+                <li key={opportunity} className="flex gap-3 text-slate-700">
+                  <i className="fas fa-circle-check mt-1 shrink-0 text-sm text-[#22C55E]" aria-hidden="true" />
                   {opportunity}
                 </li>
               ))}

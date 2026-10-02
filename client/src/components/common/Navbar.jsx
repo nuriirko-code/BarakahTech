@@ -6,8 +6,11 @@ const Navbar = () => {
 
   return (
     <nav className="sticky top-0 z-50 flex items-center justify-between border-b border-green-100 bg-white/95 px-6 py-4 shadow-sm backdrop-blur sm:px-10">
-      <Link to="/" className="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
-        <span className="text-green-700">BarakahTech</span> Academy
+      <Link to="/" className="flex items-center gap-3 text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#22C55E] text-sm text-white shadow-md shadow-[#22C55E]/25" aria-hidden="true">
+          <i className="fas fa-graduation-cap" />
+        </span>
+        <span><span className="text-[#16A34A]">BarakahTech</span> Academy</span>
       </Link>
 
       {/* Right side */}
@@ -21,14 +24,16 @@ const Navbar = () => {
               // Role-aware navigation helps admins find their workspace; server authorization remains the security boundary.
               <Link
                 to="/dashboard/admin"
-                className="font-medium text-green-800 transition hover:text-green-950 hover:underline"
+                className="inline-flex items-center gap-2 rounded-xl px-3 py-2 font-semibold text-[#16A34A] transition hover:bg-[#F0FDF4]"
               >
+                <i className="fas fa-gauge-high text-sm" aria-hidden="true" />
                 Admin Dashboard
               </Link>
             )}
             <button
               onClick={logout}
-              className="rounded-lg bg-green-700 px-4 py-2 text-white transition hover:bg-green-800">
+              className="inline-flex items-center gap-2 rounded-xl bg-[#22C55E] px-4 py-2.5 font-bold text-white transition hover:bg-[#16A34A]">
+              <i className="fas fa-right-from-bracket text-xs" aria-hidden="true" />
               Logout
             </button>
           </>
@@ -36,12 +41,12 @@ const Navbar = () => {
           <>
             <Link
               to="/login"
-              className="font-medium text-green-800 transition hover:text-green-950 hover:underline">
+              className="rounded-xl px-3 py-2 font-semibold text-[#16A34A] transition hover:bg-[#F0FDF4]">
               Login
             </Link>
             <Link
               to="/register"
-              className="rounded-lg bg-green-700 px-4 py-2 text-white transition hover:bg-green-800">
+              className="rounded-xl bg-[#22C55E] px-4 py-2.5 font-bold text-white transition hover:bg-[#16A34A]">
               Register
             </Link>
           </>

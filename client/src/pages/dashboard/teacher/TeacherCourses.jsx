@@ -17,7 +17,9 @@ const TeacherCourses = () => {
 			</header>
 
 			<section className="flex min-h-[360px] flex-col items-center justify-center rounded-xl border border-gray-100 bg-white px-6 py-12 text-center shadow-sm">
-				<span className="text-6xl" aria-hidden="true">📚</span>
+				<span className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F0FDF4] text-2xl text-[#16A34A]" aria-hidden="true">
+					<i className="fas fa-book-open" />
+				</span>
 				<h2 className="mt-6 text-2xl font-bold text-gray-900">No courses yet</h2>
 				<p className="mt-3 max-w-lg leading-7 text-gray-600">
 					Create your first course and start sharing your knowledge with students on BarakahTech

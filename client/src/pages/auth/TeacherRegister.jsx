@@ -47,6 +47,14 @@ const educationLevels = [
 
 const availableDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
+const categoryIcons = {
+  technology: 'fas fa-microchip',
+  languages: 'fas fa-language',
+  sciences: 'fas fa-flask',
+  business: 'fas fa-briefcase',
+  leadership: 'fas fa-people-group',
+}
+
 const TeacherRegister = () => {
   // Keeping all step values together makes it straightforward to preserve data
   // while moving between steps and submit one complete application at the end.
@@ -301,13 +309,16 @@ const TeacherRegister = () => {
     }
   }
 
-  const inputClass = 'w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-700 focus:ring-2 focus:ring-green-100'
-  const optionClass = (selected) => `rounded-xl border p-4 text-left transition-colors ${selected ? 'border-green-700 bg-green-50 text-green-900' : 'border-gray-200 bg-white hover:border-green-400'}`
+  const inputClass = 'w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10'
+  const optionClass = (selected) => `rounded-xl border p-4 text-left transition-colors ${selected ? 'border-[#22C55E] bg-[#F0FDF4] text-slate-900 ring-1 ring-[#22C55E]/20' : 'border-slate-200 bg-white text-slate-700 hover:border-[#22C55E]/50'}`
 
   return (
-    <main className="min-h-screen bg-green-50 px-4 py-10 text-gray-900 sm:px-6">
-      <section className="mx-auto max-w-3xl rounded-2xl bg-white p-6 shadow-lg sm:p-10">
-        <p className="text-center text-2xl font-bold text-green-700">BarakahTech</p>
+    <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-900 sm:px-6">
+      <section className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
+        <p className="flex items-center justify-center gap-2 text-2xl font-extrabold tracking-tight text-slate-900">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#22C55E] text-sm text-white"><i className="fas fa-graduation-cap" aria-hidden="true" /></span>
+          BarakahTech
+        </p>
         <div className="mt-8">
           <div className="flex items-center justify-between text-sm font-semibold text-gray-600">
             <span>Step {currentStep} of 6</span>
@@ -317,10 +328,10 @@ const TeacherRegister = () => {
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
             <div className="h-full rounded-full bg-green-700 transition-all" style={{ width: `${(currentStep / 6) * 100}%` }} />
           </div>
-          <h1 className="mt-6 text-2xl font-bold text-green-900 sm:text-3xl">{steps[currentStep - 1]}</h1>
+          <h1 className="mt-6 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{steps[currentStep - 1]}</h1>
         </div>
 
-        {error && <div role="alert" className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>}
+        {error && <div role="alert" className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>}
 
         <form onSubmit={currentStep === 6 ? handleSubmit : (event) => { event.preventDefault(); handleNext() }} className="mt-8">
           {currentStep === 1 && (
@@ -348,7 +359,10 @@ const TeacherRegister = () => {
                       handleChange('specificSubject', '')
                       setOtherSubjectSelected(false)
                     }}>
-                      <span className="mr-3 text-2xl" aria-hidden="true">{category.icon}</span>{category.label}
+                      <span className={`mr-3 inline-flex h-9 w-9 items-center justify-center rounded-lg text-sm ${formData.mainCategory === categoryId ? 'bg-[#22C55E] text-white' : 'bg-slate-100 text-slate-500'}`} aria-hidden="true">
+                        <i className={categoryIcons[categoryId] || 'fas fa-layer-group'} />
+                      </span>
+                      {category.label}
                     </button>
                   ))}
                 </div>
@@ -472,8 +486,8 @@ const TeacherRegister = () => {
 
           {currentStep === 6 && (
             <div className="space-y-6">
-              <section className="rounded-xl bg-green-50 p-5">
-                <h2 className="font-semibold text-green-900">Application summary</h2>
+              <section className="rounded-xl border border-[#22C55E]/20 bg-[#F0FDF4] p-5">
+                <h2 className="font-bold text-slate-900">Application summary</h2>
                 <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
                   <div><dt className="text-gray-500">Name</dt><dd className="font-medium">{formData.name}</dd></div>
                   <div><dt className="text-gray-500">Category</dt><dd className="font-medium">{teachingCategories[formData.mainCategory]?.label}</dd></div>
@@ -482,28 +496,28 @@ const TeacherRegister = () => {
                 </dl>
               </section>
               <label className="flex items-start gap-3 rounded-lg border p-4">
-                <input className="mt-1 accent-green-700" type="checkbox" checked={formData.confirmedAvailability} onChange={(event) => handleChange('confirmedAvailability', event.target.checked)} />
+                <input className="mt-1 accent-[#22C55E]" type="checkbox" checked={formData.confirmedAvailability} onChange={(event) => handleChange('confirmedAvailability', event.target.checked)} />
                 <span>I confirm I am available for the hours I specified</span>
               </label>
               <label className="flex items-start gap-3 rounded-lg border p-4">
-                <input className="mt-1 accent-green-700" type="checkbox" checked={formData.agreedToStandards} onChange={(event) => handleChange('agreedToStandards', event.target.checked)} />
+                <input className="mt-1 accent-[#22C55E]" type="checkbox" checked={formData.agreedToStandards} onChange={(event) => handleChange('agreedToStandards', event.target.checked)} />
                 <span>I agree to BarakahTech teaching standards and code of conduct</span>
               </label>
               <label className="flex items-start gap-3 rounded-lg border p-4">
-                <input className="mt-1 accent-green-700" type="checkbox" checked={formData.agreedToBackgroundCheck} onChange={(event) => handleChange('agreedToBackgroundCheck', event.target.checked)} />
+                <input className="mt-1 accent-[#22C55E]" type="checkbox" checked={formData.agreedToBackgroundCheck} onChange={(event) => handleChange('agreedToBackgroundCheck', event.target.checked)} />
                 <span>I consent to a background verification check</span>
               </label>
             </div>
           )}
 
           <div className="mt-9 flex items-center justify-between border-t pt-6">
-            <button type="button" onClick={handleBack} disabled={currentStep === 1 || loading} className="rounded-lg border border-gray-300 px-5 py-3 font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40">
+            <button type="button" onClick={handleBack} disabled={currentStep === 1 || loading} className="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">
               Back
             </button>
             {currentStep < 6 ? (
-              <button type="submit" className="rounded-lg bg-green-700 px-6 py-3 font-semibold text-white hover:bg-green-800">Next</button>
+              <button type="submit" className="rounded-xl bg-[#22C55E] px-6 py-3 font-bold text-white shadow-md shadow-[#22C55E]/25 transition hover:bg-[#16A34A]">Next</button>
             ) : (
-              <button type="submit" disabled={loading} className="rounded-lg bg-green-700 px-6 py-3 font-semibold text-white hover:bg-green-800 disabled:cursor-wait disabled:opacity-60">
+              <button type="submit" disabled={loading} className="rounded-xl bg-[#22C55E] px-6 py-3 font-bold text-white shadow-md shadow-[#22C55E]/25 transition hover:bg-[#16A34A] disabled:cursor-wait disabled:opacity-60">
                 {loading ? 'Submitting Application...' : 'Submit Application'}
               </button>
             )}

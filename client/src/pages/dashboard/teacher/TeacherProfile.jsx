@@ -132,95 +132,183 @@ const TeacherProfile = () => {
 		.map((part) => part[0].toUpperCase())
 		.join('')
 
-	const inputClass = 'w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-green-700 focus:ring-2 focus:ring-green-100'
+	const inputClass = 'w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10'
+	const primaryButtonClass = 'inline-flex items-center justify-center gap-2 rounded-xl bg-[#22C55E] px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-[#22C55E]/25 transition-all hover:bg-[#16A34A] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22C55E] focus-visible:ring-offset-2 disabled:opacity-50'
+	const secondaryButtonClass = 'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:opacity-50'
+
 	const isLiveTeacher = profile.teachingMethod === 'live' || profile.teachingMethod === 'both'
 
 	if (loading) {
-		return <p className="py-12 text-center text-gray-600" role="status">Loading your profile...</p>
+		return (
+			<div className="flex flex-col items-center gap-3 py-16 text-slate-500" role="status">
+				<i className="fas fa-circle-notch fa-spin text-2xl text-[#22C55E]" aria-hidden="true" />
+				Loading your profile...
+			</div>
+		)
 	}
 
 	return (
-		<div className="mx-auto max-w-5xl space-y-6">
+		<div className="space-y-6">
 			<header className="flex flex-wrap items-center justify-between gap-4">
 				<div>
-					<h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
-					<p className="mt-1 text-gray-600">Manage the teaching information learners can see.</p>
+					<h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">My Profile</h1>
+					<p className="mt-1 text-slate-500">Manage the teaching information learners can see.</p>
 				</div>
 				{!editing ? (
-					<button type="button" onClick={() => { setEditing(true); setError(''); setSuccess('') }} className="rounded-lg bg-green-700 px-5 py-2.5 font-semibold text-white hover:bg-green-800">
+					<button
+						type="button"
+						onClick={() => { setEditing(true); setError(''); setSuccess('') }}
+						className={primaryButtonClass}
+					>
+						<i className="fas fa-pen text-xs" aria-hidden="true" />
 						Edit Profile
 					</button>
 				) : (
 					<div className="flex gap-2">
-						<button type="button" onClick={handleCancel} disabled={saving} className="rounded-lg border border-gray-300 px-4 py-2.5 font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50">Cancel</button>
-						<button type="button" onClick={handleSave} disabled={saving} className="rounded-lg bg-green-700 px-5 py-2.5 font-semibold text-white hover:bg-green-800 disabled:opacity-50">
-							{saving ? 'Saving...' : 'Save Changes'}
+						<button type="button" onClick={handleCancel} disabled={saving} className={secondaryButtonClass}>
+							Cancel
+						</button>
+						<button type="button" onClick={handleSave} disabled={saving} className={primaryButtonClass}>
+							{saving ? (
+								<>
+									<i className="fas fa-circle-notch fa-spin text-xs" aria-hidden="true" />
+									Saving...
+								</>
+							) : (
+								<>
+									<i className="fas fa-check text-xs" aria-hidden="true" />
+									Save Changes
+								</>
+							)}
 						</button>
 					</div>
 				)}
 			</header>
 
-			{error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">{error}</div>}
-			{success && <div role="status" className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-800">{success}</div>}
+			{error && (
+				<div role="alert" className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
+					<i className="fas fa-circle-exclamation mt-0.5" aria-hidden="true" />
+					{error}
+				</div>
+			)}
+			{success && (
+				<div role="status" className="flex items-start gap-3 rounded-xl border border-[#22C55E]/30 bg-[#F0FDF4] p-4 text-sm font-medium text-[#15803D]">
+					<i className="fas fa-circle-check mt-0.5" aria-hidden="true" />
+					{success}
+				</div>
+			)}
 
 			{/* Display mode prioritizes scan-friendly profile reading; edit mode exposes only safe public profile fields. */}
-			<section className="grid gap-6 rounded-xl border border-gray-100 bg-white p-6 shadow-sm lg:grid-cols-[minmax(240px,0.8fr)_1.5fr] lg:p-8">
+			<section className="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[minmax(240px,0.8fr)_1.5fr] lg:p-8">
 				<div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-					<div className="flex h-28 w-28 items-center justify-center rounded-full bg-green-100 text-3xl font-bold text-green-800" aria-label={`Avatar initials ${initials}`}>
+					<div
+						className="flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-[#22C55E] to-[#15803D] text-3xl font-extrabold text-white shadow-lg shadow-[#22C55E]/30 ring-4 ring-[#F0FDF4]"
+						aria-label={`Avatar initials ${initials}`}
+					>
 						{initials}
 					</div>
-					<h2 className="mt-5 text-2xl font-bold text-gray-900">{user?.name || 'Teacher'}</h2>
-					<span className="mt-2 rounded-full bg-green-100 px-3 py-1 text-sm font-semibold text-green-800">Verified Teacher</span>
-					<p className="mt-5 font-semibold text-gray-800">{profile.specificSubject || 'Subject not provided'}</p>
-					<p className="mt-1 capitalize text-gray-600">{profile.mainCategory || 'Category not provided'}</p>
+					<h2 className="mt-5 text-2xl font-extrabold tracking-tight text-slate-900">{user?.name || 'Teacher'}</h2>
+					<span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#F0FDF4] px-3 py-1 text-sm font-bold text-[#16A34A] ring-1 ring-[#22C55E]/20">
+						<i className="fas fa-badge-check" aria-hidden="true" />
+						Verified Teacher
+					</span>
+					<p className="mt-5 font-bold text-slate-800">{profile.specificSubject || 'Subject not provided'}</p>
+					<p className="mt-1 capitalize text-slate-500">{profile.mainCategory || 'Category not provided'}</p>
 					<div className="mt-4 flex flex-wrap justify-center gap-2 lg:justify-start">
-						<span className="rounded-full bg-gray-100 px-3 py-1 text-sm capitalize text-gray-700">{profile.teachingMethod || 'Method not set'}</span>
-						<span className="rounded-full bg-gray-100 px-3 py-1 text-sm capitalize text-gray-700">{profile.teachingLanguage || 'Language not set'}</span>
+						<span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold capitalize text-slate-600">
+							<i className="fas fa-chalkboard-user mr-1.5 text-xs" aria-hidden="true" />
+							{profile.teachingMethod || 'Method not set'}
+						</span>
+						<span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold capitalize text-slate-600">
+							<i className="fas fa-language mr-1.5 text-xs" aria-hidden="true" />
+							{profile.teachingLanguage || 'Language not set'}
+						</span>
 					</div>
 				</div>
 
-				<div className="min-w-0 border-t border-gray-100 pt-6 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0">
+				<div className="min-w-0 border-t border-slate-100 pt-6 lg:border-l lg:border-t-0 lg:pl-7 lg:pt-0">
 					{!editing ? (
 						<div className="space-y-6">
 							<section>
-								<h3 className="font-bold text-gray-900">About me</h3>
-								<p className="mt-2 whitespace-pre-wrap leading-7 text-gray-600">{profile.bio || 'No bio added yet.'}</p>
+								<h3 className="flex items-center gap-2 font-bold text-slate-900">
+									<i className="fas fa-quote-left text-xs text-[#22C55E]" aria-hidden="true" />
+									About me
+								</h3>
+								<p className="mt-2 whitespace-pre-wrap leading-7 text-slate-600">{profile.bio || 'No bio added yet.'}</p>
 							</section>
 							<dl className="grid gap-5 sm:grid-cols-2">
-								{isLiveTeacher && <div><dt className="text-sm text-gray-500">Hourly rate</dt><dd className="mt-1 font-semibold text-gray-900">ETB {Number(profile.hourlyRate).toLocaleString()} per hour</dd></div>}
-								<div><dt className="text-sm text-gray-500">Availability</dt><dd className="mt-1 font-semibold text-gray-900">{profile.availableHoursPerWeek} hours per week</dd></div>
+								{isLiveTeacher && (
+									<div>
+										<dt className="text-sm font-medium text-slate-500">Hourly rate</dt>
+										<dd className="mt-1 font-bold text-slate-900">ETB {Number(profile.hourlyRate).toLocaleString()} <span className="text-sm font-medium text-slate-500">per hour</span></dd>
+									</div>
+								)}
+								<div>
+									<dt className="text-sm font-medium text-slate-500">Availability</dt>
+									<dd className="mt-1 font-bold text-slate-900">{profile.availableHoursPerWeek} hours per week</dd>
+								</div>
 								<div className="sm:col-span-2">
-									<dt className="text-sm text-gray-500">Available days</dt>
+									<dt className="text-sm font-medium text-slate-500">Available days</dt>
 									<dd className="mt-2 flex flex-wrap gap-2">
-										{profile.availableDays.length > 0 ? profile.availableDays.map((day) => <span key={day} className="rounded-full bg-green-50 px-3 py-1 text-sm text-green-800">{day}</span>) : <span className="text-gray-600">No days selected</span>}
+										{profile.availableDays.length > 0 ? profile.availableDays.map((day) => (
+											<span key={day} className="rounded-full bg-[#F0FDF4] px-3 py-1 text-sm font-semibold text-[#15803D] ring-1 ring-[#22C55E]/20">
+												{day}
+											</span>
+										)) : <span className="text-slate-500">No days selected</span>}
 									</dd>
 								</div>
-								{profile.portfolioLink && <div className="sm:col-span-2"><dt className="text-sm text-gray-500">Portfolio</dt><dd className="mt-1 break-all"><a href={profile.portfolioLink} target="_blank" rel="noreferrer" className="font-semibold text-green-800 underline">{profile.portfolioLink}</a></dd></div>}
+								{profile.portfolioLink && (
+									<div className="sm:col-span-2">
+										<dt className="text-sm font-medium text-slate-500">Portfolio</dt>
+										<dd className="mt-1 break-all">
+											<a href={profile.portfolioLink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 font-bold text-[#16A34A] hover:text-[#15803D] hover:underline">
+												<i className="fas fa-arrow-up-right-from-square text-xs" aria-hidden="true" />
+												{profile.portfolioLink}
+											</a>
+										</dd>
+									</div>
+								)}
 							</dl>
 						</div>
 					) : (
 						<div className="space-y-5">
-							<label className="block space-y-2 text-sm font-semibold">Bio
+							<label className="block space-y-2 text-sm font-semibold text-slate-800">Bio
 								<textarea className={`${inputClass} min-h-36`} value={profile.bio} onChange={(event) => handleChange('bio', event.target.value)} />
-								<span className="block text-right font-normal text-gray-500">{profile.bio.length} characters</span>
+								<span className="block text-right text-xs font-medium text-slate-400">{profile.bio.length} characters</span>
 							</label>
 							{/* Hourly rates apply only when the teacher offers live sessions. */}
-							{isLiveTeacher && <label className="block space-y-2 text-sm font-semibold">Hourly rate (ETB)
-								<input className={inputClass} type="number" min="0" value={profile.hourlyRate} onChange={(event) => handleChange('hourlyRate', event.target.value)} />
-							</label>}
-							<label className="block space-y-2 text-sm font-semibold">Available hours per week
+							{isLiveTeacher && (
+								<label className="block space-y-2 text-sm font-semibold text-slate-800">Hourly rate (ETB)
+									<input className={inputClass} type="number" min="0" value={profile.hourlyRate} onChange={(event) => handleChange('hourlyRate', event.target.value)} />
+								</label>
+							)}
+							<label className="block space-y-2 text-sm font-semibold text-slate-800">Available hours per week
 								<input className={inputClass} type="number" min="0" value={profile.availableHoursPerWeek} onChange={(event) => handleChange('availableHoursPerWeek', event.target.value)} />
 							</label>
 							<fieldset>
-								<legend className="mb-2 text-sm font-semibold">Available days</legend>
+								<legend className="mb-2 text-sm font-semibold text-slate-800">Available days</legend>
 								<div className="flex flex-wrap gap-2">
 									{daysOfWeek.map((day) => {
 										const selected = profile.availableDays.includes(day)
-										return <button key={day} type="button" aria-pressed={selected} onClick={() => toggleDay(day)} className={`rounded-lg border px-3 py-2 text-sm font-medium ${selected ? 'border-green-700 bg-green-700 text-white' : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}>{day}</button>
+										return (
+											<button
+												key={day}
+												type="button"
+												aria-pressed={selected}
+												onClick={() => toggleDay(day)}
+												className={`rounded-lg border px-3.5 py-2 text-sm font-semibold transition ${
+													selected
+														? 'border-[#22C55E] bg-[#22C55E] text-white shadow-sm shadow-[#22C55E]/30'
+														: 'border-slate-300 bg-white text-slate-600 hover:border-[#22C55E]/50 hover:bg-[#F0FDF4]'
+												}`}
+											>
+												{day}
+											</button>
+										)
 									})}
 								</div>
 							</fieldset>
-							<label className="block space-y-2 text-sm font-semibold">Portfolio link
+							<label className="block space-y-2 text-sm font-semibold text-slate-800">Portfolio link
 								<input className={inputClass} type="url" value={profile.portfolioLink} onChange={(event) => handleChange('portfolioLink', event.target.value)} placeholder="https://example.com" />
 							</label>
 						</div>
