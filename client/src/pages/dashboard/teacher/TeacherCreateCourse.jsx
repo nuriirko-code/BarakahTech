@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import { useAuth } from '../../../context/AuthContext'
 import teachingCategories from '../../../utils/teachingCategories'
 
@@ -24,13 +25,28 @@ const categoryIcons = {
 	science: 'fas fa-flask',
 	business: 'fas fa-briefcase',
 	arts: 'fas fa-palette',
-	music: 'fas fa-music',
-	design: 'fas fa-pen-ruler',
+    design: 'fas fa-pen-ruler',
 }
 
 const TeacherCreateCourse = () => {
-	const [currentStep, setCurrentStep] = useState(1)
+	const location = useLocation()
+	const [currentStep, setCurrentStep] = useState(location.state?.courseId ? 3 : 1)
 	const [error, setError] = useState('')
+	const [courseId, setCourseId] = useState(location.state?.courseId || null)
+	const [lessons, setLessons] = useState([])
+	const [addingLesson, setAddingLesson] = useState(false)
+	const [publishLoading, setPublishLoading] = useState(false)
+	const [savingCourse, setSavingCourse] = useState(false)
+	const [lessonForm, setLessonForm] = useState({
+		title: '',
+		description: '',
+		contentType: 'both',
+		videoUrl: '',
+		videoSource: 'youtube',
+		textContent: '',
+		duration: 0,
+		isFree: false,
+	})
 	// Objectives are an array because one course has multiple distinct learning outcomes.
 	const [courseData, setCourseData] = useState({
 		title: '',
@@ -44,14 +60,47 @@ const TeacherCreateCourse = () => {
 		estimatedDuration: '',
 		objectives: ['', '', ''],
 	})
-	const { user } = useAuth()
+	const { user, token, setSuccess } = useAuth()
 	const navigate = useNavigate()
+
+	// The courses page can pass an existing draft ID when its owner chooses
+	// Add Lessons. Load that draft so Step 3 resumes with its existing lessons. !courseId ensures this effect only runs when a draft ID is present, not when the component first mounts.If we're not editing an existing course, don't try to load one.
+	useEffect(() => {
+		if (!courseId) return undefined
+
+		let isCurrent = true
+		axios.get(`http://localhost:5000/api/courses/${courseId}`)
+			.then((response) => {
+				if (!isCurrent) return
+				const course = response.data.course
+				setCourseData({
+					title: course.title || '',
+					description: course.description || '',
+					category: course.category || '',
+					subject: course.subject || '',
+					level: course.level || '',
+					language: course.language || '',
+					price: course.price ?? 0,
+					isFree: course.isFree || false,
+					estimatedDuration: course.estimatedDuration ?? '',
+					objectives: course.objectives || ['', '', ''],
+				})
+				setLessons(course.lessons || [])
+			})
+			.catch((requestError) => {
+				if (isCurrent) setError(requestError.response?.data?.message || 'Could not load this course draft.')
+			})
+
+		return () => {
+			isCurrent = false
+		}
+	}, [courseId])
 
 	const handleChange = (field, value) => {
 		setCourseData((currentData) => ({
 			...currentData,
 			[field]: value,
-			...(field === 'category' ? { subject: '' } : {}),
+			...(field === 'category' ? { subject: '' } : {}),// if the field being changed is category, also set subject back to an empty string; otherwise add nothing.
 		}))
 	}
 
@@ -64,12 +113,16 @@ const TeacherCreateCourse = () => {
 		}))
 	}
 
+	const handleLessonChange = (field, value) => {
+		setLessonForm((currentForm) => ({ ...currentForm, [field]: value }))
+	}
+// If there are already 8 objectives, it returns currentData unchanged, so nothing is added. If there are fewer than 8, it creates a new course object, copies the old fields, and builds a new objectives array with ...currentData.objectives plus one extra empty string '' at the end. The empty string becomes a new blank input on the screen.
 	const addObjective = () => {
 		setCourseData((currentData) => currentData.objectives.length >= 8
 			? currentData
 			: { ...currentData, objectives: [...currentData.objectives, ''] })
 	}
-
+// If there are 3 or fewer objectives, it returns currentData unchanged, so nothing is removed. If there are more than 3, it creates a new course object, copies the old fields, and builds a new objectives array that filters out the objective at the specified index. The filter method creates a new array with all objectives except the one at the index to be removed.
 	const removeObjective = (index) => {
 		setCourseData((currentData) => currentData.objectives.length <= 3
 			? currentData
@@ -106,23 +159,101 @@ const TeacherCreateCourse = () => {
 		setError(validationMessage)
 		return validationMessage === ''
 	}
-
-	const handleNext = () => {
+// If the current step is valid, it clears any error message and increments the current step by 1, but not beyond 3. If the current step is invalid, it sets an error message and does not change the current step.
+	const handleNext = async () => {
 		if (validateStep(currentStep)) {
 			setError('')
+
+			if (currentStep === 2 && !courseId) {
+				setSavingCourse(true)
+				try {
+					// Create the draft now so subsequent lesson requests have a stable
+					// courseId to target; waiting until final publish would leave lesson
+					// uploads without a parent course document.
+					const response = await axios.post(
+						'http://localhost:5000/api/courses',
+						{
+							...courseData,
+							price: courseData.isFree ? 0 : Number(courseData.price),
+							estimatedDuration: Number(courseData.estimatedDuration),
+						},
+						{ headers: { Authorization: `Bearer ${token}` } }
+					)
+					const createdCourseId = response.data.course?._id
+					if (!createdCourseId) throw new Error('The server did not return the new course ID.')
+					setCourseId(createdCourseId)
+					setLessons(response.data.course.lessons || [])
+					setCurrentStep(3)
+				} catch (requestError) {
+					setError(requestError.response?.data?.message || requestError.message || 'Could not save the course draft.')
+				} finally {
+					setSavingCourse(false)
+				}
+				return
+			}
+
 			setCurrentStep((step) => Math.min(step + 1, 3))
 		}
 	}
-
+// If the current step is 1, it clears any error message and does not change the current step. If the current step is greater than 1, it clears any error message and decrements the current step by 1, but not below 1.
 	const handleBack = () => {
 		setError('')
 		setCurrentStep((step) => Math.max(step - 1, 1))
 	}
 
-	const handleSaveDraft = () => {
-		// This temporary action will be replaced with a backend save after Course exists.
-		console.log('Course draft:', { ...courseData, teacherName: user?.name })
+	const handleAddLesson = async () => {
 		setError('')
+		if (!lessonForm.title.trim()) {
+			setError('Enter a title for this lesson.')
+			return
+		}
+		if ((lessonForm.contentType === 'video' || lessonForm.contentType === 'both') && !lessonForm.videoUrl.trim()) {
+			setError('Enter a video URL for this lesson.')
+			return
+		}
+		if ((lessonForm.contentType === 'text' || lessonForm.contentType === 'both') && !lessonForm.textContent.trim()) {
+			setError('Add text content for this lesson.')
+			return
+		}
+
+		setAddingLesson(true)
+		try {
+			const response = await axios.post(
+				`http://localhost:5000/api/courses/${courseId}/lessons`,
+				{ ...lessonForm, title: lessonForm.title.trim(), duration: Number(lessonForm.duration) || 0 },
+				{ headers: { Authorization: `Bearer ${token}` } }
+			)
+			setLessons((currentLessons) => [...currentLessons, response.data.lesson])
+			setLessonForm({
+				title: '', description: '', contentType: 'both', videoUrl: '',
+				videoSource: 'youtube', textContent: '', duration: 0, isFree: false,
+			})
+		} catch (requestError) {
+			setError(requestError.response?.data?.message || 'Could not add this lesson.')
+		} finally {
+			setAddingLesson(false)
+		}
+	}
+
+	const handlePublish = async () => {
+		if (!courseId || lessons.length === 0) return
+		setPublishLoading(true)
+		setError('')
+
+		try {
+			await axios.put(
+				`http://localhost:5000/api/courses/${courseId}/publish`,
+				{},
+				{ headers: { Authorization: `Bearer ${token}` } }
+			)
+			const message = 'Course published successfully.'
+			setSuccess(message)
+			navigate('/dashboard/teacher/courses', { state: { successMessage: message } })
+		} catch (requestError) {
+			setError(requestError.response?.data?.message || 'Could not publish this course.')
+		} finally {
+			setPublishLoading(false)
+		}
 	}
 
 	const inputClass = 'w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10'
@@ -287,25 +418,126 @@ const TeacherCreateCourse = () => {
 				)}
 
 				{currentStep === 3 && (
-					<section className="mt-7 rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-6 sm:p-8">
-						<span className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 text-xl text-amber-600">
-							<i className="fas fa-clock" aria-hidden="true" />
-						</span>
-						<h2 className="mt-4 text-xl font-extrabold tracking-tight text-amber-950">Add Lessons</h2>
-						<p className="mt-3 leading-7 text-amber-900">
-							Lesson creation and uploads will be available in a later step after the Course model and backend API are ready.
-						</p>
-						{/* This placeholder will be replaced with lesson editing and upload after Course exists on the backend. */}
-						<div className="mt-6 flex flex-wrap gap-3">
-							<button type="button" onClick={handleSaveDraft} className={primaryButtonClass}>
-								<i className="fas fa-floppy-disk text-xs" aria-hidden="true" />
-								Save Course Draft
-							</button>
-							<button type="button" onClick={() => navigate('/dashboard/teacher/courses')} className={secondaryButtonClass}>
-								Return to courses
-							</button>
-						</div>
-					</section>
+					<div className="mt-7 space-y-7">
+						<header>
+							<h2 className="text-xl font-extrabold tracking-tight text-slate-900">Add Course Lessons</h2>
+							<p className="mt-2 text-sm text-slate-500">{courseData.title}</p>
+						</header>
+
+						<section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+							<h3 className="font-bold text-slate-900">Lessons added so far</h3>
+							{lessons.length === 0 ? (
+								<p className="mt-3 rounded-xl bg-slate-50 p-4 text-sm text-slate-500">No lessons added yet. Add your first lesson below.</p>
+							) : (
+								<ol className="mt-4 divide-y divide-slate-100">
+									{lessons.map((lesson, index) => (
+										<li key={lesson._id || `${lesson.title}-${index}`} className="flex flex-wrap items-center justify-between gap-3 py-4">
+											<div className="flex min-w-0 items-center gap-3">
+												<span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#F0FDF4] text-sm font-bold text-[#16A34A]">{lesson.order || index + 1}</span>
+												<span className="min-w-0">
+													<span className="block truncate font-semibold text-slate-900">{lesson.title}</span>
+													<span className="mt-1 block text-xs capitalize text-slate-500">{lesson.contentType} · {lesson.duration || 0} min</span>
+												</span>
+											</div>
+											{lesson.isFree && <span className="rounded-full bg-[#F0FDF4] px-3 py-1 text-xs font-bold text-[#15803D]">Free preview</span>}
+										</li>
+									))}
+								</ol>
+							)}
+						</section>
+
+						<section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+							<h3 className="text-lg font-extrabold text-slate-900">Add a New Lesson</h3>
+							<div className="mt-5 space-y-5">
+								<label className="block space-y-2 text-sm font-semibold text-slate-800">Lesson title
+									<input className={inputClass} value={lessonForm.title} onChange={(event) => handleLessonChange('title', event.target.value)} placeholder="Lesson title" />
+								</label>
+								<label className="block space-y-2 text-sm font-semibold text-slate-800">Lesson description (optional)
+									<textarea className={`${inputClass} min-h-24`} value={lessonForm.description} onChange={(event) => handleLessonChange('description', event.target.value)} placeholder="What will this lesson cover?" />
+								</label>
+
+								<fieldset>
+									<legend className="mb-3 text-sm font-semibold text-slate-800">Content type</legend>
+									<div className="grid gap-3 sm:grid-cols-3">
+										{[
+											{ value: 'video', label: 'Video Only', icon: 'fas fa-video' },
+											{ value: 'text', label: 'Text Only', icon: 'fas fa-file-lines' },
+											{ value: 'both', label: 'Video and Text', icon: 'fas fa-layer-group' },
+										].map((type) => (
+											<button key={type.value} type="button" aria-pressed={lessonForm.contentType === type.value} onClick={() => handleLessonChange('contentType', type.value)} className={`${optionClass(lessonForm.contentType === type.value)} justify-center`}>
+												<i className={type.icon} aria-hidden="true" />{type.label}
+											</button>
+										))}
+									</div>
+								</fieldset>
+
+								{(lessonForm.contentType === 'video' || lessonForm.contentType === 'both') && (
+									<div className="space-y-4">
+										<fieldset>
+											<legend className="mb-3 text-sm font-semibold text-slate-800">Video source</legend>
+											<div className="flex flex-wrap gap-2">
+												{[
+													{ value: 'youtube', label: 'YouTube Link' },
+													{ value: 'googledrive', label: 'Google Drive Link' },
+													{ value: 'upload', label: 'Upload File' },
+												].map((source) => (
+													<button key={source.value} type="button" aria-pressed={lessonForm.videoSource === source.value} onClick={() => handleLessonChange('videoSource', source.value)} className={`${optionClass(lessonForm.videoSource === source.value)} px-3 py-2 text-sm`}>
+														{source.label}
+													</button>
+												))}
+											</div>
+										</fieldset>
+										<label className="block space-y-2 text-sm font-semibold text-slate-800">Video URL
+											<input className={inputClass} type="url" value={lessonForm.videoUrl} onChange={(event) => handleLessonChange('videoUrl', event.target.value)} placeholder={lessonForm.videoSource === 'youtube' ? 'https://youtube.com/...' : lessonForm.videoSource === 'googledrive' ? 'https://drive.google.com/...' : 'Paste the hosted upload URL'} />
+											{lessonForm.videoSource === 'upload' && <span className="block text-xs font-normal text-slate-500">Direct file uploading will be connected when media storage is added.</span>}
+										</label>
+									</div>
+								)}
+
+								{(lessonForm.contentType === 'text' || lessonForm.contentType === 'both') && (
+									<label className="block space-y-2 text-sm font-semibold text-slate-800">Lesson text content
+										<textarea className={`${inputClass} min-h-40`} value={lessonForm.textContent} onChange={(event) => handleLessonChange('textContent', event.target.value)} placeholder="Write the lesson content for students..." />
+									</label>
+								)}
+
+								<div className="grid gap-5 sm:grid-cols-2">
+									<label className="block space-y-2 text-sm font-semibold text-slate-800">Lesson duration (minutes)
+										<input className={inputClass} type="number" min="0" value={lessonForm.duration} onChange={(event) => handleLessonChange('duration', event.target.value)} />
+									</label>
+									<label className="flex items-center gap-3 self-end rounded-xl bg-slate-50 p-4 text-sm font-semibold text-slate-800">
+										<input className="h-5 w-5 accent-[#22C55E]" type="checkbox" checked={lessonForm.isFree} onChange={(event) => handleLessonChange('isFree', event.target.checked)} />
+										Make this lesson free for non-enrolled students
+									</label>
+								</div>
+
+								<button type="button" disabled={addingLesson || !courseId} onClick={handleAddLesson} className={primaryButtonClass}>
+									<i className={`fas ${addingLesson ? 'fa-circle-notch fa-spin' : 'fa-plus'} text-xs`} aria-hidden="true" />
+									{addingLesson ? 'Adding Lesson...' : 'Add This Lesson'}
+								</button>
+							</div>
+						</section>
+
+						{lessons.length > 0 && (
+							<section className="rounded-2xl border border-[#22C55E]/20 bg-gradient-to-br from-[#F0FDF4] to-white p-6 shadow-sm sm:p-8">
+								<div className="flex flex-wrap items-start justify-between gap-4">
+									<div>
+										<h3 className="text-xl font-extrabold text-slate-900">Ready to publish?</h3>
+										<p className="mt-2 text-slate-600">Your course will be visible to all students on BarakahTech once published.</p>
+									</div>
+									<span className="rounded-full bg-white px-3 py-1 text-sm font-bold text-[#15803D] ring-1 ring-[#22C55E]/20">{lessons.length} lessons</span>
+								</div>
+								<div className="mt-5 grid gap-3 rounded-xl border border-slate-200 bg-white p-4 text-sm sm:grid-cols-3">
+									<p><span className="block text-slate-500">Course</span><span className="mt-1 block font-semibold text-slate-900">{courseData.title}</span></p>
+									<p><span className="block text-slate-500">Estimated duration</span><span className="mt-1 block font-semibold text-slate-900">{courseData.estimatedDuration} hours</span></p>
+									<p><span className="block text-slate-500">Price</span><span className="mt-1 block font-semibold text-slate-900">{courseData.isFree ? 'Free' : `ETB ${Number(courseData.price).toLocaleString()}`}</span></p>
+								</div>
+								<button type="button" disabled={publishLoading} onClick={handlePublish} className={`${primaryButtonClass} mt-6`}>
+									<i className={`fas ${publishLoading ? 'fa-circle-notch fa-spin' : 'fa-paper-plane'} text-xs`} aria-hidden="true" />
+									{publishLoading ? 'Publishing...' : 'Publish Course'}
+								</button>
+							</section>
+						)}
+					</div>
 				)}
 
 				<div className="mt-8 flex justify-between border-t border-slate-100 pt-6">
@@ -314,7 +546,8 @@ const TeacherCreateCourse = () => {
 						Back
 					</button>
 					{currentStep < 3 && (
-						<button type="button" onClick={handleNext} className={primaryButtonClass}>
+						<button type="button" disabled={savingCourse} onClick={handleNext} className={primaryButtonClass}>
+							{savingCourse && <i className="fas fa-circle-notch fa-spin text-xs" aria-hidden="true" />}
 							Next
 							<i className="fas fa-arrow-right text-xs" aria-hidden="true" />
 						</button>

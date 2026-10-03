@@ -15,6 +15,7 @@ const TeacherSidebar = ({ onClose = () => {} }) => {
 
   const handleLogout = () => {
     logout()
+    //If this sidebar is inside the mobile drawer, close the drawer.
     onClose()
     navigate('/login')
   }

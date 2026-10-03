@@ -11,6 +11,10 @@ import TeacherWelcome from './pages/auth/TeacherWelcome'
 import ApplicationSubmitted from './pages/auth/ApplicationSubmitted'
 import Login from './pages/auth/Login'
 import StudentDashboard from './pages/dashboard/StudentDashboard'
+import StudentOverview from './pages/dashboard/student/StudentOverview'
+import StudentCourses from './pages/dashboard/student/StudentCourses'
+import StudentBrowse from './pages/dashboard/student/StudentBrowse'
+import StudentProfile from './pages/dashboard/student/StudentProfile'
 import TeacherDashboard from './pages/dashboard/TeacherDashboard'
 import TeacherOverview from './pages/dashboard/teacher/TeacherOverview'
 import TeacherCourses from './pages/dashboard/teacher/TeacherCourses'
@@ -45,8 +49,13 @@ function App() {
           {/* Login page for existing users signing into their accounts. */}
           <Route path="/login" element={<Login />} />
 
-          {/* Student dashboard for authenticated users with the student role. */}
-          <Route path="/dashboard/student" element={<StudentDashboard />} />
+          {/* Student and teacher portals share a nested layout pattern, while each owns different dashboard content. */}
+          <Route path="/dashboard/student" element={<StudentDashboard />}>
+            <Route index element={<StudentOverview />} />
+            <Route path="browse" element={<StudentBrowse />} />
+            <Route path="courses" element={<StudentCourses />} />
+            <Route path="profile" element={<StudentProfile />} />
+          </Route>
 
           {/* Nested routes keep the teacher portal shell while changing its page content. */}
           <Route path="/dashboard/teacher" element={<TeacherDashboard />}>

@@ -5,6 +5,7 @@ const connectDB = require("./config/db")
 const authRoutes = require("./routes/authRoutes")
 const teacherApplicationRoutes = require("./routes/teacherApplicationRoutes")
 const teacherRoutes = require("./routes/teacherRoutes")
+const courseRoutes = require("./routes/courseRoutes")
 
 const app = express()
 const port = process.env.PORT || 5000
@@ -21,6 +22,8 @@ app.use("/api/auth", authRoutes)
 // Express prefixes each route in this router with /api/teacher-applications.
 app.use("/api/teacher-applications", teacherApplicationRoutes)
 app.use("/api/teachers", teacherRoutes)
+// Express adds this prefix to every path defined in the course router.
+app.use("/api/courses", courseRoutes)
 
 const startServer = async () => {
   await connectDB()
