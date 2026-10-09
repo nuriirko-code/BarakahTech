@@ -178,11 +178,320 @@ const getCourseById = async (req, res) => {
       return res.status(404).json({ message: 'Course not found' })
     }
 
-    return res.status(200).json({ course })
+    // Public details are only for published courses. Hide paid lessons here so
+    // this public endpoint cannot bypass the enrollment check in the viewer API.
+    if (course.status !== 'published') {
+      return res.status(404).json({ message: 'Course not found' })
+    }
+
+    const publicCourse = course.toObject()
+    publicCourse.lessons = publicCourse.lessons.filter((lesson) => lesson.isFree)
+
+    return res.status(200).json({ course: publicCourse })
   } catch (error) {
     console.error('Get course error:', error)
     return res.status(500).json({
       message: 'Server error while fetching course',
+    })
+  }
+}
+
+// Teachers use this protected endpoint to resume their own drafts. It returns
+// full lesson data only to the verified owner, unlike the public course details.
+const getTeacherCourseById = async (req, res) => {
+  try {
+    const { courseId } = req.params
+    const course = await Course.findOne({ _id: courseId, teacher: req.user.userId })
+      .populate('teacher', 'name email')
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' })
+    }
+
+    return res.status(200).json({ course })
+  } catch (error) {
+    console.error('Get teacher course error:', error)
+    return res.status(500).json({
+      message: 'Server error while fetching teacher course',
+    })
+  }
+}
+
+const updateCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params
+    const course = await Course.findById(courseId)
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' })
+    }
+
+    if (course.teacher.toString() !== req.user.userId) {
+      return res.status(403).json({ message: 'You can only update your own courses' })
+    }
+
+    const updatableFields = ['title', 'description', 'category', 'subject', 'level', 'language', 'isFree', 'price', 'objectives', 'estimatedDuration']
+    // Only provided fields are overwritten so a partial update keeps the rest of the course intact.
+    updatableFields.forEach((field) => {
+      if (Object.prototype.hasOwnProperty.call(req.body, field)) {
+        course[field] = req.body[field]
+      }
+    })
+
+    await course.save()
+
+    return res.status(200).json({
+      message: 'Course updated successfully',
+      course,
+    })
+  } catch (error) {
+    console.error('Update course error:', error)
+    return res.status(500).json({
+      message: 'Server error while updating course',
+    })
+  }
+}
+
+const updateLesson = async (req, res) => {
+  try {
+    const { courseId, lessonId } = req.params
+    const course = await Course.findById(courseId)
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' })
+    }
+
+    if (course.teacher.toString() !== req.user.userId) {
+      return res.status(403).json({ message: 'You can only update your own lessons' })
+    }
+
+    // Mongoose subdocuments provide .id() so we can fetch a nested lesson by its _id without
+    // manually searching the array and comparing raw ObjectIds.
+    const lesson = course.lessons.id(lessonId)
+    if (!lesson) {
+      return res.status(404).json({ message: 'Lesson not found' })
+    }
+
+    const updatableFields = ['title', 'description', 'contentType', 'videoUrl', 'videoSource', 'textContent', 'duration', 'isFree']
+    updatableFields.forEach((field) => {
+      if (Object.prototype.hasOwnProperty.call(req.body, field)) {
+        lesson[field] = req.body[field]
+      }
+    })
+
+    await course.save()
+
+    return res.status(200).json({
+      message: 'Lesson updated successfully',
+      lesson,
+    })
+  } catch (error) {
+    console.error('Update lesson error:', error)
+    return res.status(500).json({
+      message: 'Server error while updating lesson',
+    })
+  }
+}
+
+const deleteLesson = async (req, res) => {
+  try {
+    const { courseId, lessonId } = req.params
+    const course = await Course.findById(courseId)
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' })
+    }
+
+    if (course.teacher.toString() !== req.user.userId) {
+      return res.status(403).json({ message: 'You can only delete your own lessons' })
+    }
+
+    if (course.status === 'published' && course.lessons.length === 1) {
+      return res.status(400).json({
+        message: 'Cannot delete the only lesson in a published course. Unpublish first.',
+      })
+    }
+
+    // .pull removes all array items matching the selector, which is the standard Mongoose way
+    // to delete nested lesson documents from an embedded array.
+    course.lessons.pull({ _id: lessonId })
+    course.lessons.forEach((lesson, index) => {
+      lesson.order = index + 1
+    })
+    await course.save()
+
+    return res.status(200).json({
+      message: 'Lesson deleted successfully',
+    })
+  } catch (error) {
+    console.error('Delete lesson error:', error)
+    return res.status(500).json({
+      message: 'Server error while deleting lesson',
+    })
+  }
+}
+
+const deleteCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params
+    const course = await Course.findById(courseId)
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' })
+    }
+
+    if (course.teacher.toString() !== req.user.userId) {
+      return res.status(403).json({ message: 'You can only delete your own courses' })
+    }
+
+    const enrollmentCount = await Enrollment.countDocuments({ course: courseId })
+    if (enrollmentCount > 0) {
+      return res.status(400).json({
+        message: 'Cannot delete a course with enrolled students. Unpublish it instead to hide from new students.',
+      })
+    }
+
+    await Course.findByIdAndDelete(courseId)
+
+    return res.status(200).json({
+      message: 'Course deleted successfully',
+    })
+  } catch (error) {
+    console.error('Delete course error:', error)
+    return res.status(500).json({
+      message: 'Server error while deleting course',
+    })
+  }
+}
+
+const unpublishCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params
+    const course = await Course.findById(courseId)
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' })
+    }
+
+    if (course.teacher.toString() !== req.user.userId) {
+      return res.status(403).json({ message: 'You can only unpublish your own courses' })
+    }
+
+    // Unpublish hides the course from new student enrollment while preserving existing access,
+    // unlike a delete which permanently removes the course record.
+    course.status = 'draft'
+    await course.save()
+
+    return res.status(200).json({
+      message: 'Course unpublished. Existing students still have access but new enrollments are paused.',
+      course,
+    })
+  } catch (error) {
+    console.error('Unpublish course error:', error)
+    return res.status(500).json({
+      message: 'Server error while unpublishing course',
+    })
+  }
+}
+
+// This route returns lesson content only after both checks pass: the course is
+// published and the signed-in student has an enrollment for that course.
+const getCourseWithEnrollment = async (req, res) => {
+  try {
+    const { courseId } = req.params
+    const course = await Course.findById(courseId)
+      .populate('teacher', 'name')
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' })
+    }
+
+    if (course.status !== 'published') {
+      return res.status(400).json({ message: 'This course is not available' })
+    }
+
+    // The enrollment lookup is the content-protection boundary: knowing a
+    // course URL alone must not grant access to its full lessons.
+    const enrollment = await Enrollment.findOne({
+      student: req.user.userId,
+      course: courseId,
+    })
+
+    if (!enrollment) {
+      return res.status(403).json({ message: 'You are not enrolled in this course' })
+    }
+
+    return res.status(200).json({ course, enrollment })
+  } catch (error) {
+    console.error('Get enrolled course error:', error)
+    return res.status(500).json({
+      message: 'Server error while loading course lessons',
+    })
+  }
+}
+
+const markLessonComplete = async (req, res) => {
+  try {
+    const { courseId, lessonId } = req.params
+    const enrollment = await Enrollment.findOne({
+      student: req.user.userId,
+      course: courseId,
+    })
+
+    if (!enrollment) {
+      return res.status(404).json({ message: 'Enrollment not found' })
+    }
+
+    // ObjectIds are objects, so compare their string forms to prevent duplicate
+    // completion records for the same embedded lesson.
+    const alreadyCompleted = enrollment.completedLessons.some(
+      (completedLessonId) => completedLessonId.toString() === lessonId
+    )
+    if (alreadyCompleted) {
+      return res.status(200).json({
+        message: 'Lesson already completed',
+        enrollment,
+      })
+    }
+
+    const course = await Course.findById(courseId).select('lessons._id')
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' })
+    }
+
+    const lessonExists = course.lessons.some((lesson) => lesson._id.toString() === lessonId)
+    if (!lessonExists) {
+      return res.status(404).json({ message: 'Lesson not found in this course' })
+    }
+
+    if (course.lessons.length === 0) {
+      return res.status(400).json({ message: 'This course has no lessons to complete' })
+    }
+
+    enrollment.completedLessons.push(lessonId)
+    // Progress is completed lesson count divided by total course lessons,
+    // multiplied by 100 and rounded to the nearest whole percentage.
+    enrollment.progressPercentage = Math.round(
+      (enrollment.completedLessons.length / course.lessons.length) * 100
+    )
+    enrollment.lastAccessedLesson = lessonId
+
+    // Reaching 100% marks the enrollment complete and records when it happened.
+    if (enrollment.progressPercentage === 100) {
+      enrollment.isCompleted = true
+      enrollment.completedAt = new Date()
+    }
+
+    await enrollment.save()
+
+    return res.status(200).json({
+      message: 'Lesson marked as complete',
+      enrollment,
+    })
+  } catch (error) {
+    console.error('Mark lesson complete error:', error)
+    return res.status(500).json({
+      message: 'Server error while updating lesson progress',
     })
   }
 }
@@ -296,4 +605,12 @@ module.exports = {
   getAllPublishedCourses,
   enrollInCourse,
   getMyEnrollments,
+  getTeacherCourseById,
+  updateCourse,
+  updateLesson,
+  deleteLesson,
+  deleteCourse,
+  unpublishCourse,
+  getCourseWithEnrollment,
+  markLessonComplete,
 }

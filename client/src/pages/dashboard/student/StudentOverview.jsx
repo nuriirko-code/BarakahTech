@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
+import Avatar from '../../../components/common/Avatar'
 import { useAuth } from '../../../context/AuthContext'
+import { getCategoryIcon, getCategoryGradient } from '../../../utils/courseUtils'
 
 const emptyStats = {
 	enrolledCourses: 0,
@@ -62,7 +64,9 @@ const StudentOverview = () => {
 		{ icon: 'fas fa-fire', label: 'Day Streak', value: stats.streak, chip: 'bg-amber-50 text-amber-600' },
 	]
 
-	const continueLink = (enrollment) => `/dashboard/student/courses/${enrollment.course?._id}`
+	// A student continues on the standalone learning route, where enrollment is
+	// verified and the full course viewer can own lesson navigation.
+	const continueLink = (enrollment) => `/learn/${enrollment.course?._id}`
 
 	return (
 		<div className="space-y-8">
@@ -109,13 +113,16 @@ const StudentOverview = () => {
 
 							return (
 								<article key={enrollment._id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-									<div className="flex h-32 items-center justify-center bg-slate-100">
-										{course.thumbnail ? <img src={course.thumbnail} alt="" className="h-full w-full object-cover" /> : <i className="fas fa-book-open text-2xl text-slate-400" aria-hidden="true" />}
+									<div className={`flex h-32 items-center justify-center overflow-hidden bg-gradient-to-br ${getCategoryGradient(course.category)}`}>
+										{course.thumbnail ? <img src={course.thumbnail} alt="" className="h-full w-full object-cover" /> : <i className={`${getCategoryIcon(course.category)} text-4xl text-white/90`} aria-hidden="true" />}
 									</div>
 									<div className="space-y-4 p-5">
 										<div>
 											<h3 className="line-clamp-2 font-extrabold text-slate-900">{course.title}</h3>
-											<p className="mt-1 text-sm text-slate-500">by {course.teacher?.name || 'BarakahTech Teacher'}</p>
+											<div className="mt-2 flex items-center gap-2">
+												<Avatar name={course.teacher?.name || 'Teacher'} size="sm" />
+												<span className="text-sm text-slate-500">by {course.teacher?.name || 'Unknown'}</span>
+											</div>
 										</div>
 										<div>
 											<div className="flex justify-between text-xs font-semibold text-slate-600">

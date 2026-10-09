@@ -1,16 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import Avatar from '../../../components/common/Avatar'
 import { useAuth } from '../../../context/AuthContext'
+import { getCategoryIcon, getCategoryGradient } from '../../../utils/courseUtils'
 import teachingCategories from '../../../utils/teachingCategories'
-
-const categoryIcons = {
-	technology: 'fas fa-microchip',
-	languages: 'fas fa-language',
-	sciences: 'fas fa-flask',
-	business: 'fas fa-briefcase',
-	leadership: 'fas fa-people-group',
-}
 
 const StudentBrowse = () => {
 	const [courses, setCourses] = useState([])
@@ -18,6 +12,7 @@ const StudentBrowse = () => {
 	const [error, setError] = useState('')
 	const [successMessage, setSuccessMessage] = useState('')
 	const [enrolling, setEnrolling] = useState('')
+	const [enrolledCourseIds, setEnrolledCourseIds] = useState(() => new Set())
 	const [filters, setFilters] = useState({ category: '', level: '', language: '', search: '' })
 	const { token } = useAuth()
 	const navigate = useNavigate()
@@ -27,7 +22,7 @@ const StudentBrowse = () => {
 		const query = new URLSearchParams(
 			Object.entries(filters).filter(([, value]) => value.trim())
 		).toString()
-
+         
 		const loadCourses = async () => {
 			setLoading(true)
 			setError('')
@@ -47,6 +42,38 @@ const StudentBrowse = () => {
 		}
 	}, [filters])
 
+	useEffect(() => {
+		let isCurrent = true
+
+		const loadEnrollmentIds = async () => {
+			if (!token) return
+
+			try {
+				const response = await axios.get('http://localhost:5000/api/courses/student/my-enrollments', {
+					headers: { Authorization: `Bearer ${token}` },
+				})
+				if (isCurrent) {
+					// A Set gives O(1) membership checks for every visible course card;
+					// repeatedly searching an array would take O(n) per card.
+					setEnrolledCourseIds(new Set(
+						(response.data.enrollments || [])
+							.map((enrollment) => enrollment.course?._id || enrollment.course)
+							.filter(Boolean)
+					))
+				}
+			} catch (requestError) {
+				if (isCurrent) setError(requestError.response?.data?.message || 'Unable to check your enrollments.')
+			}
+		}
+
+		// Enrollment IDs are fetched separately because the public catalog does not
+		// include private, student-specific enrollment records.
+		loadEnrollmentIds()
+		return () => {
+			isCurrent = false
+		}
+	}, [token])
+
 	const updateFilter = (field, value) => {
 		setFilters((currentFilters) => ({ ...currentFilters, [field]: value }))
 	}
@@ -60,20 +87,18 @@ const StudentBrowse = () => {
 	const handleEnroll = async (courseId) => {
 		setEnrolling(courseId)
 		setError('')
-		setSuccessMessage('')
+		setSuccessMessage('') // both set methods clear old messages so only one is shown at a time
 
 		try {
 			await axios.post(
-				`http://localhost:5000/api/courses/${courseId}/enroll`,
+				`http://localhost:5000/api/courses/${courseId}/enroll`, //sends a **POST request** to the backend saying “enroll the currently logged-in student in this course,”
 				{},
 				{ headers: { Authorization: `Bearer ${token}` } }
 			)
 			setSuccessMessage('Successfully enrolled')
-			const query = new URLSearchParams(
-				Object.entries(filters).filter(([, value]) => value.trim())
-			).toString()
-			const response = await axios.get(`http://localhost:5000/api/courses${query ? `?${query}` : ''}`)
-			setCourses(response.data.courses || [])
+			// The server already confirmed enrollment, so update the local Set instead
+			// of refetching the entire public catalog just to change one card state.
+			setEnrolledCourseIds((currentIds) => new Set(currentIds).add(courseId))
 		} catch (requestError) {
 			setError(requestError.response?.data?.message || 'Unable to enroll in this course.')
 		} finally {
@@ -140,10 +165,14 @@ const StudentBrowse = () => {
 				</section>
 			) : (
 				<section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-					{courses.map((course) => (
+					{courses.map((course) => {
+						const isEnrolled = enrolledCourseIds.has(course._id)
+
+						return (
 						<article key={course._id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-							<button type="button" onClick={() => navigate(`/dashboard/student/courses/${course._id}`)} className="relative flex h-40 w-full items-center justify-center bg-slate-100 text-2xl text-slate-400" aria-label={`View ${course.title}`}>
-								{course.thumbnail ? <img src={course.thumbnail} alt="" className="h-full w-full object-cover" /> : <i className={categoryIcons[course.category] || 'fas fa-layer-group'} aria-hidden="true" />}
+							{/* A gradient and category icon make an empty thumbnail intentional; a future Cloudinary URL automatically replaces it. */}
+							<button type="button" onClick={() => navigate(`/dashboard/student/courses/${course._id}`)} className={`relative flex h-40 w-full items-center justify-center overflow-hidden bg-gradient-to-br ${getCategoryGradient(course.category)}`} aria-label={`View ${course.title}`}>
+								{course.thumbnail ? <img src={course.thumbnail} alt="" className="h-full w-full object-cover" /> : <i className={`${getCategoryIcon(course.category)} text-5xl text-white/90`} aria-hidden="true" />}
 								<span className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-xs font-bold capitalize text-[#15803D] shadow-sm">{course.category}</span>
 								<span className="absolute right-3 top-3 rounded-full bg-slate-900/80 px-3 py-1 text-xs font-bold capitalize text-white">{course.level}</span>
 							</button>
@@ -151,7 +180,10 @@ const StudentBrowse = () => {
 							<div className="space-y-4 p-5">
 								<div>
 									<h2 className="line-clamp-2 text-lg font-extrabold tracking-tight text-slate-900">{course.title}</h2>
-									<p className="mt-1 text-sm text-slate-500">by {course.teacher?.name || 'BarakahTech Teacher'}</p>
+									<div className="mt-2 flex items-center gap-2">
+										<Avatar name={course.teacher?.name || 'Teacher'} size="sm" />
+										<span className="text-sm text-slate-500">by {course.teacher?.name || 'Unknown'}</span>
+									</div>
 								</div>
 								<div className="flex flex-wrap items-center gap-2">
 									<span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold capitalize text-blue-700"><i className="fas fa-language mr-1" aria-hidden="true" />{course.language}</span>
@@ -161,15 +193,20 @@ const StudentBrowse = () => {
 									<span><i className="fas fa-clock mr-1" aria-hidden="true" />{course.estimatedDuration} hours total</span>
 									<span><i className="fas fa-users mr-1" aria-hidden="true" />{course.totalEnrollments || 0} students enrolled</span>
 								</div>
-								<div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+								<div className="space-y-3 border-t border-slate-100 pt-4">
 									{course.isFree ? (
 										<span className="text-xl font-extrabold text-[#15803D]">FREE</span>
 									) : (
 										<span className="text-lg font-extrabold text-slate-900">{course.currency || 'ETB'} {Number(course.price || 0).toLocaleString()}</span>
 									)}
-									{course.isFree ? (
-										<button type="button" disabled={enrolling === course._id} onClick={() => handleEnroll(course._id)} className="rounded-xl bg-[#22C55E] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#16A34A] disabled:opacity-60">
-											{enrolling === course._id ? 'Enrolling...' : 'Enroll Now'}
+									{/* These three states tell a learner whether access already exists, can be started now, or needs payment support. */}
+									{isEnrolled ? (
+										<button type="button" disabled className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-500">
+											<i className="fas fa-check" aria-hidden="true" />Enrolled
+										</button>
+									) : course.isFree ? (
+										<button type="button" disabled={enrolling === course._id} onClick={() => handleEnroll(course._id)} className="w-full rounded-lg bg-[#16A34A] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#15803D] disabled:opacity-50">
+											{enrolling === course._id ? 'Enrolling...' : 'Enroll Now — Free'}
 										</button>
 									) : (
 										<span title="Payment integration coming soon" className="cursor-not-allowed rounded-xl bg-slate-100 px-3 py-2 text-center text-xs font-semibold text-slate-500">
@@ -179,7 +216,8 @@ const StudentBrowse = () => {
 								</div>
 							</div>
 						</article>
-					))}
+						)
+					})}
 				</section>
 			)}
 		</div>

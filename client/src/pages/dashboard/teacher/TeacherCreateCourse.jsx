@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import RichTextEditor from '../../../components/common/RichTextEditor'
 import { useAuth } from '../../../context/AuthContext'
 import teachingCategories from '../../../utils/teachingCategories'
 
@@ -69,9 +70,14 @@ const TeacherCreateCourse = () => {
 		if (!courseId) return undefined
 
 		let isCurrent = true
-		axios.get(`http://localhost:5000/api/courses/${courseId}`)
-			.then((response) => {
+		//axios is a promise-based HTTP client for the browser and Node.js. It makes it easy to send asynchronous HTTP requests to REST endpoints and perform CRUD operations. It returns a promise that resolves to the response object.
+		// if course id is  abc123, then  this url becomes http://localhost:5000/api/courses/abc123.
+		axios.get(`http://localhost:5000/api/courses/teacher/my-courses/${courseId}`, {
+			headers: token ? { Authorization: `Bearer ${token}` } : {},
+		})
+			.then((response) => { //"When the server responds successfully, run this function."
 				if (!isCurrent) return
+				// We're taking data from MongoDB/backend and putting it into React state.
 				const course = response.data.course
 				setCourseData({
 					title: course.title || '',
@@ -80,7 +86,7 @@ const TeacherCreateCourse = () => {
 					subject: course.subject || '',
 					level: course.level || '',
 					language: course.language || '',
-					price: course.price ?? 0,
+					price: course.price ?? 0, // ?? is called nullish coalescing operator.  "Use the value on the left unless it is null or undefined; otherwise use the value on the right."
 					isFree: course.isFree || false,
 					estimatedDuration: course.estimatedDuration ?? '',
 					objectives: course.objectives || ['', '', ''],
@@ -94,7 +100,7 @@ const TeacherCreateCourse = () => {
 		return () => {
 			isCurrent = false
 		}
-	}, [courseId])
+	}, [courseId, token])
 
 	const handleChange = (field, value) => {
 		setCourseData((currentData) => ({
@@ -103,7 +109,7 @@ const TeacherCreateCourse = () => {
 			...(field === 'category' ? { subject: '' } : {}),// if the field being changed is category, also set subject back to an empty string; otherwise add nothing.
 		}))
 	}
-
+      
 	const handleObjectiveChange = (index, value) => {
 		setCourseData((currentData) => ({
 			...currentData,
@@ -495,9 +501,19 @@ const TeacherCreateCourse = () => {
 								)}
 
 								{(lessonForm.contentType === 'text' || lessonForm.contentType === 'both') && (
-									<label className="block space-y-2 text-sm font-semibold text-slate-800">Lesson text content
-										<textarea className={`${inputClass} min-h-40`} value={lessonForm.textContent} onChange={(event) => handleLessonChange('textContent', event.target.value)} placeholder="Write the lesson content for students..." />
-									</label>
+										<div className="space-y-2">
+											<label className="block text-sm font-semibold text-slate-800">
+												Lesson Content
+												<span className="ml-2 text-xs font-normal text-slate-500">
+													Use headings, bullet points, and code blocks to structure your lesson
+												</span>
+											</label>
+											<RichTextEditor
+												content={lessonForm.textContent}
+												onChange={(value) => setLessonForm((prev) => ({ ...prev, textContent: value }))}
+												placeholder="Write your lesson content here. Use headings to organize sections, bullet points for lists, and code blocks for any code examples."
+											/>
+										</div>
 								)}
 
 								<div className="grid gap-5 sm:grid-cols-2">

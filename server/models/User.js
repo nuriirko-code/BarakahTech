@@ -31,7 +31,13 @@ const userSchema = new mongoose.Schema(
     isApproved: {
       type: Boolean,
       default: false,
-      },
+    },
+    // isActive supports soft deactivation: access can be disabled while the
+    // account record remains available for auditing or later reactivation.
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,

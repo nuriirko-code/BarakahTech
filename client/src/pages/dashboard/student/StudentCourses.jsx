@@ -1,39 +1,62 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import Avatar from '../../../components/common/Avatar'
 import { useAuth } from '../../../context/AuthContext'
+import { getCategoryIcon, getCategoryGradient } from '../../../utils/courseUtils'
 
 const StudentCourses = () => {
 	const [enrollments, setEnrollments] = useState([])
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState('')
+	// This key forces the list subtree to refresh after a new enrollment snapshot.
+	// React Query or SWR would provide a more robust cache/invalidation strategy later.
+	const [refreshKey, setRefreshKey] = useState(0)
 	const { token, loading: authLoading } = useAuth()
 	const navigate = useNavigate()
 
+	// Continue Learning opens the standalone viewer, which verifies enrollment
+	// before loading the course's full lessons and current progress.
+	const openCourse = (courseId, enrollment) => {
+		navigate(`/learn/${courseId}`, { state: { enrollment } })
+	}
+
+	// Keep the request in a named, stable function so both initial load and the
+	// browser-tab focus event can refresh the same enrollment data consistently.
+	const fetchEnrollments = useCallback(async () => {
+		try {
+			const response = await axios.get('http://localhost:5000/api/courses/student/my-enrollments', {
+				headers: token ? { Authorization: `Bearer ${token}` } : {},
+			})
+			setEnrollments(response.data.enrollments || [])
+			setError('')
+			// Store the timestamp after fresh data arrives so the list subtree gets a new key.
+			setRefreshKey(Date.now())
+		} catch (requestError) {
+			setError(requestError.response?.data?.message || 'Unable to load your learning courses.')
+		} finally {
+			setLoading(false)
+		}
+	}, [token])
+
 	useEffect(() => {
-		let isCurrent = true
+		if (!authLoading) fetchEnrollments()
+	}, [authLoading, fetchEnrollments])
 
-		const loadEnrollments = async () => {
-			try {
-				const response = await axios.get('http://localhost:5000/api/courses/student/my-enrollments', {
-					headers: token ? { Authorization: `Bearer ${token}` } : {},
-				})
-				if (isCurrent) setEnrollments(response.data.enrollments || [])
-			} catch (requestError) {
-				if (isCurrent) setError(requestError.response?.data?.message || 'Unable to load your learning courses.')
-			} finally {
-				if (isCurrent) setLoading(false)
-			}
-		}
+	useEffect(() => {
+		if (authLoading) return undefined
 
-		if (!authLoading) loadEnrollments()
+		// The focus event fires when the student returns to this browser tab, for
+		// example after completing a lesson in another tab, so progress is refreshed.
+		window.addEventListener('focus', fetchEnrollments)
 		return () => {
-			isCurrent = false
+			// Removing the listener prevents duplicate handlers after unmount or token changes.
+			window.removeEventListener('focus', fetchEnrollments)
 		}
-	}, [authLoading, token])
+	}, [authLoading, fetchEnrollments])
 
 	return (
-		<div className="space-y-7">
+		<div key={refreshKey} className="space-y-7">
 			<header className="flex flex-wrap items-end justify-between gap-4">
 				<div>
 					<h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">My Learning</h1>
@@ -70,13 +93,16 @@ const StudentCourses = () => {
 
 						return (
 							<article key={enrollment._id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-								<div className="flex h-36 items-center justify-center bg-slate-100">
-									{course.thumbnail ? <img src={course.thumbnail} alt="" className="h-full w-full object-cover" /> : <span className="text-2xl text-slate-400"><i className="fas fa-book-open" aria-hidden="true" /></span>}
+								<div className={`flex h-36 items-center justify-center overflow-hidden bg-gradient-to-br ${getCategoryGradient(course.category)}`}>
+									{course.thumbnail ? <img src={course.thumbnail} alt={course.title} className="h-full w-full object-cover" /> : <i className={`${getCategoryIcon(course.category)} text-5xl text-white/90`} aria-hidden="true" />}
 								</div>
 								<div className="space-y-4 p-5">
 									<div>
 										<h2 className="line-clamp-2 text-lg font-extrabold tracking-tight text-slate-900">{course.title}</h2>
-										<p className="mt-1 text-sm text-slate-500">by {course.teacher?.name || 'BarakahTech Teacher'}</p>
+										<div className="mt-2 flex items-center gap-2">
+											<Avatar name={course.teacher?.name || 'Teacher'} size="sm" />
+											<span className="text-sm text-slate-500">by {course.teacher?.name || 'Unknown'}</span>
+										</div>
 									</div>
 
 									<div>
@@ -89,8 +115,8 @@ const StudentCourses = () => {
 										</div>
 									</div>
 
-									{enrollment.lastAccessedLesson && <p className="text-xs text-slate-500"><i className="fas fa-clock mr-1.5" aria-hidden="true" />Last accessed a lesson</p>}
-
+									{enrollment.lastAccessedLesson && <p className="text-xs text-slate-500"><i className="fas fa-clock mr-1.5" aria-hidden="true" />Last accessed  lesson</p>}
+        
 									{enrollment.isCompleted ? (
 										<div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
 											<span className="rounded-full bg-[#F0FDF4] px-3 py-1 text-xs font-bold text-[#15803D] ring-1 ring-[#22C55E]/20"><i className="fas fa-circle-check mr-1" aria-hidden="true" />Completed</span>
@@ -101,7 +127,7 @@ const StudentCourses = () => {
 											)}
 										</div>
 									) : (
-										<button type="button" onClick={() => navigate(`/dashboard/student/courses/${course._id}`, { state: { enrollment } })} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#22C55E] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#16A34A]">
+										<button type="button" onClick={() => openCourse(course._id, enrollment)} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#22C55E] px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#16A34A]">
 											Continue Learning<i className="fas fa-arrow-right text-xs" aria-hidden="true" />
 										</button>
 									)}

@@ -15,6 +15,8 @@ import StudentOverview from './pages/dashboard/student/StudentOverview'
 import StudentCourses from './pages/dashboard/student/StudentCourses'
 import StudentBrowse from './pages/dashboard/student/StudentBrowse'
 import StudentProfile from './pages/dashboard/student/StudentProfile'
+import CourseViewer from './pages/learn/CourseViewer'
+import LessonViewer from './pages/learn/LessonViewer'
 import TeacherDashboard from './pages/dashboard/TeacherDashboard'
 import TeacherOverview from './pages/dashboard/teacher/TeacherOverview'
 import TeacherCourses from './pages/dashboard/teacher/TeacherCourses'
@@ -48,6 +50,11 @@ function App() {
 
           {/* Login page for existing users signing into their accounts. */}
           <Route path="/login" element={<Login />} />
+
+          {/* Learning uses standalone routes, outside dashboard layouts, to provide a focused full-page course experience. */}
+          {/* :courseId and :lessonId are dynamic URL parameters identifying the requested course and lesson. */}
+          <Route path="/learn/:courseId" element={<CourseViewer />} />
+          <Route path="/learn/:courseId/:lessonId" element={<LessonViewer />} />
 
           {/* Student and teacher portals share a nested layout pattern, while each owns different dashboard content. */}
           <Route path="/dashboard/student" element={<StudentDashboard />}>

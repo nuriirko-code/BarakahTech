@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
+import Avatar from '../common/Avatar'
 import { useAuth } from '../../context/AuthContext'
 
 const navigationItems = [
@@ -57,10 +58,10 @@ const StudentSidebar = ({ onClose = () => {} }) => {
 
       <div className="border-t border-slate-100 p-4">
         <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-100">
+          {/* A personal avatar makes the dashboard feel owned and tailored to the student,
+              not like a generic portal template. */}
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#22C55E] to-[#16A34A] text-sm font-bold text-white">
-              {(user?.name || 'S').charAt(0).toUpperCase()}
-            </span>
+            <Avatar name={user?.name || 'Student'} imageUrl={user?.profilePhoto} size="md" />
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-900">{user?.name || 'Student'}</p>
               <p className="mt-0.5 inline-block rounded-full bg-[#F0FDF4] px-2 py-0.5 text-[11px] font-semibold capitalize text-[#16A34A] ring-1 ring-[#22C55E]/20">{user?.role || 'student'}</p>

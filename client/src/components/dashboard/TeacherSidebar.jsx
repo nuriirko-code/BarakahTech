@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
+import Avatar from '../common/Avatar'
 import { useAuth } from '../../context/AuthContext'
 
 const navigationItems = [
@@ -88,10 +89,10 @@ const TeacherSidebar = ({ onClose = () => {} }) => {
       {/* Teacher identity + logout */}
       <div className="border-t border-slate-100 p-4">
         <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-100">
+          {/* Showing a user avatar in the sidebar reinforces the sense that this is a personal
+              workspace rather than a generic admin shell, which builds ownership and trust. */}
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#22C55E] to-[#16A34A] text-sm font-bold text-white">
-              {(user?.name || 'T').charAt(0).toUpperCase()}
-            </span>
+            <Avatar name={user?.name || 'Teacher'} imageUrl={user?.profilePhoto} size="md" />
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-900">
                 {user?.name || 'Teacher'}
