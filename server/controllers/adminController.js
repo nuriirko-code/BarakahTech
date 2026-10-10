@@ -3,6 +3,7 @@ const User = require('../models/User')
 // Administrators can review account records, but user content remains owned by
 // its creator. Deactivation is a soft disable: the account data stays available
 // for records and can be restored instead of being permanently deleted.
+// Password hashes never leave this endpoint, even for administrators.
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.find()
@@ -16,6 +17,7 @@ const getAllUsers = async (req, res) => {
   }
 }
 
+// Toggling retains the document, allowing an account to be reactivated later.
 const toggleUserActive = async (req, res) => {
   try {
     const { userId } = req.params

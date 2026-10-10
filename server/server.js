@@ -25,6 +25,7 @@ app.use("/api/teacher-applications", teacherApplicationRoutes)
 app.use("/api/teachers", teacherRoutes)
 // Express adds this prefix to every path defined in the course router.
 app.use("/api/courses", courseRoutes)
+// User-management routes are isolated behind the /api/admin prefix.
 app.use("/api/admin", adminRoutes)
 
 const startServer = async () => {

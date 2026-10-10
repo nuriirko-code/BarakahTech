@@ -3,6 +3,7 @@ import axios from 'axios'
 import Avatar from '../../../components/common/Avatar'
 import { useAuth } from '../../../context/AuthContext'
 
+// One role-to-style map keeps badges consistent across every table row.
 const roleStyles = {
   student: 'bg-green-50 text-green-700 ring-green-200',
   teacher: 'bg-blue-50 text-blue-700 ring-blue-200',
@@ -10,6 +11,7 @@ const roleStyles = {
   admin: 'bg-violet-50 text-violet-700 ring-violet-200',
 }
 
+// Filter metadata lets the buttons render from data instead of duplicated JSX.
 const roleFilters = [
   { value: 'all', label: 'All' },
   { value: 'student', label: 'Student' },
@@ -18,6 +20,8 @@ const roleFilters = [
   { value: 'admin', label: 'Admin' },
 ]
 
+// Database timestamps are stored as ISO dates; this converts them into a
+// browser-local, readable value for administrators.
 const formatDate = (dateValue) => {
   const date = new Date(dateValue)
   return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString()
@@ -35,7 +39,9 @@ const ManageUsers = () => {
 
   useEffect(() => {
     let isCurrent = true
-
+                                                                                  
+    // This endpoint is admin-only on the server. The browser sends the JWT so
+    // authMiddleware can identify the request before roleMiddleware checks admin access.
     const loadUsers = async () => {
       try {
         const response = await axios.get('http://localhost:5000/api/admin/users', {
@@ -55,6 +61,8 @@ const ManageUsers = () => {
     }
   }, [token])
 
+  // visibleUsers is derived from the source user list and filter controls;
+  // deriving it avoids maintaining a second, potentially stale users array.
   const visibleUsers = useMemo(() => {
     const query = searchTerm.trim().toLowerCase()
     return users.filter((user) => {
@@ -65,6 +73,8 @@ const ManageUsers = () => {
     })
   }, [users, roleFilter, searchTerm])
 
+  // Dashboard counts are also derived from users, so a deactivate/reactivate
+  // response automatically keeps the table and summary in agreement.
   const stats = {
     total: users.length,
     students: users.filter((user) => user.role === 'student').length,
@@ -72,6 +82,8 @@ const ManageUsers = () => {
     pendingTeachers: users.filter((user) => user.role === 'pending_teacher').length,
   }
 
+  // The same endpoint toggles isActive. Its name mentions deactivation because
+  // that is the primary admin action, while reactivation restores the account.
   const handleDeactivate = async (userId) => {
     setActionLoading(userId)
     setError('')
@@ -83,6 +95,8 @@ const ManageUsers = () => {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       )
+      // The server returns the safe updated user. Replacing that one record is
+      // faster and clearer than refetching every account after one action.
       setUsers((currentUsers) => currentUsers.map((user) => (
         user._id === userId ? response.data.user : user
       )))
@@ -107,6 +121,7 @@ const ManageUsers = () => {
       {error && <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">{error}</div>}
       {successMessage && <div role="status" className="rounded-xl border border-green-200 bg-green-50 p-4 text-sm font-medium text-green-800">{successMessage}</div>}
 
+      {/* Summary cards provide a quick operational view before the detailed table. */}
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-4" aria-label="User statistics">
         {[
           { label: 'Total Users', value: stats.total, icon: 'fas fa-users', color: 'text-slate-600 bg-slate-100' },
@@ -122,6 +137,7 @@ const ManageUsers = () => {
         ))}
       </section>
 
+      {/* Filters change the derived visibleUsers list only; they never mutate the server data. */}
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-col gap-4 border-b border-slate-200 p-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap gap-2" aria-label="Filter users by role">

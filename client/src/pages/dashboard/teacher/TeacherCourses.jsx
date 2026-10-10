@@ -47,6 +47,8 @@ const TeacherCourses = () => {
 
 	const createCourse = () => navigate('/dashboard/teacher/courses/create')
 
+	// Unpublishing is reversible: it hides a course from new enrollment while
+	// preserving the course and existing student records.
 	const handleUnpublish = async (courseId) => {
 		setUnpublishingCourseId(courseId)
 		setError('')
@@ -69,6 +71,8 @@ const TeacherCourses = () => {
 		}
 	}
 
+	// This request runs only after confirmDeleteId has required a second,
+	// intentional click, protecting teachers from irreversible deletion.
 	const handleDelete = async (courseId) => {
 		setDeletingCourseId(courseId)
 		setError('')

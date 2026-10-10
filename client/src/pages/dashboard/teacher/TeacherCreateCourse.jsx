@@ -272,7 +272,7 @@ const TeacherCreateCourse = () => {
 	const secondaryButtonClass = 'inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:cursor-not-allowed disabled:opacity-40'
 
 	const progressWidth = `${(currentStep / 3) * 100}%`
-
+   
 	return (
 		<div className="space-y-7">
 			<header>

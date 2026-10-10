@@ -17,6 +17,8 @@ const StudentBrowse = () => {
 	const { token } = useAuth()
 	const navigate = useNavigate()
 
+	// Catalog filters change this public course query. It intentionally stays
+	// separate from the private enrollment lookup below.
 	useEffect(() => {
 		let isCurrent = true
 		const query = new URLSearchParams(
@@ -42,6 +44,8 @@ const StudentBrowse = () => {
 		}
 	}, [filters])
 
+	// A second request obtains only this student's enrollment IDs so each public
+	// course card can accurately communicate whether enrollment is already active.
 	useEffect(() => {
 		let isCurrent = true
 

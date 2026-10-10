@@ -183,6 +183,7 @@ const AdminDashboard = () => {
       </header>
 
       <div className="mx-auto max-w-7xl space-y-6 px-5 py-8 sm:px-8">
+        {/* Tabs preserve one admin workspace while swapping focused tools in its content area. */}
         <nav className="flex gap-6 border-b border-slate-200" aria-label="Admin dashboard sections">
           <button type="button" onClick={() => setActiveTab('applications')} className={`border-b-2 px-1 pb-3 text-sm transition ${activeTab === 'applications' ? 'border-green-700 font-semibold text-green-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
             Teacher Applications

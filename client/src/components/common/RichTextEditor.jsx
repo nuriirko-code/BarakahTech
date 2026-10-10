@@ -34,7 +34,7 @@ const RichTextEditor = ({ content = '', onChange = () => {}, placeholder = 'Writ
     }
   }, [content, editor])
 
-  if (!editor) return null
+  if (!editor) return null //Wait until editor is ready
 
   const toolbarButtons = [
     { label: 'Bold', action: () => editor.chain().focus().toggleBold().run(), active: editor.isActive('bold'), icon: 'fas fa-bold' },
