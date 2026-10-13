@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '../../../context/AuthContext'
+import { formatCurrency } from '../../../utils/currencyUtils'
 
 const emptyStats = {
 	totalCourses: 0,
@@ -41,6 +42,8 @@ const TeacherOverview = () => {
 	const [stats, setStats] = useState(emptyStats)
 	const [loading, setLoading] = useState(true)
 	const [recentActivity, setRecentActivity] = useState([])
+	const [earnings, setEarnings] = useState({ totalPending: 0, totalApproved: 0, totalPaidOut: 0, entries: [] })
+	const [earningsLoading, setEarningsLoading] = useState(true)
 	const { user, token, loading: authLoading } = useAuth()
 	const navigate = useNavigate()
 
@@ -65,6 +68,36 @@ const TeacherOverview = () => {
 		}
 
 		if (!authLoading) loadStats()
+
+		return () => {
+			isCurrent = false
+		}
+	}, [authLoading, token])
+
+	useEffect(() => {
+		let isCurrent = true
+
+		const loadEarnings = async () => {
+			try {
+				const response = await axios.get('http://localhost:5000/api/payments/earnings', {
+					headers: { Authorization: `Bearer ${token}` },
+				})
+				if (isCurrent) {
+					setEarnings({
+						totalPending: response.data?.totals?.totalPending || 0,
+						totalApproved: response.data?.totals?.totalApproved || 0,
+						totalPaidOut: response.data?.totals?.totalPaidOut || 0,
+						entries: response.data?.entries || response.data?.ledgerEntries || [],
+					})
+				}
+			} catch {
+				// Silent failure keeps the page usable even if teacher payout data is temporarily unavailable.
+			} finally {
+				if (isCurrent) setEarningsLoading(false)
+			}
+		}
+
+		if (!authLoading && token) loadEarnings()
 
 		return () => {
 			isCurrent = false
@@ -172,6 +205,84 @@ const TeacherOverview = () => {
 						</Link>
 					))}
 				</div>
+			</section>
+
+			<section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+				<div className="flex items-center gap-3">
+					<i className="fas fa-chart-line text-lg text-[#16A34A]" aria-hidden="true" />
+					<h2 className="text-lg font-bold tracking-tight text-slate-900">Earnings Overview</h2>
+				</div>
+				{earningsLoading ? (
+					<div className="mt-5 grid gap-4 md:grid-cols-3">
+						{[1, 2, 3].map((card) => (
+							<div key={card} className="h-28 animate-pulse rounded-2xl bg-slate-200" />
+						))}
+					</div>
+				) : (
+					<div className="mt-5 space-y-5">
+						<div className="grid gap-4 md:grid-cols-3">
+							<div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+								<div className="flex items-center gap-3 text-amber-700"><i className="fas fa-clock" aria-hidden="true" /><span className="text-sm font-semibold">Awaiting Feedback</span></div>
+								<p className="mt-3 text-2xl font-extrabold text-slate-900">{formatCurrency(earnings.totalPending, 'USD')}</p>
+								<p className="mt-1 text-xs text-slate-500">Released after student feedback</p>
+							</div>
+							<div className="rounded-2xl border border-green-200 bg-green-50 p-4">
+								<div className="flex items-center gap-3 text-green-700"><i className="fas fa-check-circle" aria-hidden="true" /><span className="text-sm font-semibold">Approved</span></div>
+								<p className="mt-3 text-2xl font-extrabold text-slate-900">{formatCurrency(earnings.totalApproved, 'USD')}</p>
+								<p className="mt-1 text-xs text-slate-500">Ready for monthly payout</p>
+							</div>
+							<div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+								<div className="flex items-center gap-3 text-blue-700"><i className="fas fa-building-columns" aria-hidden="true" /><span className="text-sm font-semibold">Total Paid Out</span></div>
+								<p className="mt-3 text-2xl font-extrabold text-slate-900">{formatCurrency(earnings.totalPaidOut, 'USD')}</p>
+								<p className="mt-1 text-xs text-slate-500">Received so far</p>
+							</div>
+						</div>
+
+						<div className="overflow-hidden rounded-2xl border border-slate-200">
+							<div className="overflow-x-auto">
+								<table className="min-w-full text-left text-sm">
+									<thead className="bg-slate-50 text-slate-600">
+										<tr>
+											<th className="px-4 py-3 font-semibold">Date</th>
+											<th className="px-4 py-3 font-semibold">Course</th>
+											<th className="px-4 py-3 font-semibold">Gross</th>
+											<th className="px-4 py-3 font-semibold">Platform Fee</th>
+											<th className="px-4 py-3 font-semibold">Your Earning</th>
+											<th className="px-4 py-3 font-semibold">Status</th>
+										</tr>
+									</thead>
+									<tbody>
+										{earnings.entries.length > 0 ? (
+											earnings.entries.slice(0, 5).map((entry) => {
+												const statusClasses = {
+													pending: 'bg-amber-100 text-amber-700',
+													approved: 'bg-green-100 text-green-700',
+													paid_out: 'bg-blue-100 text-blue-700',
+													refunded: 'bg-red-100 text-red-700',
+												}[entry.status] || 'bg-slate-100 text-slate-700'
+
+												return (
+													<tr key={entry._id} className="border-t border-slate-100">
+														<td className="px-4 py-3 text-slate-600">{new Date(entry.date).toLocaleDateString()}</td>
+														<td className="px-4 py-3 text-slate-700">{entry.course || 'Course activity'}</td>
+														<td className="px-4 py-3 text-slate-700">{formatCurrency(entry.grossAmount, 'USD')}</td>
+														<td className="px-4 py-3 text-slate-700">{formatCurrency(entry.platformFeeAmount, 'USD')}</td>
+														<td className="px-4 py-3 font-semibold text-slate-900">{formatCurrency(entry.netAmount, 'USD')}</td>
+														<td className="px-4 py-3"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold capitalize ${statusClasses}`}>{entry.status}</span></td>
+													</tr>
+												)
+											})
+										) : (
+											<tr>
+												<td colSpan="6" className="px-4 py-8 text-center text-slate-500">No earnings yet. Publish a course or complete a session to start earning.</td>
+											</tr>
+										)}
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+				)}
 			</section>
 
 			{/* Getting started checklist */}

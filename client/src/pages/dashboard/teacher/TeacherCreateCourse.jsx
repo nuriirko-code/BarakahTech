@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import RichTextEditor from '../../../components/common/RichTextEditor'
 import { useAuth } from '../../../context/AuthContext'
+import { getSupportedCurrencies } from '../../../utils/currencyUtils'
 import teachingCategories from '../../../utils/teachingCategories'
 
 const levels = [
@@ -56,6 +57,7 @@ const TeacherCreateCourse = () => {
 		subject: '',
 		level: '',
 		language: '',
+		currency: 'USD',
 		price: 0,
 		isFree: false,
 		estimatedDuration: '',
@@ -86,6 +88,7 @@ const TeacherCreateCourse = () => {
 					subject: course.subject || '',
 					level: course.level || '',
 					language: course.language || '',
+					currency: course.currency || 'USD',
 					price: course.price ?? 0, // ?? is called nullish coalescing operator.  "Use the value on the left unless it is null or undefined; otherwise use the value on the right."
 					isFree: course.isFree || false,
 					estimatedDuration: course.estimatedDuration ?? '',
@@ -181,6 +184,7 @@ const TeacherCreateCourse = () => {
 						{
 							...courseData,
 							price: courseData.isFree ? 0 : Number(courseData.price),
+								currency: courseData.currency || 'USD',
 							estimatedDuration: Number(courseData.estimatedDuration),
 						},
 						{ headers: { Authorization: `Bearer ${token}` } }
@@ -415,9 +419,33 @@ const TeacherCreateCourse = () => {
 									Students can enroll for free.
 								</p>
 							) : (
-								<label className="block space-y-2 text-sm font-semibold text-slate-800">Course price (ETB)
-									<input className={inputClass} type="number" min="0" step="0.01" value={courseData.price} onChange={(event) => handleChange('price', event.target.value)} />
-								</label>
+								<div className="space-y-2">
+									<label className="block text-sm font-semibold text-slate-800">Course price</label>
+									<div className="flex gap-3">
+										<select
+											value={courseData.currency}
+											onChange={(event) => handleChange('currency', event.target.value)}
+											className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10"
+										>
+											{getSupportedCurrencies().map((currency) => (
+												<option key={currency.code} value={currency.code}>
+													{currency.symbol} {currency.code} - {currency.name}
+												</option>
+											))}
+										</select>
+										<input
+											type="number"
+											value={courseData.price}
+											onChange={(event) => handleChange('price', event.target.value)}
+											disabled={courseData.isFree}
+											placeholder="0.00"
+											min="0"
+											step="0.01"
+											className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10"
+										/>
+									</div>
+									<p className="text-xs font-medium text-slate-400">Teachers often price in the currency they expect students to pay locally, so the course price stays aligned with the teacher's market.</p>
+								</div>
 							)}
 						</section>
 					</div>

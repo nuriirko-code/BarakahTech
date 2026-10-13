@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
+import Avatar from '../../components/common/Avatar'
+import { formatCurrency } from '../../utils/currencyUtils'
 import ManageUsers from './admin/ManageUsers'
 
 const statusStyles = {
@@ -29,6 +31,10 @@ const AdminDashboard = () => {
   const [successMessage, setSuccessMessage] = useState('')
   const [activeFilter, setActiveFilter] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
+  const [pendingPayments, setPendingPayments] = useState([])
+  const [paymentsLoading, setPaymentsLoading] = useState(true)
+  const [verifyingId, setVerifyingId] = useState('')
+  const [paymentSuccess, setPaymentSuccess] = useState('')
   // Tabs keep related administration tools in one focused workspace instead of
   // turning this operational dashboard into a multi-page navigation flow.
   const [activeTab, setActiveTab] = useState('applications')
@@ -62,6 +68,33 @@ const AdminDashboard = () => {
       isCurrent = false
     }
   }, [token])
+
+  useEffect(() => {
+    if (activeTab !== 'payments' || !token) return undefined
+
+    let isCurrent = true
+
+    const fetchPendingPayments = async () => {
+      try {
+        const response = await axios.get(
+          'http://localhost:5000/api/payments/pending',
+          { headers: { Authorization: `Bearer ${token}` } }
+        )
+        if (isCurrent) setPendingPayments(response.data.payments || [])
+      } catch (requestError) {
+        if (isCurrent) {
+          setError(requestError.response?.data?.message || 'Could not load pending payments.')
+        }
+      } finally {
+        if (isCurrent) setPaymentsLoading(false)
+      }
+    }
+
+    fetchPendingPayments()
+    return () => {
+      isCurrent = false
+    }
+  }, [activeTab, token])
 
   // Summary counts are derived from the one applications list, avoiding
   // duplicate state that could become inconsistent after a review action.
@@ -145,9 +178,39 @@ const AdminDashboard = () => {
     }
   }
 
+  // Admins compare the submitted transaction ID and platform code with the bank SMS or
+  // account statement. Approving activates enrollment; rejecting retains the record for audit.
+  const handleVerifyPayment = async (paymentId, action) => {
+    setVerifyingId(paymentId)
+    setError('')
+    setPaymentSuccess('')
+
+    try {
+      const response = await axios.put(
+        `http://localhost:5000/api/payments/${paymentId}/verify`,
+        { action },
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
+      setPendingPayments((currentPayments) => currentPayments.filter((payment) => payment._id !== paymentId))
+      setPaymentSuccess(response.data.message || `Payment ${action}d successfully.`)
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || `Could not ${action} this payment.`)
+    } finally {
+      setVerifyingId('')
+    }
+  }
+
   const handleLogout = () => {
     logout()
     navigate('/login')
+  }
+
+  const openPendingPayments = () => {
+    if (activeTab === 'payments') return
+    setPaymentsLoading(true)
+    setError('')
+    setPaymentSuccess('')
+    setActiveTab('payments')
   }
 
   const displayValue = (value) => value || 'Not provided'
@@ -191,9 +254,126 @@ const AdminDashboard = () => {
           <button type="button" onClick={() => setActiveTab('users')} className={`border-b-2 px-1 pb-3 text-sm transition ${activeTab === 'users' ? 'border-green-700 font-semibold text-green-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
             User Management
           </button>
+          <button type="button" onClick={openPendingPayments} className={`flex items-center gap-2 border-b-2 px-1 pb-3 text-sm transition ${activeTab === 'payments' ? 'border-green-700 font-semibold text-green-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+            Pending Payments
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">{pendingPayments.length}</span>
+          </button>
         </nav>
 
-        {activeTab === 'applications' ? (
+        {activeTab === 'payments' ? (
+          <section className="space-y-5">
+            <header className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <h2 className="text-xl font-extrabold text-slate-900">Pending Payment Verifications</h2>
+                <span className="rounded-full bg-amber-100 px-2.5 py-1 text-sm font-bold text-amber-900">{pendingPayments.length}</span>
+              </div>
+              {pendingPayments.length > 0 && (
+                <i className="fas fa-triangle-exclamation text-xl text-amber-600" aria-label="Payments need review" />
+              )}
+            </header>
+
+            <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
+              <i className="fas fa-circle-info mt-1 text-amber-700" aria-hidden="true" />
+              <p>Students send payment to our accounts manually. Verify each payment below by checking your Telebirr or bank account for the matching transaction.</p>
+            </div>
+
+            {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</div>}
+            {paymentSuccess && <div role="status" className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800">{paymentSuccess}</div>}
+
+            {paymentsLoading ? (
+              <div className="space-y-3" role="status" aria-label="Loading pending payments">
+                {[1, 2, 3].map((row) => <div key={row} className="h-16 animate-pulse rounded-lg bg-slate-200" />)}
+              </div>
+            ) : pendingPayments.length === 0 ? (
+              <div className="rounded-xl border border-slate-200 bg-white px-5 py-14 text-center shadow-sm">
+                <i className="fas fa-circle-check text-3xl text-green-700" aria-hidden="true" />
+                <p className="mt-3 font-semibold text-slate-800">No pending payments. All caught up!</p>
+              </div>
+            ) : (
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[1180px] text-left text-sm">
+                    <thead className="bg-slate-50 text-xs uppercase text-slate-600">
+                      <tr>
+                        <th className="px-4 py-3 font-semibold">Student</th>
+                        <th className="px-4 py-3 font-semibold">Course</th>
+                        <th className="px-4 py-3 font-semibold">Amount</th>
+                        <th className="px-4 py-3 font-semibold">Method</th>
+                        <th className="px-4 py-3 font-semibold">Platform Code</th>
+                        <th className="px-4 py-3 font-semibold">Student Reference</th>
+                        <th className="px-4 py-3 font-semibold">Submitted</th>
+                        <th className="px-4 py-3 font-semibold">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pendingPayments.map((payment) => {
+                        const methodLabels = {
+                          telebirr: 'Telebirr',
+                          cbe_birr: 'CBE Birr',
+                          other_mobile: 'Other mobile money',
+                          manual: 'Manual',
+                        }
+                        const isVerifying = verifyingId === payment._id
+
+                        return (
+                          <tr key={payment._id} className="border-t border-slate-100 border-l-4 border-l-amber-400 align-middle">
+                            <td className="px-4 py-4">
+                              <div className="flex items-center gap-3">
+                                <Avatar name={payment.payer?.name || 'Student'} size="sm" />
+                                <div className="min-w-0">
+                                  <p className="font-semibold text-slate-900">{payment.payer?.name || 'Unknown student'}</p>
+                                  <p className="mt-0.5 text-xs text-slate-500">{payment.payer?.email || 'No email'}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="max-w-48 px-4 py-4 font-medium text-slate-800">{payment.course?.title || 'Course unavailable'}</td>
+                            <td className="px-4 py-4 font-bold text-green-800">{formatCurrency(payment.amount, payment.currency || 'ETB')}</td>
+                            <td className="px-4 py-4">
+                              <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-800">
+                                {methodLabels[payment.paymentMethod || payment.gateway] || 'Other'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4">
+                              {/* Prominence makes the platform-issued code quick to compare
+                                  with the reference shown in the bank SMS or statement. */}
+                              <code className="whitespace-nowrap rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 font-bold text-amber-950">{payment.platformPaymentCode || 'No code'}</code>
+                            </td>
+                            <td className="px-4 py-4 font-mono text-slate-700">{payment.manualPaymentReference}</td>
+                            <td className="whitespace-nowrap px-4 py-4 text-slate-600">{new Date(payment.updatedAt || payment.createdAt).toLocaleString()}</td>
+                            <td className="px-4 py-4">
+                              <div className="flex items-center gap-2">
+                                {/* Approval marks the payment complete and activates enrollment on the server. */}
+                                <button
+                                  type="button"
+                                  disabled={Boolean(verifyingId)}
+                                  onClick={() => handleVerifyPayment(payment._id, 'approve')}
+                                  className="inline-flex items-center gap-1.5 rounded-md bg-green-700 px-3 py-2 text-xs font-bold text-white transition hover:bg-green-800 disabled:cursor-wait disabled:opacity-60"
+                                >
+                                  {isVerifying ? <i className="fas fa-spinner fa-spin" aria-hidden="true" /> : <i className="fas fa-check" aria-hidden="true" />}
+                                  Approve
+                                </button>
+                                {/* Rejection retains the payment record and verifier metadata for accounting. */}
+                                <button
+                                  type="button"
+                                  disabled={Boolean(verifyingId)}
+                                  onClick={() => handleVerifyPayment(payment._id, 'reject')}
+                                  className="inline-flex items-center gap-1.5 rounded-md bg-red-700 px-3 py-2 text-xs font-bold text-white transition hover:bg-red-800 disabled:cursor-wait disabled:opacity-60"
+                                >
+                                  {isVerifying ? <i className="fas fa-spinner fa-spin" aria-hidden="true" /> : <i className="fas fa-xmark" aria-hidden="true" />}
+                                  Reject
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </section>
+        ) : activeTab === 'applications' ? (
           <>
         {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">{error}</div>}
         {successMessage && <div role="status" className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-800">{successMessage}</div>}
@@ -277,7 +457,7 @@ const AdminDashboard = () => {
           )}
         </section>
 		  </>
-		) : <ManageUsers />}
+    ) : <ManageUsers />}
       </div>
 
       {activeTab === 'applications' && selectedApplication && (

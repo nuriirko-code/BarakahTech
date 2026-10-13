@@ -17,6 +17,7 @@ import StudentBrowse from './pages/dashboard/student/StudentBrowse'
 import StudentProfile from './pages/dashboard/student/StudentProfile'
 import CourseViewer from './pages/learn/CourseViewer'
 import LessonViewer from './pages/learn/LessonViewer'
+import CourseCheckout from './pages/payment/CourseCheckout'
 import TeacherDashboard from './pages/dashboard/TeacherDashboard'
 import TeacherOverview from './pages/dashboard/teacher/TeacherOverview'
 import TeacherCourses from './pages/dashboard/teacher/TeacherCourses'
@@ -55,6 +56,14 @@ function App() {
           {/* :courseId and :lessonId are dynamic URL parameters identifying the requested course and lesson. */}
           <Route path="/learn/:courseId" element={<CourseViewer />} />
           <Route path="/learn/:courseId/:lessonId" element={<LessonViewer />} />
+          <Route
+            path="/checkout/course/:courseId"
+            element={(
+              <ProtectedRoute allowedRoles={['student']}>
+                <CourseCheckout />
+              </ProtectedRoute>
+            )}
+          />
 
           {/* Student and teacher portals share a nested layout pattern, while each owns different dashboard content. */}
           <Route path="/dashboard/student" element={<StudentDashboard />}>

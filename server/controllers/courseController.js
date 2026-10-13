@@ -10,6 +10,7 @@ const createCourse = async (req, res) => {
       subject,
       level,
       language,
+      currency,
       isFree,
       price,
       objectives,
@@ -36,6 +37,7 @@ const createCourse = async (req, res) => {
       subject,
       level,
       language,
+      currency: currency || 'USD',
       isFree,
       price,
       objectives,
@@ -230,7 +232,7 @@ const updateCourse = async (req, res) => {
       return res.status(403).json({ message: 'You can only update your own courses' })
     }
 
-    const updatableFields = ['title', 'description', 'category', 'subject', 'level', 'language', 'isFree', 'price', 'objectives', 'estimatedDuration']
+    const updatableFields = ['title', 'description', 'category', 'subject', 'level', 'language', 'currency', 'isFree', 'price', 'objectives', 'estimatedDuration']
     // Only provided fields are overwritten so a partial update keeps the rest of the course intact.
     updatableFields.forEach((field) => {
       if (Object.prototype.hasOwnProperty.call(req.body, field)) {

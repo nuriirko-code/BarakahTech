@@ -7,12 +7,15 @@ const teacherApplicationRoutes = require("./routes/teacherApplicationRoutes")
 const teacherRoutes = require("./routes/teacherRoutes")
 const courseRoutes = require("./routes/courseRoutes")
 const adminRoutes = require("./routes/adminRoutes")
+const paymentRoutes = require("./routes/paymentRoutes")
+const feedbackRoutes = require("./routes/feedbackRoutes")
 
 const app = express()
 const port = process.env.PORT || 5000
 
 // Middleware
 app.use(cors({ origin: "http://localhost:5173" }))
+
 app.use(express.json())
 
 // Routes
@@ -25,6 +28,8 @@ app.use("/api/teacher-applications", teacherApplicationRoutes)
 app.use("/api/teachers", teacherRoutes)
 // Express adds this prefix to every path defined in the course router.
 app.use("/api/courses", courseRoutes)
+app.use("/api/payments", paymentRoutes)
+app.use("/api/feedback", feedbackRoutes)
 // User-management routes are isolated behind the /api/admin prefix.
 app.use("/api/admin", adminRoutes)
 

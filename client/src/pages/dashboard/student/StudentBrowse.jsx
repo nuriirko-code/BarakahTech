@@ -4,6 +4,7 @@ import axios from 'axios'
 import Avatar from '../../../components/common/Avatar'
 import { useAuth } from '../../../context/AuthContext'
 import { getCategoryIcon, getCategoryGradient } from '../../../utils/courseUtils'
+import { formatCurrency } from '../../../utils/currencyUtils'
 import teachingCategories from '../../../utils/teachingCategories'
 
 const StudentBrowse = () => {
@@ -198,12 +199,20 @@ const StudentBrowse = () => {
 									<span><i className="fas fa-users mr-1" aria-hidden="true" />{course.totalEnrollments || 0} students enrolled</span>
 								</div>
 								<div className="space-y-3 border-t border-slate-100 pt-4">
-									{course.isFree ? (
-										<span className="text-xl font-extrabold text-[#15803D]">FREE</span>
-									) : (
-										<span className="text-lg font-extrabold text-slate-900">{course.currency || 'ETB'} {Number(course.price || 0).toLocaleString()}</span>
-									)}
-									{/* These three states tell a learner whether access already exists, can be started now, or needs payment support. */}
+									<div className="mt-3 flex items-center justify-between">
+										{course.isFree ? (
+											<span className="text-lg font-bold text-green-700">Free</span>
+										) : (
+											<div>
+												<span className="text-lg font-bold text-gray-900">{formatCurrency(course.price, course.currency || 'USD')}</span>
+												{/* Showing familiar payment methods early lets learners decide before they
+												open checkout, reducing uncertainty at the point of purchase. */}
+												<p className="mt-0.5 text-xs text-gray-400">Pay via Telebirr · CBE · Mobile Money</p>
+											</div>
+										)}
+									</div>
+									{/* A dedicated checkout page is more trustworthy than a modal because it gives the
+									learner a broader order summary and a clear point of confirmation before payment. */}
 									{isEnrolled ? (
 										<button type="button" disabled className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-500">
 											<i className="fas fa-check" aria-hidden="true" />Enrolled
@@ -213,9 +222,14 @@ const StudentBrowse = () => {
 											{enrolling === course._id ? 'Enrolling...' : 'Enroll Now — Free'}
 										</button>
 									) : (
-										<span title="Payment integration coming soon" className="cursor-not-allowed rounded-xl bg-slate-100 px-3 py-2 text-center text-xs font-semibold text-slate-500">
-											Enroll · Payment coming soon
-										</span>
+										<button
+											type="button"
+											onClick={() => navigate(`/checkout/course/${course._id}`)}
+											className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-700 px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-green-800"
+										>
+											<i className="fas fa-shopping-cart" aria-hidden="true" />
+											{formatCurrency(course.price, course.currency || 'USD')}
+										</button>
 									)}
 								</div>
 							</div>
