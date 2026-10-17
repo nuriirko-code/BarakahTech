@@ -1,0 +1,117 @@
+﻿713:   // Most enrolled courses appear first.
+713:     const courses = await Course.find(filter)
+713:       .populate('teacher', 'name')
+713:       .sort({ totalEnrollments: -1 })
+713: 
+713:     return res.status(200).json({
+713:       courses,
+713:       count: courses.length,
+713:     })
+713:   } catch (error) {
+713:     console.error('Get published courses error:', error)
+713:     return res.status(500).json({
+713:       message: 'Server error while fetching published courses',
+713:     })
+713:   }
+713: }
+713: 
+713: const enrollInCourse = async (req, res) => {
+713:   try {
+713:     const { courseId } = req.params
+713:     const course = await Course.findById(courseId)
+713: 
+713:     if (!course) {
+713:       return res.status(404).json({ message: 'Course not found' })
+713:     }
+713:     if (course.status !== 'published') {
+713:       return res.status(400).json({ message: 'This course is not available for enrollment' })
+713:     }
+713: 
+713:     const studentId = req.user.userId
+713:     const existingEnrollment = await Enrollment.findOne({ student: studentId, course: courseId })
+713:     if (existingEnrollment) {
+713:       return res.status(400).json({ message: 'You are already enrolled in this course' })
+713:     }
+713: 
+713:     // Paid enrollment stays blocked until a payment provider can confirm payment.
+713:     if (!course.isFree) {
+713:       return res.status(400).json({
+713:         message: 'Payment required. Payment integration coming soon.',
+713:       })
+713:     }
+713: 
+713:     // Free courses get immediate full enrollment â€” there is no payment barrier and
+713:     // no trial gate, so the student is treated as fully active as soon as the enroll record is created.
+713:     const enrollment = await Enrollment.create({
+713:       student: studentId,
+713:       course: course._id,
+713:       teacher: course.teacher,
+713:       paymentStatus: 'free',
+713:       amountPaid: 0,
+713:       currency: course.currency,
+713:       isFullyEnrolled: true,
+713:       fullEnrollmentActivatedAt: new Date(),
+713:     })
+713: 
+713:     // Update the cached popularity count rather than recounting enrollments on every listing.
+713:     course.totalEnrollments += 1
+713:     await course.save()
+713: 
+713:     const [student, teacher] = await Promise.all([
+713:       User.findById(studentId).select('name email'),
+713:       User.findById(course.teacher).select('name email'),
+713:     ])
+713:     if (student) void sendEnrollmentConfirmationEmail(student, course, teacher)
+713: 
+713:     return res.status(201).json({
+713:       message: 'Successfully enrolled in course',
+713:       enrollment,
+713:     })
+713:   } catch (error) {
+713:     if (error.code === 11000) { // 11000 is MongoDB duplicate-key error.
+713:       return res.status(400).json({ message: 'You are already enrolled in this course' })
+713:     }
+713:     console.error('Enroll in course error:', error)
+713:     return res.status(500).json({
+713:       message: 'Server error while enrolling in course',
+713:     })
+713:   }
+713: }
+713: 
+713: const getMyEnrollments = async (req, res) => {
+713:   try {
+713:     const enrollments = await Enrollment.find({ student: req.user.userId })
+713:       .populate({
+713:         path: 'course',
+713:         select: 'title description thumbnail category level totalEnrollments rating lessons._id teacher',
+713:         populate: { path: 'teacher', select: 'name' },
+713:       })
+713:   
+713:     return res.status(200).json({ enrollments })
+713:   } catch (error) {
+713:     console.error('Get student enrollments error:', error)
+713:     return res.status(500).json({
+713:       message: 'Server error while fetching enrollments',
+713:     })
+713:   }
+713: }
+713: 
+713: module.exports = {
+713:   createCourse,
+713:   addLesson,
+713:   publishCourse,
+713:   getTeacherCourses,
+713:   getCourseById,
+713:   getAllPublishedCourses,
+713:   enrollInCourse,
+713:   getMyEnrollments,
+713:   getTeacherCourseById,
+713:   updateCourse,
+713:   updateLesson,
+713:   deleteLesson,
+713:   deleteCourse,
+713:   unpublishCourse,
+713:   getCourseWithEnrollment,
+713:   markLessonComplete,
+713:   submitLessonAssessment,
+713: }

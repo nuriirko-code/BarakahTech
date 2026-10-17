@@ -2,7 +2,13 @@ const Payment = require('../models/Payment')
 const Enrollment = require('../models/Enrollment')
 const Course = require('../models/Course')
 const EarningsLedger = require('../models/EarningsLedger')
+const User = require('../models/User')
 const { calculateFees, generatePaymentCode } = require('../utils/paymentUtils')
+const {
+  sendEnrollmentConfirmationEmail,
+  sendPaymentReceivedNotificationEmail,
+  sendPaymentVerifiedEmail,
+} = require('../utils/emailService')
 
 // Auth tokens in this app store the account identifier as userId. Accept id as a fallback
 // too so the payment endpoints remain compatible with either verified token shape.
@@ -194,6 +200,8 @@ const adminVerifyPayment = async (req, res) => {
       currency: payment.currency,
       paymentStatus: 'paid',
       paymentReference: payment.manualPaymentReference,
+      isFullyEnrolled: true,
+      fullEnrollmentActivatedAt: new Date(),
     })
 
     course.totalEnrollments = Number(course.totalEnrollments || 0) + 1
@@ -216,6 +224,20 @@ const adminVerifyPayment = async (req, res) => {
     payment.status = 'completed'
     payment.enrollment = enrollment._id
     await payment.save()
+
+    const [student, teacher] = await Promise.all([
+      User.findById(payment.payer).select('name email'),
+      User.findById(course.teacher).select('name email'),
+    ])
+    // Each message serves a different recipient/purpose: the student receives proof of
+    // verification and access, while the teacher is notified of the new learner and earning.
+    if (student) {
+      void sendPaymentVerifiedEmail(student, course, payment)
+      void sendEnrollmentConfirmationEmail(student, course, teacher)
+    }
+    if (student && teacher) {
+      void sendPaymentReceivedNotificationEmail(teacher, student, course, payment)
+    }
 
     return res.status(200).json({
       message: 'Payment verified. Student enrollment activated.',

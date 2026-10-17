@@ -1,0 +1,55 @@
+﻿200:       paymentStatus: 'paid',
+200:       paymentReference: payment.manualPaymentReference,
+200:       isFullyEnrolled: true,
+200:       fullEnrollmentActivatedAt: new Date(),
+200:     })
+200: 
+200:     course.totalEnrollments = Number(course.totalEnrollments || 0) + 1
+200:     await course.save()
+200: 
+200:     await EarningsLedger.create({
+200:       teacher: course.teacher,
+200:       student: payment.payer,
+200:       payment: payment._id,
+200:       course: payment.course,
+200:       date: new Date(),
+200:       grossAmount: payment.amount,
+200:       platformFeeAmount: payment.platformFeeAmount,
+200:       netAmount: payment.teacherEarningAmount,
+200:       currency: payment.currency,
+200:       status: 'pending',
+200:       approvedByFeedback: false,
+200:     })
+200: 
+200:     payment.status = 'completed'
+200:     payment.enrollment = enrollment._id
+200:     await payment.save()
+200: 
+200:     const [student, teacher] = await Promise.all([
+200:       User.findById(payment.payer).select('name email'),
+200:       User.findById(course.teacher).select('name email'),
+200:     ])
+200:     // Each message serves a different recipient/purpose: the student receives proof of
+200:     // verification and access, while the teacher is notified of the new learner and earning.
+200:     if (student) {
+200:       void sendPaymentVerifiedEmail(student, course, payment)
+200:       void sendEnrollmentConfirmationEmail(student, course, teacher)
+200:     }
+200:     if (student && teacher) {
+200:       void sendPaymentReceivedNotificationEmail(teacher, student, course, payment)
+200:     }
+200: 
+200:     return res.status(200).json({
+200:       message: 'Payment verified. Student enrollment activated.',
+200:       enrollment,
+200:     })
+200:   } catch (error) {
+200:     console.error('Admin verify payment error:', error)
+200:     return res.status(500).json({ message: 'Server error while verifying payment' })
+200:   }
+200: }
+200: 
+200: const getPendingPayments = async (req, res) => {
+200:   try {
+200:     const payments = await Payment.find({
+200:       status: 'pending',

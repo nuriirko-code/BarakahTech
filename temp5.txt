@@ -1,0 +1,200 @@
+﻿440:     console.error('Get enrolled course error:', error)
+440:     return res.status(500).json({
+440:       message: 'Server error while loading course lessons',
+440:     })
+440:   }
+440: }
+440: 
+440: const getEngagementMessage = (enrollment, course, trialLimit) => {
+440:   const progressPercentage = Math.round(
+440:     (enrollment.completedLessons.length / course.lessons.length) * 100
+440:   )
+440: 
+440:   if (enrollment.completedLessons.length === 1) {
+440:     return { title: 'Great start!', message: 'You completed your first lesson. Keep going â€” every lesson builds on the last.' }
+440:   }
+440: 
+440:   if (enrollment.trialLessonsCompleted === trialLimit - 1) {
+440:     return {
+440:       title: 'Almost there!',
+440:       message: 'One more free lesson before you unlock the full course and connect with your teacher!',
+440:     }
+440:   }
+440: 
+440:   if (enrollment.isFullyEnrolled && enrollment.completedLessons.length === 5) {
+440:     return {
+440:       title: 'Milestone reached!',
+440:       message: 'You have completed 5 lessons. Your teacher will schedule a live mentorship session with you soon.',
+440:     }
+440:   }
+440: 
+440:   if (enrollment.isFullyEnrolled && enrollment.completedLessons.length === Math.floor(course.lessons.length / 2)) {
+440:     return {
+440:       title: 'Halfway there!',
+440:       message: 'You are halfway through the course. Your progress has been shared with your teacher.',
+440:     }
+440:   }
+440: 
+440:   if (progressPercentage === 100) {
+440:     return {
+440:       title: 'Course Complete!',
+440:       message: 'Congratulations on completing the entire course. Your certificate is being prepared.',
+440:     }
+440:   }
+440: 
+440:   return null
+440: }
+440: 
+440: const markLessonComplete = async (req, res) => {
+440:   try {
+440:     const { courseId, lessonId } = req.params
+440:     const enrollment = await Enrollment.findOne({
+440:       student: req.user.userId,
+440:       course: courseId,
+440:     })
+440: 
+440:     if (!enrollment) {
+440:       return res.status(404).json({ message: 'Enrollment not found' })
+440:     }
+440: 
+440:     const course = await Course.findById(courseId)
+440:     if (!course) {
+440:       return res.status(404).json({ message: 'Course not found' })
+440:     }
+440: 
+440:     // A TRIAL_COMPLETE response is a special 403 because the frontend needs to distinguish
+440:     // it from ordinary permission errors and show the payment gate immediately.
+440:     if (!course.isFree && !enrollment.isFullyEnrolled) {
+440:       const trialLimit = calculateTrialLessonCount(course.lessons.length, course.isFree)
+440:       if (enrollment.trialLessonsCompleted >= trialLimit) {
+440:         return res.status(403).json({
+440:           message: 'Trial period complete',
+440:           code: 'TRIAL_COMPLETE',
+440:           trialLimit,
+440:           requiresPayment: true,
+440:         })
+440:       }
+440:     }
+440: 
+440:     // ObjectIds are objects, so compare their string forms to prevent duplicate
+440:     // completion records for the same embedded lesson.
+440:     const alreadyCompleted = enrollment.completedLessons.some(
+440:       (completedLessonId) => completedLessonId.toString() === lessonId
+440:     )
+440:     if (alreadyCompleted) {
+440:       return res.status(200).json({
+440:         message: 'Lesson already completed',
+440:         enrollment,
+440:       })
+440:     }
+440: 
+440:     const lesson = course.lessons.id(lessonId)
+440:     if (!lesson) {
+440:       return res.status(404).json({ message: 'Lesson not found in this course' })
+440:     }
+440: 
+440:     if (course.lessons.length === 0) {
+440:       return res.status(400).json({ message: 'This course has no lessons to complete' })
+440:     }
+440: 
+440:     // The learning flow is enforced before progression: the student cannot bypass a lesson
+440:     // just by hitting the complete endpoint without passing the required assessment.
+440:     if (lesson.hasAssessment) {
+440:       const passedAssessment = enrollment.assessmentScores?.some(
+440:         (score) => score.lessonId.toString() === lessonId && score.passed
+440:       )
+440: 
+440:       if (!passedAssessment) {
+440:         return res.status(403).json({
+440:           message: 'You must pass the lesson assessment before continuing',
+440:           code: 'ASSESSMENT_REQUIRED',
+440:           lessonId,
+440:         })
+440:       }
+440:     }
+440: 
+440:     const trialLimit = calculateTrialLessonCount(course.lessons.length, course.isFree)
+440:     enrollment.completedLessons.push(lessonId)
+440:     enrollment.lastAccessedLesson = lessonId
+440: 
+440:     if (!enrollment.isFullyEnrolled) {
+440:       enrollment.trialLessonsCompleted += 1
+440:     }
+440: 
+440:     // Progress is completed lesson count divided by total course lessons,
+440:     // multiplied by 100 and rounded to the nearest whole percentage.
+440:     enrollment.progressPercentage = Math.round(
+440:       (enrollment.completedLessons.length / course.lessons.length) * 100
+440:     )
+440: 
+440:     if (enrollment.progressPercentage === 100) {
+440:       enrollment.isCompleted = true
+440:       enrollment.completedAt = new Date()
+440:     }
+440: 
+440:     let justReachedLimit = false
+440:     if (!course.isFree && !enrollment.isFullyEnrolled) {
+440:       if (enrollment.trialLessonsCompleted >= trialLimit) {
+440:         enrollment.isTrialComplete = true
+440:         enrollment.trialCompletedAt = new Date()
+440:         justReachedLimit = true
+440:       }
+440:     }
+440: 
+440:     const engagementMessage = getEngagementMessage(enrollment, course, trialLimit)
+440:     await enrollment.save()
+440: 
+440:     return res.status(200).json({
+440:       message: 'Lesson completed',
+440:       enrollment,
+440:       engagementMessage,
+440:       trialJustCompleted: enrollment.isTrialComplete && justReachedLimit,
+440:       trialLimit,
+440:     })
+440:   } catch (error) {
+440:     console.error('Mark lesson complete error:', error)
+440:     return res.status(500).json({
+440:       message: 'Server error while updating lesson progress',
+440:     })
+440:   }
+440: }
+440: 
+440: const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+440: 
+440: const submitLessonAssessment = async (req, res) => {
+440:   try {
+440:     const { courseId, lessonId } = req.params
+440:     const { answers = [] } = req.body
+440: 
+440:     const course = await Course.findById(courseId)
+440:     if (!course) {
+440:       return res.status(404).json({ message: 'Course not found' })
+440:     }
+440: 
+440:     const enrollment = await Enrollment.findOne({
+440:       student: req.user.userId,
+440:       course: courseId,
+440:     })
+440:     if (!enrollment) {
+440:       return res.status(404).json({ message: 'Enrollment not found' })
+440:     }
+440: 
+440:     const lesson = course.lessons.id(lessonId)
+440:     if (!lesson) {
+440:       return res.status(404).json({ message: 'Lesson not found' })
+440:     }
+440: 
+440:     if (!lesson.hasAssessment) {
+440:       return res.status(400).json({ message: 'This lesson has no assessment' })
+440:     }
+440: 
+440:     let earnedPoints = 0
+440:     let totalPoints = 0
+440:     const results = []
+440: 
+440:     lesson.assessmentQuestions.forEach((question, questionIndex) => {
+440:       const answerEntry = answers.find((item) => Number(item.questionIndex) === questionIndex)
+440:       const studentAnswer = String(answerEntry?.answer ?? '').trim()
+440:       const normalizedStudentAnswer = studentAnswer.toLowerCase()
+440:       const normalizedCorrectAnswer = String(question.correctAnswer ?? '').trim().toLowerCase()
+440:       const isShortAnswer = question.questionType === 'short_answer'

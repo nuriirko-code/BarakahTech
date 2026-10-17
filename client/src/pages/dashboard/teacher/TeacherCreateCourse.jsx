@@ -48,6 +48,9 @@ const TeacherCreateCourse = () => {
 		textContent: '',
 		duration: 0,
 		isFree: false,
+		hasAssessment: false,
+		assessmentQuestions: [],
+		passingScore: 80,
 	})
 	// Objectives are an array because one course has multiple distinct learning outcomes.
 	const [courseData, setCourseData] = useState({
@@ -124,6 +127,77 @@ const TeacherCreateCourse = () => {
 
 	const handleLessonChange = (field, value) => {
 		setLessonForm((currentForm) => ({ ...currentForm, [field]: value }))
+	}
+
+	// This state shape mirrors the Mongoose lesson schema in server/models/Course.js:
+	// each object becomes one assessment question with question, questionType, options,
+	// correctAnswer, explanation, and points inside the lesson's assessmentQuestions array.
+	const createAssessmentQuestionTemplate = () => ({
+		question: '',
+		questionType: 'multiple_choice',
+		options: ['', '', '', ''],
+		correctAnswer: '',
+		explanation: '',
+		points: 10,
+	})
+
+	// Assessment is optional on purpose: teachers decide which lessons need a checkpoint and which ones are just explanatory content.
+	// The default 80% matches the company standard for a lesson to be considered passed before the next lesson unlocks.
+	// Explanations are required because they teach the reasoning behind the answer, not just pass/fail status.
+	const addAssessmentQuestion = () => {
+		setLessonForm((currentForm) => {
+			if (currentForm.assessmentQuestions.length >= 10) return currentForm
+			return {
+				...currentForm,
+				hasAssessment: true,
+				assessmentQuestions: [...currentForm.assessmentQuestions, createAssessmentQuestionTemplate()],
+			}
+		})
+	}
+
+	const updateAssessmentQuestion = (questionIndex, field, value) => {
+		setLessonForm((currentForm) => {
+			const nextQuestions = [...currentForm.assessmentQuestions]
+			nextQuestions[questionIndex] = { ...nextQuestions[questionIndex], [field]: value }
+			return { ...currentForm, assessmentQuestions: nextQuestions }
+		})
+	}
+
+	const updateAssessmentQuestionOption = (questionIndex, optionIndex, value) => {
+		setLessonForm((currentForm) => {
+			const nextQuestions = [...currentForm.assessmentQuestions]
+			const currentQuestion = { ...nextQuestions[questionIndex] }
+			const nextOptions = [...(currentQuestion.options || Array(4).fill(''))]
+			nextOptions[optionIndex] = value
+			nextQuestions[questionIndex] = {
+				...currentQuestion,
+				options: nextOptions,
+			}
+			return { ...currentForm, assessmentQuestions: nextQuestions }
+		})
+	}
+
+	const changeAssessmentQuestionType = (questionIndex, nextType) => {
+		setLessonForm((currentForm) => {
+			const nextQuestions = [...currentForm.assessmentQuestions]
+			const currentQuestion = nextQuestions[questionIndex] || createAssessmentQuestionTemplate()
+
+			nextQuestions[questionIndex] = {
+				...currentQuestion,
+				questionType: nextType,
+				options: nextType === 'multiple_choice' ? (currentQuestion.options?.length ? currentQuestion.options.slice(0, 4).concat(Array(4).fill('')).slice(0, 4) : ['', '', '', '']) : nextType === 'true_false' ? ['True', 'False'] : [],
+				correctAnswer: nextType === 'true_false' ? (currentQuestion.correctAnswer === 'True' || currentQuestion.correctAnswer === 'False' ? currentQuestion.correctAnswer : '') : currentQuestion.correctAnswer,
+			}
+
+			return { ...currentForm, assessmentQuestions: nextQuestions }
+		})
+	}
+
+	const removeAssessmentQuestion = (index) => {
+		setLessonForm((currentForm) => ({
+			...currentForm,
+			assessmentQuestions: currentForm.assessmentQuestions.filter((_, questionIndex) => questionIndex !== index),
+		}))
 	}
 // If there are already 8 objectives, it returns currentData unchanged, so nothing is added. If there are fewer than 8, it creates a new course object, copies the old fields, and builds a new objectives array with ...currentData.objectives plus one extra empty string '' at the end. The empty string becomes a new blank input on the screen.
 	const addObjective = () => {
@@ -225,18 +299,54 @@ const TeacherCreateCourse = () => {
 			setError('Add text content for this lesson.')
 			return
 		}
+		if (lessonForm.hasAssessment) {
+			if (lessonForm.assessmentQuestions.length < 1) {
+				setError('Add at least one assessment question before saving this lesson.')
+				return
+			}
+			if (lessonForm.assessmentQuestions.length > 10) {
+				setError('A lesson may include up to 10 assessment questions.')
+				return
+			}
+
+			const invalidQuestion = lessonForm.assessmentQuestions.some((question) => {
+				if (!question.question?.trim() || !question.explanation?.trim()) {
+					return true
+				}
+				if (question.questionType === 'multiple_choice') {
+					return question.options.length !== 4 || question.options.some((option) => !String(option).trim()) || !question.correctAnswer
+				}
+				if (question.questionType === 'true_false') {
+					return !['True', 'False'].includes(question.correctAnswer)
+				}
+				return !question.correctAnswer?.trim()
+			})
+
+			if (invalidQuestion) {
+				setError('Complete each assessment question with an answer, valid choices, and an explanation.')
+				return
+			}
+		}
 
 		setAddingLesson(true)
 		try {
 			const response = await axios.post(
 				`http://localhost:5000/api/courses/${courseId}/lessons`,
-				{ ...lessonForm, title: lessonForm.title.trim(), duration: Number(lessonForm.duration) || 0 },
+				{
+					...lessonForm,
+					title: lessonForm.title.trim(),
+					duration: Number(lessonForm.duration) || 0,
+					hasAssessment: Boolean(lessonForm.hasAssessment),
+					assessmentQuestions: lessonForm.assessmentQuestions || [],
+					passingScore: Number(lessonForm.passingScore) || 80,
+				},
 				{ headers: { Authorization: `Bearer ${token}` } }
 			)
 			setLessons((currentLessons) => [...currentLessons, response.data.lesson])
 			setLessonForm({
 				title: '', description: '', contentType: 'both', videoUrl: '',
 				videoSource: 'youtube', textContent: '', duration: 0, isFree: false,
+				hasAssessment: false, assessmentQuestions: [], passingScore: 80,
 			})
 		} catch (requestError) {
 			setError(requestError.response?.data?.message || 'Could not add this lesson.')
@@ -353,7 +463,7 @@ const TeacherCreateCourse = () => {
 								))}
 							</div>
 						</fieldset>
-
+      
 						<fieldset>
 							<legend className="mb-3 font-semibold text-slate-800">Course language</legend>
 							<div className="flex flex-wrap gap-3">
@@ -553,6 +663,176 @@ const TeacherCreateCourse = () => {
 										Make this lesson free for non-enrolled students
 									</label>
 								</div>
+
+								<div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+									<input
+										type="checkbox"
+										id="hasAssessment"
+										checked={lessonForm.hasAssessment}
+										onChange={(event) => setLessonForm((currentForm) => ({ ...currentForm, hasAssessment: event.target.checked }))}
+										className="h-5 w-5 text-[#22C55E]"
+									/>
+									<label htmlFor="hasAssessment" className="font-medium text-slate-900">
+										Add a lesson assessment
+									</label>
+									<span className="text-sm text-slate-500">
+										Students must score {lessonForm.passingScore}% or higher to continue
+									</span>
+								</div>
+
+								{lessonForm.hasAssessment && (
+									<div className="space-y-5 rounded-2xl border border-[#22C55E]/20 bg-[#F0FDF4]/60 p-5">
+										<div className="grid gap-4 md:grid-cols-2">
+											<label className="block space-y-2 text-sm font-semibold text-slate-800">
+												Passing Score (%)
+												<input
+													type="number"
+													min="0"
+													max="100"
+													value={lessonForm.passingScore}
+													onChange={(event) => setLessonForm((currentForm) => ({ ...currentForm, passingScore: Number(event.target.value) || 0 }))}
+													className={inputClass}
+												/>
+											</label>
+										</div>
+
+										<div className="flex items-center justify-between gap-3">
+											<h4 className="text-base font-bold text-slate-900">Assessment Questions</h4>
+											<button
+												type="button"
+												disabled={lessonForm.assessmentQuestions.length >= 10}
+												onClick={addAssessmentQuestion}
+												className="inline-flex items-center gap-2 rounded-xl border border-[#22C55E]/30 bg-white px-3 py-2 text-sm font-bold text-[#15803D] transition hover:bg-[#F0FDF4] disabled:cursor-not-allowed disabled:opacity-40"
+											>
+												<i className="fas fa-plus text-xs" aria-hidden="true" />
+												Add Question
+											</button>
+										</div>
+
+										<div className="space-y-4">
+											{lessonForm.assessmentQuestions.length === 0 ? (
+												<p className="rounded-xl border border-dashed border-slate-300 bg-white p-4 text-sm text-slate-500">
+													No questions added yet. Add at least one question to activate this assessment.
+												</p>
+											) : (
+												lessonForm.assessmentQuestions.map((question, questionIndex) => (
+													<div key={`${questionIndex}-${question.questionType}`} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+														<div className="mb-4 flex items-center justify-between gap-3">
+															<h5 className="text-sm font-bold text-slate-900">Question {questionIndex + 1}</h5>
+															<button
+																type="button"
+																onClick={() => removeAssessmentQuestion(questionIndex)}
+																className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-600 transition hover:border-red-300 hover:bg-red-100"
+															>
+																<i className="fas fa-trash text-[10px]" aria-hidden="true" />
+																Remove
+															</button>
+														</div>
+
+														<label className="mb-4 block space-y-2 text-sm font-semibold text-slate-800">
+															Question type(choose among multiple choice, true/false, short answer)
+															<select
+																value={question.questionType}
+																onChange={(event) => changeAssessmentQuestionType(questionIndex, event.target.value)}
+																className={inputClass}
+															>
+																<option value="multiple_choice">Multiple Choice</option>
+																<option value="true_false">True/False</option>
+																<option value="short_answer">Short Answer</option>
+															</select>
+														</label>
+
+														<label className="mb-4 block space-y-2 text-sm font-semibold text-slate-800">
+															Question text
+															<input
+																value={question.question}
+																onChange={(event) => updateAssessmentQuestion(questionIndex, 'question', event.target.value)}
+																className={inputClass}
+																placeholder="Write the question students must answer"
+															/>
+														</label>
+
+														{question.questionType === 'multiple_choice' && (
+															<div className="space-y-3">
+																{question.options.map((option, optionIndex) => (
+																	<label key={`option-${optionIndex}`} className="block space-y-2 text-sm font-semibold text-slate-800">
+																		<div className="flex items-center gap-3">
+																			<input
+																				type="radio"
+																				name={`correct-answer-${questionIndex}`}
+																				checked={question.correctAnswer === option}
+																				onChange={() => updateAssessmentQuestion(questionIndex, 'correctAnswer', option)}
+																				className="h-4 w-4 accent-[#22C55E]"
+																			/>
+																			<span className="text-slate-600">Option {optionIndex + 1}</span>
+																		</div>
+																		<input
+																			value={option}
+																			onChange={(event) => updateAssessmentQuestionOption(questionIndex, optionIndex, event.target.value)}
+																			className={inputClass}
+																			placeholder={`Option ${optionIndex + 1}`}
+																		/>
+																	</label>
+																))}
+															</div>
+														)}
+
+														{question.questionType === 'true_false' && (
+															<div className="space-y-3">
+																<p className="text-sm font-semibold text-slate-800">Select the correct answer</p>
+																<div className="flex gap-4">
+																	<label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+																		<input
+																			type="radio"
+																			name={`true-false-${questionIndex}`}
+																			checked={question.correctAnswer === 'True'}
+																			onChange={() => updateAssessmentQuestion(questionIndex, 'correctAnswer', 'True')}
+																			className="h-4 w-4 accent-[#22C55E]"
+																		/>
+																		True
+																	</label>
+																	<label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+																		<input
+																			type="radio"
+																			name={`true-false-${questionIndex}`}
+																			checked={question.correctAnswer === 'False'}
+																			onChange={() => updateAssessmentQuestion(questionIndex, 'correctAnswer', 'False')}
+																			className="h-4 w-4 accent-[#22C55E]"
+																		/>
+																		False
+																	</label>
+																</div>
+															</div>
+														)}
+
+														{question.questionType === 'short_answer' && (
+															<label className="mb-4 block space-y-2 text-sm font-semibold text-slate-800">
+																Correct answer keywords
+																<input
+																	value={question.correctAnswer}
+																	onChange={(event) => updateAssessmentQuestion(questionIndex, 'correctAnswer', event.target.value)}
+																	className={inputClass}
+																	placeholder="photosynthesis, sunlight, chlorophyll"
+																/>
+																<p className="text-xs font-normal text-slate-500">Separate keywords with commas</p>
+															</label>
+														)}
+
+														<label className="mb-4 block space-y-2 text-sm font-semibold text-slate-800">
+															Explanation
+															<textarea
+																value={question.explanation}
+																onChange={(event) => updateAssessmentQuestion(questionIndex, 'explanation', event.target.value)}
+																className={`${inputClass} min-h-24`}
+																placeholder="Explain why this is the correct answer (shown to students after)"
+															/>
+														</label>
+													</div>
+												))
+											)}
+										</div>
+									</div>
+								)}
 
 								<button type="button" disabled={addingLesson || !courseId} onClick={handleAddLesson} className={primaryButtonClass}>
 									<i className={`fas ${addingLesson ? 'fa-circle-notch fa-spin' : 'fa-plus'} text-xs`} aria-hidden="true" />

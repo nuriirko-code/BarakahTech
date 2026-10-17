@@ -1,16 +1,19 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import Avatar from '../common/Avatar'
 import { useAuth } from '../../context/AuthContext'
+import useUnreadMessageCount from '../../hooks/useUnreadMessageCount'
 
 const navigationItems = [
   { to: '/dashboard/student', label: 'Overview', icon: 'fas fa-chart-pie', end: true },
   { to: '/dashboard/student/browse', label: 'Browse Courses', icon: 'fas fa-magnifying-glass' },
   { to: '/dashboard/student/courses', label: 'My Learning', icon: 'fas fa-book-open' },
+  { to: '/messages', label: 'Messages', icon: 'fas fa-comments' },
   { to: '/dashboard/student/profile', label: 'My Profile', icon: 'fas fa-user' },
 ]
 
 const StudentSidebar = ({ onClose = () => {} }) => {
   const { user, logout } = useAuth()
+  const unreadCount = useUnreadMessageCount()
   const navigate = useNavigate()
 
   const handleLogout = () => {
@@ -48,6 +51,12 @@ const StudentSidebar = ({ onClose = () => {} }) => {
                     <i className={item.icon} />
                   </span>
                   <span className="truncate">{item.label}</span>
+                  {item.to === '/messages' && unreadCount > 0 && (
+                    // Keep badge width bounded so large unread totals do not distort navigation.
+                    <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-green-700 px-1.5 text-[10px] font-bold text-white">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
                   {isActive && <i className="fas fa-chevron-right ml-auto text-[10px] text-[#22C55E]" aria-hidden="true" />}
                 </>
               )}

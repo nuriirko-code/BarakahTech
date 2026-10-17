@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import Avatar from '../../components/common/Avatar'
@@ -238,6 +238,9 @@ const AdminDashboard = () => {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-700">{user?.name || 'Administrator'}</span>
+            <Link to="/messages" className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-green-50 hover:text-green-800">
+              <i className="fas fa-comments" aria-hidden="true" />Messages
+            </Link>
             <button onClick={handleLogout} className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900">
               Logout
             </button>

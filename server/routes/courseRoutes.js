@@ -14,6 +14,7 @@ const {
   getTeacherCourseById,
   getCourseWithEnrollment,
   markLessonComplete,
+  submitLessonAssessment,
   updateCourse,
   updateLesson,
   deleteLesson,
@@ -49,6 +50,7 @@ router.post('/:courseId/enroll', authMiddleware, authorize('student'), enrollInC
 // enrollment before revealing course lessons or changing progress.
 router.get('/:courseId/learn', authMiddleware, authorize('student'), getCourseWithEnrollment)
 router.post('/:courseId/lessons/:lessonId/complete', authMiddleware, authorize('student'), markLessonComplete)
+router.post('/:courseId/lessons/:lessonId/assessment', authMiddleware, authorize('student'), submitLessonAssessment)
 
 // The shared /api/courses prefix is mounted from server.js.
 module.exports = router

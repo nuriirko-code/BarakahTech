@@ -9,6 +9,7 @@ const courseRoutes = require("./routes/courseRoutes")
 const adminRoutes = require("./routes/adminRoutes")
 const paymentRoutes = require("./routes/paymentRoutes")
 const feedbackRoutes = require("./routes/feedbackRoutes")
+const messageRoutes = require("./routes/messageRoutes")
 
 const app = express()
 const port = process.env.PORT || 5000
@@ -30,6 +31,7 @@ app.use("/api/teachers", teacherRoutes)
 app.use("/api/courses", courseRoutes)
 app.use("/api/payments", paymentRoutes)
 app.use("/api/feedback", feedbackRoutes)
+app.use("/api/messages", messageRoutes)
 // User-management routes are isolated behind the /api/admin prefix.
 app.use("/api/admin", adminRoutes)
 

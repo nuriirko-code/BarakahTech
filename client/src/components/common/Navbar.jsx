@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import useUnreadMessageCount from '../../hooks/useUnreadMessageCount'
 
 const Navbar = () => {
   const { user, logout } = useAuth()
+  const unreadCount = useUnreadMessageCount()
 
   return (
     <nav className="sticky top-0 z-50 flex items-center justify-between border-b border-green-100 bg-white/95 px-6 py-4 shadow-sm backdrop-blur sm:px-10">
@@ -20,6 +22,15 @@ const Navbar = () => {
             <span className="text-gray-700 font-medium">
               {user.name}
             </span>
+            <Link to="/messages" aria-label={`Messages${unreadCount ? `, ${unreadCount} unread` : ''}`} title="Messages" className="relative inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-600 transition hover:bg-green-50 hover:text-green-800">
+              <i className="fas fa-comments" aria-hidden="true" />
+              {unreadCount > 0 && (
+                // The 9+ cap keeps a large unread total from stretching the compact navigation badge.
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-green-600 px-1 text-[10px] font-bold text-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </Link>
             {user.role === 'admin' && (
               // Role-aware navigation helps admins find their workspace; server authorization remains the security boundary.
               <Link

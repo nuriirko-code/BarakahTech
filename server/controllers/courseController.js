@@ -1,5 +1,8 @@
 const Course = require('../models/Course')
 const Enrollment = require('../models/Enrollment')
+const User = require('../models/User')
+const { calculateTrialLessonCount } = require('../utils/courseUtils')
+const { sendEnrollmentConfirmationEmail } = require('../utils/emailService')
 
 const createCourse = async (req, res) => {
   try {
@@ -84,6 +87,9 @@ const addLesson = async (req, res) => {
       textContent,
       duration,
       isFree,
+      hasAssessment = false,
+      assessmentQuestions = [],
+      passingScore = 80,
     } = req.body
 
     if (!title || !title.trim()) {
@@ -96,6 +102,10 @@ const addLesson = async (req, res) => {
       return res.status(400).json({ message: 'Text content is required for this lesson type' })
     }
 
+    if (hasAssessment && (!Array.isArray(assessmentQuestions) || assessmentQuestions.length < 1 || assessmentQuestions.length > 10)) {
+      return res.status(400).json({ message: 'Each assessment must include between 1 and 10 questions.' })
+    }
+
     course.lessons.push({
       title: title.trim(),
       description,
@@ -106,6 +116,9 @@ const addLesson = async (req, res) => {
       duration,
       order: course.lessons.length + 1,
       isFree,
+      hasAssessment,
+      assessmentQuestions: Array.isArray(assessmentQuestions) ? assessmentQuestions : [],
+      passingScore: Number(passingScore) || 80,
     })
     await course.save()
 
@@ -223,7 +236,7 @@ const updateCourse = async (req, res) => {
   try {
     const { courseId } = req.params
     const course = await Course.findById(courseId)
-
+  
     if (!course) {
       return res.status(404).json({ message: 'Course not found' })
     }
@@ -274,7 +287,7 @@ const updateLesson = async (req, res) => {
       return res.status(404).json({ message: 'Lesson not found' })
     }
 
-    const updatableFields = ['title', 'description', 'contentType', 'videoUrl', 'videoSource', 'textContent', 'duration', 'isFree']
+    const updatableFields = ['title', 'description', 'contentType', 'videoUrl', 'videoSource', 'textContent', 'duration', 'isFree', 'hasAssessment', 'assessmentQuestions', 'passingScore']
     updatableFields.forEach((field) => {
       if (Object.prototype.hasOwnProperty.call(req.body, field)) {
         lesson[field] = req.body[field]
@@ -432,6 +445,46 @@ const getCourseWithEnrollment = async (req, res) => {
   }
 }
 
+const getEngagementMessage = (enrollment, course, trialLimit) => {
+  const progressPercentage = Math.round(
+    (enrollment.completedLessons.length / course.lessons.length) * 100
+  )
+
+  if (enrollment.completedLessons.length === 1) {
+    return { title: 'Great start!', message: 'You completed your first lesson. Keep going — every lesson builds on the last.' }
+  }
+
+  if (enrollment.trialLessonsCompleted === trialLimit - 1) {
+    return {
+      title: 'Almost there!',
+      message: 'One more free lesson before you unlock the full course and connect with your teacher!',
+    }
+  }
+ 
+  if (enrollment.isFullyEnrolled && enrollment.completedLessons.length === 5) {
+    return {
+      title: 'Milestone reached!',
+      message: 'You have completed 5 lessons. Your teacher will schedule a live mentorship session with you soon.',
+    }
+  }
+
+  if (enrollment.isFullyEnrolled && enrollment.completedLessons.length === Math.floor(course.lessons.length / 2)) {
+    return {
+      title: 'Halfway there!',
+      message: 'You are halfway through the course. Your progress has been shared with your teacher.',
+    }
+  }
+
+  if (progressPercentage === 100) {
+    return {
+      title: 'Course Complete!',
+      message: 'Congratulations on completing the entire course. Your certificate is being prepared.',
+    }
+  }
+
+  return null
+}
+
 const markLessonComplete = async (req, res) => {
   try {
     const { courseId, lessonId } = req.params
@@ -442,6 +495,25 @@ const markLessonComplete = async (req, res) => {
 
     if (!enrollment) {
       return res.status(404).json({ message: 'Enrollment not found' })
+    }
+
+    const course = await Course.findById(courseId)
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' })
+    }
+
+    // A TRIAL_COMPLETE response is a special 403 because the frontend needs to distinguish
+    // it from ordinary permission errors and show the payment gate immediately.
+    if (!course.isFree && !enrollment.isFullyEnrolled) {
+      const trialLimit = calculateTrialLessonCount(course.lessons.length, course.isFree)
+      if (enrollment.trialLessonsCompleted >= trialLimit) {
+        return res.status(403).json({
+          message: 'Trial period complete',
+          code: 'TRIAL_COMPLETE',
+          trialLimit,
+          requiresPayment: true,
+        })
+      }
     }
 
     // ObjectIds are objects, so compare their string forms to prevent duplicate
@@ -456,13 +528,8 @@ const markLessonComplete = async (req, res) => {
       })
     }
 
-    const course = await Course.findById(courseId).select('lessons._id')
-    if (!course) {
-      return res.status(404).json({ message: 'Course not found' })
-    }
-
-    const lessonExists = course.lessons.some((lesson) => lesson._id.toString() === lessonId)
-    if (!lessonExists) {
+    const lesson = course.lessons.id(lessonId)
+    if (!lesson) {
       return res.status(404).json({ message: 'Lesson not found in this course' })
     }
 
@@ -470,25 +537,59 @@ const markLessonComplete = async (req, res) => {
       return res.status(400).json({ message: 'This course has no lessons to complete' })
     }
 
+    // The learning flow is enforced before progression: the student cannot bypass a lesson
+    // just by hitting the complete endpoint without passing the required assessment.
+    if (lesson.hasAssessment) {
+      const passedAssessment = enrollment.assessmentScores?.some(
+        (score) => score.lessonId.toString() === lessonId && score.passed
+      )
+
+      if (!passedAssessment) {
+        return res.status(403).json({
+          message: 'You must pass the lesson assessment before continuing',
+          code: 'ASSESSMENT_REQUIRED',
+          lessonId,
+        })
+      }
+    }
+
+    const trialLimit = calculateTrialLessonCount(course.lessons.length, course.isFree)
     enrollment.completedLessons.push(lessonId)
+    enrollment.lastAccessedLesson = lessonId
+
+    if (!enrollment.isFullyEnrolled) {
+      enrollment.trialLessonsCompleted += 1
+    }
+
     // Progress is completed lesson count divided by total course lessons,
     // multiplied by 100 and rounded to the nearest whole percentage.
     enrollment.progressPercentage = Math.round(
       (enrollment.completedLessons.length / course.lessons.length) * 100
     )
-    enrollment.lastAccessedLesson = lessonId
 
-    // Reaching 100% marks the enrollment complete and records when it happened.
     if (enrollment.progressPercentage === 100) {
       enrollment.isCompleted = true
       enrollment.completedAt = new Date()
     }
 
+    let justReachedLimit = false
+    if (!course.isFree && !enrollment.isFullyEnrolled) {
+      if (enrollment.trialLessonsCompleted >= trialLimit) {
+        enrollment.isTrialComplete = true
+        enrollment.trialCompletedAt = new Date()
+        justReachedLimit = true
+      }
+    }
+
+    const engagementMessage = getEngagementMessage(enrollment, course, trialLimit)
     await enrollment.save()
 
     return res.status(200).json({
-      message: 'Lesson marked as complete',
+      message: 'Lesson completed',
       enrollment,
+      engagementMessage,
+      trialJustCompleted: enrollment.isTrialComplete && justReachedLimit,
+      trialLimit,
     })
   } catch (error) {
     console.error('Mark lesson complete error:', error)
@@ -499,6 +600,106 @@ const markLessonComplete = async (req, res) => {
 }
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+const submitLessonAssessment = async (req, res) => {
+  try {
+    const { courseId, lessonId } = req.params
+    const { answers = [] } = req.body
+
+    const course = await Course.findById(courseId)
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' })
+    }
+
+    const enrollment = await Enrollment.findOne({
+      student: req.user.userId,
+      course: courseId,
+    })
+    if (!enrollment) {
+      return res.status(404).json({ message: 'Enrollment not found' })
+    }
+
+    const lesson = course.lessons.id(lessonId)
+    if (!lesson) {
+      return res.status(404).json({ message: 'Lesson not found' })
+    }
+
+    if (!lesson.hasAssessment) {
+      return res.status(400).json({ message: 'This lesson has no assessment' })
+    }
+
+    let earnedPoints = 0
+    let totalPoints = 0
+    const results = []
+
+    lesson.assessmentQuestions.forEach((question, questionIndex) => {
+      const answerEntry = answers.find((item) => Number(item.questionIndex) === questionIndex)
+      const studentAnswer = String(answerEntry?.answer ?? '').trim()
+      const normalizedStudentAnswer = studentAnswer.toLowerCase()
+      const normalizedCorrectAnswer = String(question.correctAnswer ?? '').trim().toLowerCase()
+      const isShortAnswer = question.questionType === 'short_answer'
+      const keywords = isShortAnswer ? normalizedCorrectAnswer.split(/[\s,;]+/).filter(Boolean) : []
+      const isCorrect = isShortAnswer
+        ? keywords.length > 0 && keywords.every((keyword) => normalizedStudentAnswer.includes(keyword))
+        : normalizedStudentAnswer === normalizedCorrectAnswer
+
+      const questionPoints = Number(question.points || 10)
+      totalPoints += questionPoints
+      if (isCorrect) earnedPoints += questionPoints
+
+      results.push({
+        question: question.question,
+        studentAnswer,
+        correctAnswer: question.correctAnswer,
+        correct: isCorrect,
+        explanation: question.explanation || '',
+        pointsEarned: isCorrect ? questionPoints : 0,
+      })
+    })
+
+    const score = totalPoints > 0 ? Math.round((earnedPoints / totalPoints) * 100) : 0
+    const passed = score >= (lesson.passingScore || 80)
+
+    const existingEntry = enrollment.assessmentScores.find((item) => item.lessonId.toString() === lessonId)
+    const newAttempt = existingEntry ? (existingEntry.attempts || 0) + 1 : 1
+
+    const scorePayload = {
+      lessonId,
+      score,
+      passed,
+      attempts: newAttempt,
+      passedAt: passed ? new Date() : null,
+    }
+
+    if (existingEntry) {
+      existingEntry.score = Math.max(existingEntry.score || 0, score)
+      existingEntry.passed = existingEntry.passed || passed
+      existingEntry.attempts = newAttempt
+      if (passed && !existingEntry.passedAt) existingEntry.passedAt = new Date()
+      if (passed && score >= (existingEntry.score || 0)) {
+        existingEntry.passedAt = new Date()
+      }
+    } else {
+      enrollment.assessmentScores.push(scorePayload)
+    }
+
+    await enrollment.save()
+
+    return res.status(200).json({
+      score,
+      passed,
+      passingScore: lesson.passingScore || 80,
+      results,
+      attempts: newAttempt,
+      message: passed
+        ? 'Assessment passed! You can now continue to the next lesson.'
+        : `You scored ${score}%. You need ${lesson.passingScore || 80}% to pass. Review the lesson and try again.`,
+    })
+  } catch (error) {
+    console.error('Submit lesson assessment error:', error)
+    return res.status(500).json({ message: 'Server error while grading assessment' })
+  }
+}
 
 const getAllPublishedCourses = async (req, res) => {
   try {
@@ -552,6 +753,8 @@ const enrollInCourse = async (req, res) => {
       })
     }
 
+    // Free courses get immediate full enrollment — there is no payment barrier and
+    // no trial gate, so the student is treated as fully active as soon as the enroll record is created.
     const enrollment = await Enrollment.create({
       student: studentId,
       course: course._id,
@@ -559,11 +762,19 @@ const enrollInCourse = async (req, res) => {
       paymentStatus: 'free',
       amountPaid: 0,
       currency: course.currency,
+      isFullyEnrolled: true,
+      fullEnrollmentActivatedAt: new Date(),
     })
 
     // Update the cached popularity count rather than recounting enrollments on every listing.
     course.totalEnrollments += 1
     await course.save()
+  
+    const [student, teacher] = await Promise.all([
+      User.findById(studentId).select('name email'),
+      User.findById(course.teacher).select('name email'),
+    ])
+    if (student) void sendEnrollmentConfirmationEmail(student, course, teacher)
 
     return res.status(201).json({
       message: 'Successfully enrolled in course',
@@ -615,4 +826,5 @@ module.exports = {
   unpublishCourse,
   getCourseWithEnrollment,
   markLessonComplete,
+  submitLessonAssessment,
 }

@@ -43,6 +43,54 @@ const lessonSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  // ASSESSMENT FIELDS — per lesson quiz
+  // These questions live inside the lesson itself because they belong to that lesson's content,
+  // not to a separate global collection that would need extra joins.
+  hasAssessment: {
+    type: Boolean,
+    default: false,
+    // If this is true, a student must pass the quiz before the next lesson unlocks.
+  },
+  assessmentQuestions: [{
+    question: {
+      type: String,
+    },
+    questionType: {
+      type: String,
+      enum: ['multiple_choice', 'true_false', 'short_answer'],
+      default: 'multiple_choice',
+    },
+    options: [String],
+    // For multiple_choice we store the choices; for true_false it's usually ['True', 'False'].
+    correctAnswer: {
+      type: String,
+    },
+    explanation: {
+      type: String,
+      default: '',
+      // Showing a reason after each answer helps students learn from mistakes rather than only passing or failing.
+    },
+    points: {
+      type: Number,
+      default: 10,
+      // Each question contributes to the total score for that lesson.
+    },
+  }],
+  passingScore: {
+    type: Number,
+    default: 80,
+    // The company default is 80%, but this remains adjustable for teachers in advanced cases.
+  },
+  // CODING CHALLENGE — placeholder for a future editor integration.
+  hasCodingChallenge: {
+    type: Boolean,
+    default: false,
+  },
+  codingChallengeDescription: {
+    type: String,
+    default: '',
+    // This is the future hook for lab-style coding tasks once an integrated editor exists.
+  },
 })
 
 const courseSchema = new mongoose.Schema(

@@ -1,6 +1,8 @@
 const User = require('../models/User')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const crypto = require('crypto')
+const { sendPasswordResetEmail, sendWelcomeEmail } = require('../utils/emailService')
 
 const registerUser = async (req, res) => {
   try {
@@ -38,6 +40,8 @@ const registerUser = async (req, res) => {
       password: hashedPassword,
       role: safeRole,
     })
+
+    void sendWelcomeEmail(user)
 
     // Return a token so teacher applicants can immediately authenticate the
     // protected application submission after their pending_teacher account is created.
@@ -140,4 +144,64 @@ const getMe = async (req, res) => {
   }
 }
 
-module.exports = { registerUser, loginUser, getMe }
+const forgotPassword = async (req, res) => {
+  const genericResponse = { message: 'If an account exists with this email, a reset link has been sent' }
+
+  try {
+    const email = String(req.body?.email || '').trim().toLowerCase()
+    if (!email) return res.status(400).json({ message: 'Email is required' })
+
+    const user = await User.findOne({ email })
+    if (!user) {
+      // A uniform response prevents attackers from using this endpoint to discover registered emails.
+      return res.status(200).json(genericResponse)
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex')
+    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex')
+    user.passwordResetToken = hashedToken
+    user.passwordResetExpires = new Date(Date.now() + 3600000)
+    await user.save()
+
+    void sendPasswordResetEmail(user, resetToken)
+    return res.status(200).json(genericResponse)
+  } catch (error) {
+    console.error('Forgot password error:', error)
+    return res.status(500).json({ message: 'Unable to process password reset request' })
+  }
+}
+
+const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params
+    const newPassword = String(req.body?.newPassword || '')
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters' })
+    }
+
+    // Hash the emailed token before lookup so a database reader cannot redeem stored tokens.
+    const hashedToken = crypto.createHash('sha256').update(String(token || '')).digest('hex')
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: new Date() },
+    })
+
+    if (!user) {
+      return res.status(400).json({ message: 'Reset link is invalid or has expired' })
+    }
+
+    const salt = await bcrypt.genSalt(10)
+    user.password = await bcrypt.hash(newPassword, salt)
+    user.passwordResetToken = null
+    user.passwordResetExpires = null
+    await user.save()
+
+    return res.status(200).json({ message: 'Password reset successfully. Please login.' })
+  } catch (error) {
+    console.error('Reset password error:', error)
+    return res.status(500).json({ message: 'Unable to reset password' })
+  }
+}
+
+module.exports = { registerUser, loginUser, getMe, forgotPassword, resetPassword }

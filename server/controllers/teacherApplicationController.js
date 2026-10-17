@@ -1,5 +1,6 @@
 const TeacherApplication = require('../models/TeacherApplication')
 const User = require('../models/User')
+const { sendTeacherApprovalEmail } = require('../utils/emailService')
 
 // A verified JWT from authMiddleware puts the user's ID in req.user.userId.
 // Checking for an existing application prevents duplicate submissions for the
@@ -146,9 +147,7 @@ const reviewApplication = async (req, res) => {
 
     // Approval changes the user's account as well as the application: the
     // applicant moves from pending_teacher to teacher and becomes approved.
-    const applicant = status === 'approved'
-      ? await User.findById(application.user)
-      : null
+    const applicant = await User.findById(application.user)
 
     if (status === 'approved' && !applicant) {
       return res.status(404).json({
@@ -163,9 +162,12 @@ const reviewApplication = async (req, res) => {
     await application.save()
 
     if (applicant) {
-      applicant.role = 'teacher'
-      applicant.isApproved = true
-      await applicant.save()
+      if (status === 'approved') {
+        applicant.role = 'teacher'
+        applicant.isApproved = true
+        await applicant.save()
+      }
+      void sendTeacherApprovalEmail(applicant, status === 'approved', adminNote)
     }
 
     // Lifecycle: submission creates a pending application; an admin review

@@ -111,6 +111,31 @@ const StudentBrowse = () => {
 		}
 	}
 
+	const handleMessageTeacher = async (course) => {
+		const teacherId = course.teacher?._id || course.teacher
+		if (!teacherId) {
+			setError('Teacher contact is unavailable for this course.')
+			return
+		}
+
+		setError('')
+		try {
+			// Create the thread with course context first; the Messages page then opens that exact conversation.
+			const response = await axios.post(
+				'http://localhost:5000/api/messages/conversations',
+				{
+					recipientId: teacherId,
+					courseId: course._id,
+					subject: `Question about ${course.title}`,
+				},
+				{ headers: { Authorization: `Bearer ${token}` } }
+			)
+			navigate(`/messages?conversationId=${response.data.conversation._id}`)
+		} catch (requestError) {
+			setError(requestError.response?.data?.message || 'Unable to contact this teacher right now.')
+		}
+	}
+
 	const inputClass = 'rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10'
 
 	return (
@@ -214,9 +239,15 @@ const StudentBrowse = () => {
 									{/* A dedicated checkout page is more trustworthy than a modal because it gives the
 									learner a broader order summary and a clear point of confirmation before payment. */}
 									{isEnrolled ? (
+										<>
 										<button type="button" disabled className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-500">
 											<i className="fas fa-check" aria-hidden="true" />Enrolled
 										</button>
+										{/* The course-linked message action is shown only after enrollment; the API enforces the same rule. */}
+										<button type="button" onClick={() => handleMessageTeacher(course)} className="w-full text-sm font-semibold text-green-800 hover:text-green-900 hover:underline">
+											<i className="fas fa-comments mr-1.5" aria-hidden="true" />Ask Teacher
+										</button>
+										</>
 									) : course.isFree ? (
 										<button type="button" disabled={enrolling === course._id} onClick={() => handleEnroll(course._id)} className="w-full rounded-lg bg-[#16A34A] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#15803D] disabled:opacity-50">
 											{enrolling === course._id ? 'Enrolling...' : 'Enroll Now — Free'}

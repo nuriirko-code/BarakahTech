@@ -1,17 +1,20 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import Avatar from '../common/Avatar'
 import { useAuth } from '../../context/AuthContext'
+import useUnreadMessageCount from '../../hooks/useUnreadMessageCount'
 
 const navigationItems = [
   // `end` ensures Overview is active only at the exact dashboard root URL.
   { to: '/dashboard/teacher', label: 'Overview', icon: 'fas fa-chart-pie', end: true },
   { to: '/dashboard/teacher/courses', label: 'My Courses', icon: 'fas fa-book-open' },
   { to: '/dashboard/teacher/sessions', label: 'Live Sessions', icon: 'fas fa-video' },
+  { to: '/messages', label: 'Messages', icon: 'fas fa-comments' },
   { to: '/dashboard/teacher/profile', label: 'My Profile', icon: 'fas fa-user' },
 ]
 
 const TeacherSidebar = ({ onClose = () => {} }) => {
   const { user, logout } = useAuth()
+  const unreadCount = useUnreadMessageCount()
   const navigate = useNavigate()
 
   const handleLogout = () => {
@@ -73,6 +76,12 @@ const TeacherSidebar = ({ onClose = () => {} }) => {
                     <i className={item.icon} />
                   </span>
                   <span className="truncate">{item.label}</span>
+                  {item.to === '/messages' && unreadCount > 0 && (
+                    // A capped count remains legible without pushing sidebar content around.
+                    <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-green-700 px-1.5 text-[10px] font-bold text-white">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
                   {isActive && (
                     <i
                       className="fas fa-chevron-right ml-auto text-[10px] text-[#22C55E]"

@@ -1,0 +1,110 @@
+﻿      count: courses.length,
+    })
+  } catch (error) {
+    console.error('Get published courses error:', error)
+    return res.status(500).json({
+      message: 'Server error while fetching published courses',
+    })
+  }
+}
+
+const enrollInCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params
+    const course = await Course.findById(courseId)
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' })
+    }
+    if (course.status !== 'published') {
+      return res.status(400).json({ message: 'This course is not available for enrollment' })
+    }
+
+    const studentId = req.user.userId
+    const existingEnrollment = await Enrollment.findOne({ student: studentId, course: courseId })
+    if (existingEnrollment) {
+      return res.status(400).json({ message: 'You are already enrolled in this course' })
+    }
+
+    // Paid enrollment stays blocked until a payment provider can confirm payment.
+    if (!course.isFree) {
+      return res.status(400).json({
+        message: 'Payment required. Payment integration coming soon.',
+      })
+    }
+
+    // Free courses get immediate full enrollment â€” there is no payment barrier and
+    // no trial gate, so the student is treated as fully active as soon as the enroll record is created.
+    const enrollment = await Enrollment.create({
+      student: studentId,
+      course: course._id,
+      teacher: course.teacher,
+      paymentStatus: 'free',
+      amountPaid: 0,
+      currency: course.currency,
+      isFullyEnrolled: true,
+      fullEnrollmentActivatedAt: new Date(),
+    })
+
+    // Update the cached popularity count rather than recounting enrollments on every listing.
+    course.totalEnrollments += 1
+    await course.save()
+
+    const [student, teacher] = await Promise.all([
+      User.findById(studentId).select('name email'),
+      User.findById(course.teacher).select('name email'),
+    ])
+    if (student) void sendEnrollmentConfirmationEmail(student, course, teacher)
+
+    return res.status(201).json({
+      message: 'Successfully enrolled in course',
+      enrollment,
+    })
+  } catch (error) {
+    if (error.code === 11000) { // 11000 is MongoDB duplicate-key error.
+      return res.status(400).json({ message: 'You are already enrolled in this course' })
+    }
+    console.error('Enroll in course error:', error)
+    return res.status(500).json({
+      message: 'Server error while enrolling in course',
+    })
+  }
+}
+
+const getMyEnrollments = async (req, res) => {
+  try {
+    const enrollments = await Enrollment.find({ student: req.user.userId })
+      .populate({
+        path: 'course',
+        select: 'title description thumbnail category level totalEnrollments rating lessons._id teacher',
+        populate: { path: 'teacher', select: 'name' },
+      })
+  
+    return res.status(200).json({ enrollments })
+  } catch (error) {
+    console.error('Get student enrollments error:', error)
+    return res.status(500).json({
+      message: 'Server error while fetching enrollments',
+    })
+  }
+}
+
+module.exports = {
+  createCourse,
+  addLesson,
+  publishCourse,
+  getTeacherCourses,
+  getCourseById,
+  getAllPublishedCourses,
+  enrollInCourse,
+  getMyEnrollments,
+  getTeacherCourseById,
+  updateCourse,
+  updateLesson,
+  deleteLesson,
+  deleteCourse,
+  unpublishCourse,
+  getCourseWithEnrollment,
+  markLessonComplete,
+  submitLessonAssessment,
+}

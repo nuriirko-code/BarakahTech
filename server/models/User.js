@@ -22,6 +22,17 @@ const userSchema = new mongoose.Schema(
       minlength: [6, 'Password must be at least 6 characters'],
     },
 
+    // Only the SHA-256 digest is stored. A database leak therefore does not reveal
+    // a usable reset link, and the expiry limits how long a digest can be redeemed.
+    passwordResetToken: {
+      type: String,
+      default: null,
+    },
+    passwordResetExpires: {
+      type: Date,
+      default: null,
+    },
+
     role: {
       type: String,
       enum: ['student', 'teacher', 'pending_teacher', 'admin'],

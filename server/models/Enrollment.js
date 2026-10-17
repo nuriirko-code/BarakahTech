@@ -43,6 +43,67 @@ const enrollmentSchema = new mongoose.Schema(
     completedLessons: [{
       type: mongoose.Schema.Types.ObjectId,
     }],
+    // TRIAL SYSTEM FIELDS
+    // Trial completion is a different state than full enrollment: it means the
+    // student reached the free-preview gate and needs to pay, while full enrollment
+    // means access was granted and the teacher can communicate freely.
+    trialLessonsCompleted: {
+      type: Number,
+      default: 0,
+      // This count is intentionally separate from completedLessons because it only
+      // tracks lessons completed during the free preview window before payment.
+    },
+    isTrialComplete: {
+      type: Boolean,
+      default: false,
+      // When this turns true, the frontend can show the payment gate without
+      // treating the student as a fully paid learner yet.
+    },
+    isFullyEnrolled: {
+      type: Boolean,
+      default: false,
+      // Full enrollment is the master gate for access and communication after admin
+      // confirms payment. Free courses set this immediately because there is no paid gate.
+    },
+    trialCompletedAt: {
+      type: Date,
+      default: null,
+      // The exact moment the student hit the trial cap and the payment gate appeared.
+    },
+    fullEnrollmentActivatedAt: {
+      type: Date,
+      default: null,
+      // This records when the course was upgraded from preview access to full access.
+    },
+    // LESSON ASSESSMENT TRACKING
+    // We store scores in the enrollment because they are linked directly to this student’s
+    // course progress, not to a generic reusable assessment table.
+    assessmentScores: [{
+      lessonId: {
+        type: mongoose.Schema.Types.ObjectId,
+      },
+      score: {
+        type: Number,
+      },
+      passed: {
+        type: Boolean,
+      },
+      attempts: {
+        type: Number,
+        default: 1,
+        // Attempt tracking helps identify when a student is struggling with the material.
+      },
+      passedAt: {
+        type: Date,
+        default: null,
+      },
+    }],
+    // ENGAGEMENT TRACKING
+    lastEngagementMessage: {
+      type: String,
+      default: '',
+      // This avoids showing the same motivational prompt repeatedly to the same learner.
+    },
     lastAccessedLesson: {
       type: mongoose.Schema.Types.ObjectId,
       default: null,

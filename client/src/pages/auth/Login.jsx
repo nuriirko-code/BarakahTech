@@ -66,6 +66,9 @@ const Login = () => {
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
           <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address" type="email" autoComplete="email" />
           <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="password" value={formData.password} onChange={handleChange} placeholder="Password" type="password" autoComplete="current-password" />
+          <div className="-mt-2 text-right">
+            <Link to="/forgot-password" className="text-sm font-semibold text-green-800 hover:underline">Forgot password?</Link>
+          </div>
           <button className="w-full rounded-xl bg-[#22C55E] p-3 font-bold text-white shadow-md shadow-[#22C55E]/25 transition hover:bg-[#16A34A] disabled:opacity-60" type="submit" disabled={loading}>
             {loading ? 'Logging in...' : 'Login'}
           </button>

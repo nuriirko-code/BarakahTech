@@ -10,6 +10,8 @@ import TeacherRegister from './pages/auth/TeacherRegister'
 import TeacherWelcome from './pages/auth/TeacherWelcome'
 import ApplicationSubmitted from './pages/auth/ApplicationSubmitted'
 import Login from './pages/auth/Login'
+import ForgotPassword from './pages/auth/ForgotPassword'
+import ResetPassword from './pages/auth/ResetPassword'
 import StudentDashboard from './pages/dashboard/StudentDashboard'
 import StudentOverview from './pages/dashboard/student/StudentOverview'
 import StudentCourses from './pages/dashboard/student/StudentCourses'
@@ -18,6 +20,8 @@ import StudentProfile from './pages/dashboard/student/StudentProfile'
 import CourseViewer from './pages/learn/CourseViewer'
 import LessonViewer from './pages/learn/LessonViewer'
 import CourseCheckout from './pages/payment/CourseCheckout'
+import TrialPaymentGate from './pages/payment/TrialPaymentGate'
+import MessagesPage from './pages/messaging/MessagesPage'
 import TeacherDashboard from './pages/dashboard/TeacherDashboard'
 import TeacherOverview from './pages/dashboard/teacher/TeacherOverview'
 import TeacherCourses from './pages/dashboard/teacher/TeacherCourses'
@@ -51,16 +55,34 @@ function App() {
 
           {/* Login page for existing users signing into their accounts. */}
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
 
           {/* Learning uses standalone routes, outside dashboard layouts, to provide a focused full-page course experience. */}
           {/* :courseId and :lessonId are dynamic URL parameters identifying the requested course and lesson. */}
           <Route path="/learn/:courseId" element={<CourseViewer />} />
           <Route path="/learn/:courseId/:lessonId" element={<LessonViewer />} />
           <Route
+            path="/courses/:courseId/enroll"
+            element={(
+              <ProtectedRoute allowedRoles={['student']}>
+                <TrialPaymentGate />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
             path="/checkout/course/:courseId"
             element={(
               <ProtectedRoute allowedRoles={['student']}>
                 <CourseCheckout />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/messages"
+            element={(
+              <ProtectedRoute allowedRoles={['student', 'teacher', 'pending_teacher', 'admin']}>
+                <MessagesPage />
               </ProtectedRoute>
             )}
           />
