@@ -2,26 +2,34 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
 import Avatar from '../../components/common/Avatar'
-import { formatCurrency } from '../../utils/currencyUtils'
+import { formatCurrency, getCoursePricing } from '../../utils/currencyUtils'
+import { useAuth } from '../../context/AuthContext'
 
 const TrialPaymentGate = () => {
   const { courseId } = useParams()
   const location = useLocation()
   const navigate = useNavigate()
+  const { token } = useAuth()
   const [course, setCourse] = useState(location.state?.course || null)
   const [loading, setLoading] = useState(!location.state?.course)
+  const [completedLessons, setCompletedLessons] = useState(0)
+  const [trialLimit, setTrialLimit] = useState(0)
 
   useEffect(() => {
-    if (location.state?.course) return undefined
-
     let isCurrent = true
 
     const loadCourse = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/courses/${courseId}`)
-        if (isCurrent) setCourse(response.data.course || response.data)
+        const response = await axios.get(`http://localhost:5000/api/courses/${courseId}/learn`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        })
+        if (isCurrent) {
+          setCourse(response.data.course)
+          setCompletedLessons(response.data.enrollment?.completedLessons?.length || 0)
+          setTrialLimit(response.data.trialLimit || 0)
+        }
       } catch {
-        if (isCurrent) setCourse(null)
+        if (isCurrent && !location.state?.course) setCourse(null)
       } finally {
         if (isCurrent) setLoading(false)
       }
@@ -31,7 +39,7 @@ const TrialPaymentGate = () => {
     return () => {
       isCurrent = false
     }
-  }, [courseId, location.state])
+  }, [courseId, location.state, token])
 
   if (loading) {
     return (
@@ -60,9 +68,9 @@ const TrialPaymentGate = () => {
     )
   }
 
-  const completedLessons = 3
-  const progressValue = Math.min(100, Math.round((completedLessons / Math.max(course.lessons?.length || 1, 1)) * 100))
-  const totalLessons = course.lessons?.length || 0
+  const totalLessons = course.totalLessonCount || course.lessons?.length || 0
+  const progressValue = Math.min(100, Math.round((completedLessons / Math.max(trialLimit || 1, 1)) * 100))
+  const pricing = getCoursePricing(course.price, course.discountPercentage)
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900 sm:px-6 lg:px-8">
@@ -79,7 +87,7 @@ const TrialPaymentGate = () => {
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl border border-slate-200 bg-white p-5">
               <ul className="space-y-3 text-sm font-medium text-slate-700">
-                {[1, 2, 3].map((lessonNumber) => (
+                {Array.from({ length: completedLessons }, (_, index) => index + 1).map((lessonNumber) => (
                   <li key={lessonNumber} className="flex items-center gap-3">
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-green-100 text-green-700">
                       <i className="fas fa-check text-[10px]" aria-hidden="true" />
@@ -163,7 +171,8 @@ const TrialPaymentGate = () => {
               </ul>
 
               <div className="mt-6 rounded-xl border border-green-200 bg-green-50 p-4 text-center">
-                <p className="text-4xl font-black text-slate-900">{formatCurrency(course.price, course.currency || 'ETB')}</p>
+                <p className="text-4xl font-black text-slate-900">{formatCurrency(pricing.discountedPrice, course.currency || 'ETB')}</p>
+                {pricing.discountPercentage > 0 && <p className="mt-1 text-sm text-slate-600"><span className="line-through">{formatCurrency(pricing.originalPrice, course.currency || 'ETB')}</span><span className="ml-2 font-bold text-green-800">{pricing.discountPercentage}% off · save {formatCurrency(pricing.discountAmount, course.currency || 'ETB')}</span></p>}
                 <p className="mt-1 text-sm text-slate-600">One-time payment · Lifetime access</p>
               </div>
 

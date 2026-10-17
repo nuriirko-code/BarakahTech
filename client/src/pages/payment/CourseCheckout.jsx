@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
-import { formatCurrency } from '../../utils/currencyUtils'
+import { formatCurrency, getCoursePricing } from '../../utils/currencyUtils'
 import { getCategoryGradient, getCategoryIcon } from '../../utils/courseUtils'
 
 const paymentMethods = [
@@ -45,6 +45,7 @@ const CourseCheckout = () => {
   const [stage, setStage] = useState('method')
   const [selectedMethod, setSelectedMethod] = useState('')
   const [referenceNumber, setReferenceNumber] = useState('')
+  const [referenceError, setReferenceError] = useState('')
   const [studentNote, setStudentNote] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -103,12 +104,13 @@ const CourseCheckout = () => {
     event.preventDefault()
 
     if (!referenceNumber.trim()) {
-      setError('Enter the transaction ID from your payment receipt.')
+      setReferenceError('Enter the transaction ID from your payment receipt.')
       return
     }
 
     setSubmitting(true)
     setError('')
+    setReferenceError('')
 
     try {
       const response = await axios.post(
@@ -154,6 +156,8 @@ const CourseCheckout = () => {
   const currentStageIndex = checkoutStages.indexOf(stage)
   const categoryGradient = getCategoryGradient(course?.category)
   const categoryIcon = getCategoryIcon(course?.category)
+  const pricing = getCoursePricing(course?.price, course?.discountPercentage)
+  const payableAmount = payment?.amount ?? pricing.discountedPrice
 
   if (loading) {
     return (
@@ -202,9 +206,15 @@ const CourseCheckout = () => {
                 <p className="text-sm text-slate-500">Instructor</p>
                 <p className="font-semibold text-slate-900">{course.teacher?.name || 'BarakahTech Teacher'}</p>
               </div>
-              <p className="text-xl font-extrabold text-slate-900">
-                {formatCurrency(course.price, course.currency || 'ETB')}
-              </p>
+              <div className="text-right">
+                <p className="text-xl font-extrabold text-slate-900">{formatCurrency(payableAmount, course.currency || 'ETB')}</p>
+                {pricing.discountPercentage > 0 && (
+                  <>
+                    <p className="text-sm text-slate-500 line-through">{formatCurrency(pricing.originalPrice, course.currency || 'ETB')}</p>
+                    <p className="text-xs font-semibold text-green-800">{pricing.discountPercentage}% off · save {formatCurrency(pricing.discountAmount, course.currency || 'ETB')}</p>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </section>
@@ -292,7 +302,7 @@ const CourseCheckout = () => {
               <p className="text-xs font-bold uppercase text-green-800">Step 1</p>
               <p className="mt-2 flex items-start gap-2 text-sm font-semibold text-slate-800">
                 <i className="fas fa-arrow-right mt-1 text-green-700" aria-hidden="true" />
-                <span>Send exactly {formatCurrency(course.price, course.currency || 'ETB')} to:</span>
+                <span>Send exactly {formatCurrency(payableAmount, course.currency || 'ETB')} to:</span>
               </p>
               <p className="mt-2 break-words pl-6 text-sm font-bold text-slate-900">{paymentDestination}</p>
             </div>
@@ -339,7 +349,7 @@ const CourseCheckout = () => {
           <section className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm sm:p-6">
             <h2 className="text-lg font-bold text-slate-900">Confirm Your Payment</h2>
             <p className="mt-1 text-sm text-slate-500">
-              {selectedMethodDetails?.title || 'Payment method'} · {formatCurrency(course.price, course.currency || 'ETB')}
+              {selectedMethodDetails?.title || 'Payment method'} · {formatCurrency(payableAmount, course.currency || 'ETB')}
             </p>
             <p className="mt-2 break-words text-sm text-slate-600">Sent to: {paymentDestination}</p>
 
@@ -349,10 +359,14 @@ const CourseCheckout = () => {
                 <input
                   required
                   value={referenceNumber}
-                  onChange={(event) => setReferenceNumber(event.target.value)}
                   placeholder="e.g. TXN123456789"
                   className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-green-600 focus:ring-4 focus:ring-green-100"
+                  onChange={(event) => {
+                    setReferenceNumber(event.target.value)
+                    setReferenceError('')
+                  }}
                 />
+                {referenceError && <span role="alert" className="mt-1 block text-sm font-medium text-red-700">{referenceError}</span>}
               </label>
 
               <label className="block text-sm font-semibold text-slate-800">

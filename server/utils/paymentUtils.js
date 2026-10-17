@@ -6,6 +6,12 @@ const ZERO_DECIMAL_CURRENCIES = new Set([
 // floating-point problems and matches real payment processor expectations.
 const roundMoney = (value) => Number((Number(value) || 0).toFixed(2))
 
+const calculateDiscountedPrice = (price, discountPercentage = 0) => {
+  const originalPrice = Math.max(0, Number(price) || 0)
+  const discount = Math.min(99, Math.max(0, Number(discountPercentage) || 0))
+  return roundMoney(originalPrice * (1 - discount / 100))
+}
+
 const calculateFees = (amount, currency = 'USD', commissionPercentage = 20) => {
   const grossAmount = roundMoney(amount)
   const safeCommission = Number(commissionPercentage) || 0
@@ -62,6 +68,7 @@ const generatePaymentCode = () => {
 
 module.exports = {
   calculateFees,
+  calculateDiscountedPrice,
   formatAmountForStripe,
   formatAmountFromStripe,
   generatePaymentCode,

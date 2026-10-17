@@ -15,6 +15,7 @@ const {
   getCourseWithEnrollment,
   markLessonComplete,
   submitLessonAssessment,
+  saveLessonDraft,
   updateCourse,
   updateLesson,
   deleteLesson,
@@ -40,6 +41,7 @@ router.put('/:courseId/unpublish', authMiddleware, authorize('teacher'), unpubli
 router.get('/', getAllPublishedCourses)
 router.get('/:courseId', getCourseById)
 
+router.put('/:courseId/lesson-draft', authMiddleware, authorize('teacher'), saveLessonDraft)
 // Mutations require authentication and the role that owns the operation.
 router.post('/', authMiddleware, authorize('teacher'), createCourse)
 router.post('/:courseId/lessons', authMiddleware, authorize('teacher'), addLesson)

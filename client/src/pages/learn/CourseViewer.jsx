@@ -49,7 +49,10 @@ const CourseViewer = () => {
 
         setCourse(loadedCourse)
         setEnrollment(loadedEnrollment)
-        setTrialLimit(calculateTrialLessonCount(loadedCourse?.lessons?.length || 0, loadedCourse?.isFree))
+        setTrialLimit(response.data.trialLimit ?? calculateTrialLessonCount(
+          loadedCourse?.totalLessonCount || loadedCourse?.lessons?.length || 0,
+          loadedCourse?.isFree
+        ))
 
         if (loadedEnrollment?.lastAccessedLesson && loadedCourse?.lessons?.length) {
           const lastLessonIndex = loadedCourse.lessons.findIndex(
@@ -75,7 +78,7 @@ const CourseViewer = () => {
 
   const activeLesson = course?.lessons?.[activeLessonIndex] || null
   const completedCount = enrollment?.completedLessons?.length || 0
-  const totalLessons = course?.lessons?.length || 0
+  const totalLessons = course?.totalLessonCount || course?.lessons?.length || 0
   const progressPercentage = totalLessons > 0
     ? Math.min(100, Math.round((completedCount / totalLessons) * 100))
     : 0

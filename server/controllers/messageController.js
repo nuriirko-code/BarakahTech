@@ -75,11 +75,10 @@ const createConversation = async (req, res) => {
         return res.status(400).json({ message: 'Course questions must be sent to that course’s teacher' })
       }
 
-      // Course-linked teacher contact is limited to enrolled students; hiding the button
-      // in the UI is helpful, but this API check is the actual access-control boundary.
+      // Preview enrollment does not unlock teacher contact; payment approval must fully enroll the student.
       const enrollment = await Enrollment.findOne({ student: currentUserId, course: courseId })
-      if (!enrollment) {
-        return res.status(403).json({ message: 'Enroll in this course before messaging its teacher' })
+      if (!enrollment?.isFullyEnrolled) {
+        return res.status(403).json({ message: 'Unlock the full course before messaging its teacher' })
       }
     }
 

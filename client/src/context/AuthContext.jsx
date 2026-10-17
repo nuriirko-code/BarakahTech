@@ -30,6 +30,10 @@ export const AuthProvider = ({ children }) => {
     setToken(null)
     setUser(null)
   }
+//updateUser merges the provided updates into the current user state, allowing for partial updates without overwriting the entire user object.
+  const updateUser = (userUpdates) => {
+    setUser((currentUser) => currentUser ? { ...currentUser, ...userUpdates } : currentUser)
+  }
 
   const setSuccess = (message) => {
     setSuccessMessage(message)
@@ -71,7 +75,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, loading, successMessage, login, logout, setSuccess }}
+      value={{ user, token, loading, successMessage, login, logout, updateUser, setSuccess }}
     >
       {children}
     </AuthContext.Provider>

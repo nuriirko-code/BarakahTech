@@ -13,31 +13,39 @@ const StudentRegister = () => {
     confirmPassword: '',
   })
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
   const { setSuccess } = useAuth()
 
   const handleChange = (event) => {
     const { name, value } = event.target
+    if (fieldErrors[name]) setError('')
+    setFieldErrors((currentErrors) => ({ ...currentErrors, [name]: '' }))
     setFormData((currentData) => ({ ...currentData, [name]: value }))
   }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError('')
+    setFieldErrors({})
 
-    if (Object.values(formData).some((value) => !value.trim())) {
+    const missingField = Object.keys(formData).find((field) => !formData[field].trim())
+    if (missingField) {
       setError('Please fill in all fields')
+      setFieldErrors({ [missingField]: 'This field is required.' })
       return
     }
 
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match')
+      setFieldErrors({ confirmPassword: 'Passwords do not match.' })
       return
     }
 
     if (formData.password.length < 6) {
       setError('Password must be at least 6 characters')
+      setFieldErrors({ password: 'Use at least 6 characters.' })
       return
     }
 
@@ -63,6 +71,10 @@ const StudentRegister = () => {
     }
   }
 
+  const renderFieldError = (field) => fieldErrors[field]
+    ? <span role="alert" className="block text-sm font-medium text-red-700">{fieldErrors[field]}</span>
+    : null
+
   return (
     <main className="min-h-screen bg-green-50 px-6 py-12 text-gray-900">
       <div className="mx-auto max-w-lg rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
@@ -72,13 +84,13 @@ const StudentRegister = () => {
         </p>
         <h1 className="mt-6 text-center text-3xl font-extrabold tracking-tight text-slate-900">Create your student account</h1>
 
-        {error && <div role="alert" className="mt-6 rounded-xl border border-red-200 bg-red-50 p-3 text-red-700">{error}</div>}
+        {error && !Object.values(fieldErrors).some(Boolean) && <div role="alert" className="mt-6 rounded-xl border border-red-200 bg-red-50 p-3 text-red-700">{error}</div>}
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-          <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="name" value={formData.name} onChange={handleChange} placeholder="Full Name" autoComplete="name" />
-          <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address" type="email" autoComplete="email" />
-          <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="password" value={formData.password} onChange={handleChange} placeholder="Password" type="password" autoComplete="new-password" />
-          <input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder="Confirm Password" type="password" autoComplete="new-password" />
+          <label className="block space-y-1"><span className="sr-only">Full name</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="name" value={formData.name} onChange={handleChange} placeholder="Full Name" autoComplete="name" />{renderFieldError('name')}</label>
+          <label className="block space-y-1"><span className="sr-only">Email address</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address" type="email" autoComplete="email" />{renderFieldError('email')}</label>
+          <label className="block space-y-1"><span className="sr-only">Password</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="password" value={formData.password} onChange={handleChange} placeholder="Password" type="password" autoComplete="new-password" />{renderFieldError('password')}</label>
+          <label className="block space-y-1"><span className="sr-only">Confirm password</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder="Confirm Password" type="password" autoComplete="new-password" />{renderFieldError('confirmPassword')}</label>
           <button className="w-full rounded-xl bg-[#22C55E] p-3 font-bold text-white shadow-md shadow-[#22C55E]/25 transition hover:bg-[#16A34A] disabled:opacity-60" type="submit" disabled={loading}>
             {loading ? 'Creating account...' : 'Create account'}
           </button>

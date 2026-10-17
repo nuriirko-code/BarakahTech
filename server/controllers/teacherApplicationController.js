@@ -18,6 +18,7 @@ const submitApplication = async (req, res) => {
     
     const {
       phone,
+      profilePhoto,
       city,
       region,
       dateOfBirth,
@@ -43,6 +44,10 @@ const submitApplication = async (req, res) => {
       agreedToBackgroundCheck,
       confirmedAvailability,
     } = req.body
+
+    if (profilePhoto && profilePhoto.length > 2_500_000) {
+      return res.status(400).json({ message: 'Profile photo must be smaller than 2 MB after compression.' })
+    }
 
     // Only applicant-editable fields are copied from the request. Status and
     // review metadata remain controlled by the review process, not the applicant.
@@ -74,6 +79,10 @@ const submitApplication = async (req, res) => {
       agreedToBackgroundCheck,
       confirmedAvailability,
     })
+
+    if (profilePhoto) {
+      await User.findByIdAndUpdate(userId, { profilePhoto })
+    }
 
     return res.status(201).json({
       message: 'Application submitted successfully',
@@ -113,7 +122,7 @@ const getAllApplications = async (req, res) => {
     // Admins can see all applications, sorted by submission time (newest first).
     //do yo know what the populate method does in mongoose? it replaces the stored User ObjectId with selected account fields, letting admins see who applied without a separate user query per application.
     const applications = await TeacherApplication.find()
-      .populate('user', 'name email role')
+      .populate('user', 'name email role profilePhoto')
       .sort({ createdAt: -1 })
 
     return res.status(200).json({ applications })
@@ -195,6 +204,7 @@ const updateTeacherProfile = async (req, res) => {
       availableHoursPerWeek,
       availableDays,
       portfolioLink,
+      profilePhoto,
     } = req.body
 
     // findOne is appropriate because the teacher is identified by the user
@@ -218,6 +228,13 @@ const updateTeacherProfile = async (req, res) => {
     Object.entries(editableFields).forEach(([field, value]) => {
       if (value !== undefined) application[field] = value
     })
+
+    if (profilePhoto !== undefined) {
+      if (String(profilePhoto).length > 2_500_000) {
+        return res.status(400).json({ message: 'Profile photo must be smaller than 2 MB after compression.' })
+      }
+      await User.findByIdAndUpdate(teacherId, { profilePhoto })
+    }
 
     await application.save()
 

@@ -149,6 +149,12 @@ const courseSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    discountPercentage: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 99,
+    },
     currency: {
       type: String,
       default: 'USD',
@@ -171,6 +177,11 @@ const courseSchema = new mongoose.Schema(
     lessons: {
       type: [lessonSchema],
       default: [],
+    },
+    lessonDraft: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+      select: false,
     },
 
     // Draft courses are private work in progress; published courses are

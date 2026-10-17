@@ -9,18 +9,22 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [fieldErrors, setFieldErrors] = useState({})
   const [success, setSuccess] = useState(false)
 
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError('')
+    setFieldErrors({})
 
     if (password.length < 6) {
       setError('Password must be at least 6 characters.')
+      setFieldErrors({ password: 'Use at least 6 characters.' })
       return
     }
     if (password !== confirmPassword) {
       setError('Passwords do not match.')
+      setFieldErrors({ confirmPassword: 'Passwords do not match.' })
       return
     }
 
@@ -39,6 +43,10 @@ const ResetPassword = () => {
     }
   }
 
+  const renderFieldError = (field) => fieldErrors[field]
+    ? <span role="alert" className="mt-1 block text-sm font-medium text-red-700">{fieldErrors[field]}</span>
+    : null
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10 text-slate-900">
       <section className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
@@ -51,7 +59,7 @@ const ResetPassword = () => {
         ) : (
           <>
             <p className="mt-2 text-center text-sm text-slate-600">Choose a new password for your account.</p>
-            {error && <div role="alert" className="mt-5 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>}
+            {error && !Object.values(fieldErrors).some(Boolean) && <div role="alert" className="mt-5 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>}
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               <label className="block text-sm font-semibold text-slate-700">
                 New Password
@@ -61,9 +69,10 @@ const ResetPassword = () => {
                   type="password"
                   autoComplete="new-password"
                   value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                  onChange={(event) => { setPassword(event.target.value); setFieldErrors((current) => ({ ...current, password: '' })); setError('') }}
                   className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-green-700 focus:ring-4 focus:ring-green-100"
                 />
+                {renderFieldError('password')}
               </label>
               <label className="block text-sm font-semibold text-slate-700">
                 Confirm Password
@@ -73,9 +82,10 @@ const ResetPassword = () => {
                   type="password"
                   autoComplete="new-password"
                   value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  onChange={(event) => { setConfirmPassword(event.target.value); setFieldErrors((current) => ({ ...current, confirmPassword: '' })); setError('') }}
                   className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-green-700 focus:ring-4 focus:ring-green-100"
                 />
+                {renderFieldError('confirmPassword')}
               </label>
               <button type="submit" disabled={loading} className="w-full rounded-lg bg-green-700 px-4 py-3 text-sm font-bold text-white hover:bg-green-800 disabled:cursor-wait disabled:opacity-60">
                 {loading ? 'Resetting…' : 'Reset Password'}

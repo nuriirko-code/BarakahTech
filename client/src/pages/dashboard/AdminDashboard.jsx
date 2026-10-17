@@ -440,8 +440,13 @@ const AdminDashboard = () => {
                   {visibleApplications.map((application) => (
                     <tr key={application._id} className="align-middle">
                       <td className="px-5 py-4">
-                        <p className="font-semibold">{application.user?.name || 'Unknown applicant'}</p>
-                        <p className="mt-1 text-gray-500">{application.user?.email || 'No email'}</p>
+                        <div className="flex items-center gap-3">
+                          <Avatar name={application.user?.name || 'Applicant'} imageUrl={application.user?.profilePhoto} size="sm" />
+                          <div>
+                            <p className="font-semibold">{application.user?.name || 'Unknown applicant'}</p>
+                            <p className="mt-1 text-gray-500">{application.user?.email || 'No email'}</p>
+                          </div>
+                        </div>
                       </td>
                       <td className="px-5 py-4">{application.specificSubject}</td>
                       <td className="px-5 py-4 capitalize">{application.mainCategory}</td>
@@ -479,6 +484,10 @@ const AdminDashboard = () => {
             <div className="space-y-7 p-5 sm:p-7">
               <section>
                 <h3 className="font-bold text-green-900">Personal information</h3>
+                <div className="mt-3 flex items-center gap-3">
+                  <Avatar name={selectedApplication.user?.name || 'Applicant'} imageUrl={selectedApplication.user?.profilePhoto} size="lg" />
+                  <p className="font-semibold text-slate-900">{displayValue(selectedApplication.user?.name)}</p>
+                </div>
                 <dl className="mt-3 grid gap-3 sm:grid-cols-2">
                   <div><dt className="text-xs text-gray-500">Name</dt><dd>{displayValue(selectedApplication.user?.name)}</dd></div>
                   <div><dt className="text-xs text-gray-500">Email</dt><dd>{displayValue(selectedApplication.user?.email)}</dd></div>

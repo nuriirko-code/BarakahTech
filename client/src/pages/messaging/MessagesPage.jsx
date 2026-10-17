@@ -20,6 +20,7 @@ const MessagesPage = () => {
   const [messagesLoading, setMessagesLoading] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
+  const [messageWarning, setMessageWarning] = useState('')
   const [showSidebar, setShowSidebar] = useState(true)
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false)
   const [announcementForm, setAnnouncementForm] = useState({ subject: '', content: '', targetRole: 'all' })
@@ -145,6 +146,7 @@ const MessagesPage = () => {
     setShowSidebar(false)
     setMessagesLoading(true)
     setError('')
+    setMessageWarning('')
     setSearchParams({ conversationId: conversation._id })
     setConversations((currentConversations) => currentConversations.map((item) => (
       item._id === conversation._id ? { ...item, unreadCount: 0 } : item
@@ -156,6 +158,7 @@ const MessagesPage = () => {
 
     setSending(true)
     setError('')
+    setMessageWarning('')
     try {
       const response = await axios.post(
         `http://localhost:5000/api/messages/conversations/${activeConversation._id}/messages`,
@@ -181,7 +184,7 @@ const MessagesPage = () => {
       setActiveConversation((conversation) => conversation?._id === activeConversation._id
         ? { ...conversation, lastMessage: sentMessage.content, lastMessageAt: sentMessage.createdAt }
         : conversation)
-      if (response.data.warning) setError(response.data.warning)
+      if (response.data.warning) setMessageWarning(`Sent, but flagged for review. ${response.data.warning}`)
       return true
     } catch (requestError) {
       setError(requestError.response?.data?.warning || requestError.response?.data?.message || 'Message could not be sent.')
@@ -351,6 +354,7 @@ const MessagesPage = () => {
               </header>
 
               {error && <div role="alert" className="mx-4 mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>}
+              {messageWarning && <div role="status" className="mx-4 mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{messageWarning}</div>}
 
               <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto bg-slate-50/70 px-4 py-5 sm:px-6">
                 {messagesLoading ? (

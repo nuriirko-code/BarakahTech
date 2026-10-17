@@ -6,11 +6,17 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [emailError, setEmailError] = useState('')
   const [success, setSuccess] = useState(false)
 
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError('')
+    setEmailError('')
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setEmailError('Enter a valid email address.')
+      return
+    }
     setLoading(true)
 
     try {
@@ -48,7 +54,7 @@ const ForgotPassword = () => {
             <h1 className="mt-5 text-center text-2xl font-extrabold">Forgot your password?</h1>
             <p className="mt-2 text-center text-sm text-slate-600">Enter your email and we’ll send you a reset link.</p>
             {error && <div role="alert" className="mt-5 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>}
-            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            <form noValidate onSubmit={handleSubmit} className="mt-6 space-y-4">
               <label className="block text-sm font-semibold text-slate-700">
                 Email address
                 <input
@@ -56,9 +62,10 @@ const ForgotPassword = () => {
                   type="email"
                   autoComplete="email"
                   value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  onChange={(event) => { setEmail(event.target.value); setEmailError('') }}
                   className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-green-700 focus:ring-4 focus:ring-green-100"
                 />
+                {emailError && <span role="alert" className="mt-1 block text-sm font-medium text-red-700">{emailError}</span>}
               </label>
               <button type="submit" disabled={loading || !email.trim()} className="w-full rounded-lg bg-green-700 px-4 py-3 text-sm font-bold text-white hover:bg-green-800 disabled:cursor-wait disabled:opacity-60">
                 {loading ? 'Sending…' : 'Send Reset Link'}

@@ -4,6 +4,7 @@ import axios from 'axios'
 import Avatar from '../../../components/common/Avatar'
 import { useAuth } from '../../../context/AuthContext'
 import { getCategoryIcon, getCategoryGradient } from '../../../utils/courseUtils'
+import { formatCurrency, getCoursePricing } from '../../../utils/currencyUtils'
 
 const statusStyles = {
 	draft: 'bg-amber-50 text-amber-800 ring-1 ring-amber-200',
@@ -25,7 +26,7 @@ const TeacherCourses = () => {
 	useEffect(() => {
 		let isCurrent = true
 
-		const loadCourses = async () => {
+		 const loadCourses = async () => {
 			try {
 				const response = await axios.get('http://localhost:5000/api/courses/teacher/my-courses', {
 					headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -142,6 +143,9 @@ const TeacherCourses = () => {
 			) : (
 				<section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
 					{courses.map((course) => (
+						(()=> {
+							const pricing = getCoursePricing(course.price, course.discountPercentage)
+							return (
 						<article key={course._id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
 								<div className={`relative flex h-40 items-center justify-center overflow-hidden bg-gradient-to-br ${getCategoryGradient(course.category)}`}>
 									{course.thumbnail ? (
@@ -158,7 +162,7 @@ const TeacherCourses = () => {
 									<div>
 										<h2 className="line-clamp-2 text-lg font-extrabold tracking-tight text-slate-900">{course.title}</h2>
 										<div className="mt-2 flex items-center gap-2">
-											<Avatar name={course.teacher?.name || 'Teacher'} size="sm" />
+											<Avatar name={course.teacher?.name || 'Teacher'} imageUrl={course.teacher?.profilePhoto} size="sm" />
 											<span className="text-sm text-slate-500">by {course.teacher?.name || 'Unknown'}</span>
 										</div>
 										<p className="mt-2 text-sm capitalize text-slate-500">{course.subject} · {course.category}</p>
@@ -172,7 +176,7 @@ const TeacherCourses = () => {
 									<div className="flex flex-wrap gap-x-4 gap-y-2 border-t border-slate-100 pt-4 text-xs font-medium text-slate-500">
 										<span><i className="fas fa-users mr-1.5 text-slate-400" aria-hidden="true" />{course.totalEnrollments || 0} students</span>
 										<span><i className="fas fa-clock mr-1.5 text-slate-400" aria-hidden="true" />{course.estimatedDuration} hours</span>
-										<span className="font-bold text-slate-800">{course.isFree ? 'Free' : `${course.currency || 'ETB'} ${Number(course.price || 0).toLocaleString()}`}</span>
+										<span className="font-bold text-slate-800">{course.isFree ? 'Free' : <span className="inline-flex flex-wrap items-center gap-2">{formatCurrency(pricing.discountedPrice, course.currency || 'ETB')}{pricing.discountPercentage > 0 && <><span className="font-normal text-slate-400 line-through">{formatCurrency(pricing.originalPrice, course.currency || 'ETB')}</span><span className="text-xs font-bold text-red-700">{pricing.discountPercentage}% off</span></>}</span>}</span>
 									</div>
 
 									<div className="flex flex-wrap gap-2 border-t border-slate-100 pt-4">
@@ -207,6 +211,8 @@ const TeacherCourses = () => {
 									</div>
 								</div>
 							</article>
+							)
+						})()
 					))}
 				</section>
 			)}

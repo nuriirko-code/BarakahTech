@@ -16,6 +16,7 @@ const createCourse = async (req, res) => {
       currency,
       isFree,
       price,
+      discountPercentage,
       objectives,
       estimatedDuration,
     } = req.body
@@ -24,6 +25,14 @@ const createCourse = async (req, res) => {
       return res.status(400).json({
         message: 'Please provide the title, description, category, subject, level, and language.',
       })
+    }
+
+    if (!isFree && (!Number.isFinite(Number(price)) || Number(price) <= 0)) {
+      return res.status(400).json({ message: 'Paid courses must have an original price greater than zero.' })
+    }
+
+    if (!Number.isFinite(Number(discountPercentage || 0)) || Number(discountPercentage || 0) < 0 || Number(discountPercentage || 0) > 99) {
+      return res.status(400).json({ message: 'Course discount must be between 0% and 99%.' })
     }
 
     if (!Array.isArray(objectives) || objectives.length < 3) {
@@ -43,6 +52,7 @@ const createCourse = async (req, res) => {
       currency: currency || 'USD',
       isFree,
       price,
+      discountPercentage: Number(discountPercentage) || 0,
       objectives,
       estimatedDuration,
       teacher: req.user.userId,
@@ -120,8 +130,8 @@ const addLesson = async (req, res) => {
       assessmentQuestions: Array.isArray(assessmentQuestions) ? assessmentQuestions : [],
       passingScore: Number(passingScore) || 80,
     })
+    course.lessonDraft = null
     await course.save()
-
     return res.status(201).json({
       message: 'Lesson added successfully',
       lesson: course.lessons[course.lessons.length - 1],
@@ -131,6 +141,25 @@ const addLesson = async (req, res) => {
     return res.status(500).json({
       message: 'Server error while adding lesson',
     })
+  }
+}
+
+const saveLessonDraft = async (req, res) => {
+  try {
+    const course = await Course.findOne({ _id: req.params.courseId, teacher: req.user.userId })
+      .select('+lessonDraft')
+
+    if (!course) {
+      return res.status(404).json({ message: 'Course not found' })
+    }
+
+    course.lessonDraft = req.body.lessonDraft || null
+    await course.save()
+
+    return res.status(200).json({ message: 'Lesson draft saved' })
+  } catch (error) {
+    console.error('Save lesson draft error:', error)
+    return res.status(500).json({ message: 'Server error while saving lesson draft' })
   }
 }
 
@@ -169,6 +198,7 @@ const publishCourse = async (req, res) => {
 const getTeacherCourses = async (req, res) => {
   try {
     const courses = await Course.find({ teacher: req.user.userId })
+      .populate('teacher', 'name profilePhoto')
       .sort({ createdAt: -1 })//newest courses first
 
     return res.status(200).json({
@@ -187,7 +217,7 @@ const getCourseById = async (req, res) => {
   try {
     const { courseId } = req.params
     const course = await Course.findById(courseId)
-      .populate('teacher', 'name email')
+      .populate('teacher', 'name email profilePhoto')
 
     if (!course) {
       return res.status(404).json({ message: 'Course not found' })
@@ -200,7 +230,8 @@ const getCourseById = async (req, res) => {
     }
 
     const publicCourse = course.toObject()
-    publicCourse.lessons = publicCourse.lessons.filter((lesson) => lesson.isFree)
+    publicCourse.totalLessonCount = course.lessons.length
+    publicCourse.lessons = []
 
     return res.status(200).json({ course: publicCourse })
   } catch (error) {
@@ -217,7 +248,8 @@ const getTeacherCourseById = async (req, res) => {
   try {
     const { courseId } = req.params
     const course = await Course.findOne({ _id: courseId, teacher: req.user.userId })
-      .populate('teacher', 'name email')
+      .populate('teacher', 'name email profilePhoto')
+      .select('+lessonDraft')
 
     if (!course) {
       return res.status(404).json({ message: 'Course not found' })
@@ -245,7 +277,7 @@ const updateCourse = async (req, res) => {
       return res.status(403).json({ message: 'You can only update your own courses' })
     }
 
-    const updatableFields = ['title', 'description', 'category', 'subject', 'level', 'language', 'currency', 'isFree', 'price', 'objectives', 'estimatedDuration']
+    const updatableFields = ['title', 'description', 'category', 'subject', 'level', 'language', 'currency', 'isFree', 'price', 'discountPercentage', 'objectives', 'estimatedDuration']
     // Only provided fields are overwritten so a partial update keeps the rest of the course intact.
     updatableFields.forEach((field) => {
       if (Object.prototype.hasOwnProperty.call(req.body, field)) {
@@ -294,6 +326,7 @@ const updateLesson = async (req, res) => {
       }
     })
 
+    course.lessonDraft = null
     await course.save()
 
     return res.status(200).json({
@@ -415,7 +448,7 @@ const getCourseWithEnrollment = async (req, res) => {
   try {
     const { courseId } = req.params
     const course = await Course.findById(courseId)
-      .populate('teacher', 'name')
+      .populate('teacher', 'name profilePhoto')
 
     if (!course) {
       return res.status(404).json({ message: 'Course not found' })
@@ -436,7 +469,15 @@ const getCourseWithEnrollment = async (req, res) => {
       return res.status(403).json({ message: 'You are not enrolled in this course' })
     }
 
-    return res.status(200).json({ course, enrollment })
+    const totalLessonCount = course.lessons.length
+    const trialLimit = calculateTrialLessonCount(totalLessonCount, course.isFree)
+    const courseData = course.toObject()
+    courseData.totalLessonCount = totalLessonCount
+    if (!course.isFree && !enrollment.isFullyEnrolled) {
+      courseData.lessons = courseData.lessons.slice(0, trialLimit)
+    }
+
+    return res.status(200).json({ course: courseData, enrollment, trialLimit })
   } catch (error) {
     console.error('Get enrolled course error:', error)
     return res.status(500).json({
@@ -475,7 +516,7 @@ const getEngagementMessage = (enrollment, course, trialLimit) => {
     }
   }
 
-  if (progressPercentage === 100) {
+  if (enrollment.isFullyEnrolled && progressPercentage === 100) {
     return {
       title: 'Course Complete!',
       message: 'Congratulations on completing the entire course. Your certificate is being prepared.',
@@ -502,10 +543,20 @@ const markLessonComplete = async (req, res) => {
       return res.status(404).json({ message: 'Course not found' })
     }
 
+    const lesson = course.lessons.id(lessonId)
+    if (!lesson) {
+      return res.status(404).json({ message: 'Lesson not found in this course' })
+    }
+
+    const lessonIndex = course.lessons.findIndex((item) => item._id.toString() === lessonId)
+    const trialLimit = calculateTrialLessonCount(course.lessons.length, course.isFree)
+    if (!course.isFree && !enrollment.isFullyEnrolled && lessonIndex >= trialLimit) {
+      return res.status(403).json({ message: 'This lesson is locked until you enroll', code: 'TRIAL_LOCKED', trialLimit })
+    }
+
     // A TRIAL_COMPLETE response is a special 403 because the frontend needs to distinguish
     // it from ordinary permission errors and show the payment gate immediately.
     if (!course.isFree && !enrollment.isFullyEnrolled) {
-      const trialLimit = calculateTrialLessonCount(course.lessons.length, course.isFree)
       if (enrollment.trialLessonsCompleted >= trialLimit) {
         return res.status(403).json({
           message: 'Trial period complete',
@@ -528,11 +579,6 @@ const markLessonComplete = async (req, res) => {
       })
     }
 
-    const lesson = course.lessons.id(lessonId)
-    if (!lesson) {
-      return res.status(404).json({ message: 'Lesson not found in this course' })
-    }
-
     if (course.lessons.length === 0) {
       return res.status(400).json({ message: 'This course has no lessons to complete' })
     }
@@ -553,7 +599,6 @@ const markLessonComplete = async (req, res) => {
       }
     }
 
-    const trialLimit = calculateTrialLessonCount(course.lessons.length, course.isFree)
     enrollment.completedLessons.push(lessonId)
     enrollment.lastAccessedLesson = lessonId
 
@@ -567,7 +612,7 @@ const markLessonComplete = async (req, res) => {
       (enrollment.completedLessons.length / course.lessons.length) * 100
     )
 
-    if (enrollment.progressPercentage === 100) {
+    if (enrollment.isFullyEnrolled && enrollment.progressPercentage === 100) {
       enrollment.isCompleted = true
       enrollment.completedAt = new Date()
     }
@@ -622,6 +667,12 @@ const submitLessonAssessment = async (req, res) => {
     const lesson = course.lessons.id(lessonId)
     if (!lesson) {
       return res.status(404).json({ message: 'Lesson not found' })
+    }
+
+    const lessonIndex = course.lessons.findIndex((item) => item._id.toString() === lessonId)
+    const trialLimit = calculateTrialLessonCount(course.lessons.length, course.isFree)
+    if (!course.isFree && !enrollment.isFullyEnrolled && lessonIndex >= trialLimit) {
+      return res.status(403).json({ message: 'This lesson assessment is locked until you enroll', code: 'TRIAL_LOCKED', trialLimit })
     }
 
     if (!lesson.hasAssessment) {
@@ -713,7 +764,8 @@ const getAllPublishedCourses = async (req, res) => {
     if (search) filter.title = { $regex: escapeRegExp(search), $options: 'i' }
   // Most enrolled courses appear first.
     const courses = await Course.find(filter)
-      .populate('teacher', 'name')
+      .select('title description thumbnail category subject level language teacher isFree price discountPercentage currency estimatedDuration totalEnrollments rating totalRatings status createdAt')
+      .populate('teacher', 'name profilePhoto')
       .sort({ totalEnrollments: -1 })
 
     return res.status(200).json({
@@ -746,38 +798,31 @@ const enrollInCourse = async (req, res) => {
       return res.status(400).json({ message: 'You are already enrolled in this course' })
     }
 
-    // Paid enrollment stays blocked until a payment provider can confirm payment.
-    if (!course.isFree) {
-      return res.status(400).json({
-        message: 'Payment required. Payment integration coming soon.',
-      })
-    }
-
-    // Free courses get immediate full enrollment — there is no payment barrier and
-    // no trial gate, so the student is treated as fully active as soon as the enroll record is created.
+    const isFreeCourse = Boolean(course.isFree)
     const enrollment = await Enrollment.create({
       student: studentId,
       course: course._id,
       teacher: course.teacher,
-      paymentStatus: 'free',
+      paymentStatus: isFreeCourse ? 'free' : 'pending',
       amountPaid: 0,
       currency: course.currency,
-      isFullyEnrolled: true,
-      fullEnrollmentActivatedAt: new Date(),
+      isFullyEnrolled: isFreeCourse,
+      fullEnrollmentActivatedAt: isFreeCourse ? new Date() : null,
     })
 
-    // Update the cached popularity count rather than recounting enrollments on every listing.
-    course.totalEnrollments += 1
-    await course.save()
+    if (isFreeCourse) {
+      course.totalEnrollments += 1
+      await course.save()
+    }
   
     const [student, teacher] = await Promise.all([
       User.findById(studentId).select('name email'),
       User.findById(course.teacher).select('name email'),
     ])
-    if (student) void sendEnrollmentConfirmationEmail(student, course, teacher)
+    if (student && isFreeCourse) void sendEnrollmentConfirmationEmail(student, course, teacher)
 
     return res.status(201).json({
-      message: 'Successfully enrolled in course',
+      message: isFreeCourse ? 'Successfully enrolled in course' : 'Free course preview started',
       enrollment,
     })
   } catch (error) {
@@ -797,7 +842,7 @@ const getMyEnrollments = async (req, res) => {
       .populate({
         path: 'course',
         select: 'title description thumbnail category level totalEnrollments rating lessons._id teacher',
-        populate: { path: 'teacher', select: 'name' },
+        populate: { path: 'teacher', select: 'name profilePhoto' },
       })
   
     return res.status(200).json({ enrollments })
@@ -812,6 +857,7 @@ const getMyEnrollments = async (req, res) => {
 module.exports = {
   createCourse,
   addLesson,
+  saveLessonDraft,
   publishCourse,
   getTeacherCourses,
   getCourseById,

@@ -4,7 +4,7 @@ import axios from 'axios'
 import Avatar from '../../../components/common/Avatar'
 import { useAuth } from '../../../context/AuthContext'
 import { getCategoryIcon, getCategoryGradient } from '../../../utils/courseUtils'
-import { formatCurrency } from '../../../utils/currencyUtils'
+import { formatCurrency, getCoursePricing } from '../../../utils/currencyUtils'
 import teachingCategories from '../../../utils/teachingCategories'
 
 const StudentBrowse = () => {
@@ -14,6 +14,7 @@ const StudentBrowse = () => {
 	const [successMessage, setSuccessMessage] = useState('')
 	const [enrolling, setEnrolling] = useState('')
 	const [enrolledCourseIds, setEnrolledCourseIds] = useState(() => new Set())
+	const [fullyEnrolledCourseIds, setFullyEnrolledCourseIds] = useState(() => new Set())
 	const [filters, setFilters] = useState({ category: '', level: '', language: '', search: '' })
 	const { token } = useAuth()
 	const navigate = useNavigate()
@@ -65,6 +66,12 @@ const StudentBrowse = () => {
 							.map((enrollment) => enrollment.course?._id || enrollment.course)
 							.filter(Boolean)
 					))
+					setFullyEnrolledCourseIds(new Set(
+						(response.data.enrollments || [])
+							.filter((enrollment) => enrollment.isFullyEnrolled)
+							.map((enrollment) => enrollment.course?._id || enrollment.course)
+							.filter(Boolean)
+					))
 				}
 			} catch (requestError) {
 				if (isCurrent) setError(requestError.response?.data?.message || 'Unable to check your enrollments.')
@@ -89,26 +96,37 @@ const StudentBrowse = () => {
 
 	// Keep the active course ID rather than a boolean so only that card shows
 	// the in-progress state while other free courses remain actionable.
-	const handleEnroll = async (courseId) => {
-		setEnrolling(courseId)
+	const handleEnroll = async (course) => {
+		setEnrolling(course._id)
 		setError('')
 		setSuccessMessage('') // both set methods clear old messages so only one is shown at a time
 
 		try {
 			await axios.post(
-				`http://localhost:5000/api/courses/${courseId}/enroll`, //sends a **POST request** to the backend saying “enroll the currently logged-in student in this course,”
+				`http://localhost:5000/api/courses/${course._id}/enroll`,
 				{},
 				{ headers: { Authorization: `Bearer ${token}` } }
 			)
-			setSuccessMessage('Successfully enrolled')
 			// The server already confirmed enrollment, so update the local Set instead
 			// of refetching the entire public catalog just to change one card state.
-			setEnrolledCourseIds((currentIds) => new Set(currentIds).add(courseId))
+			setEnrolledCourseIds((currentIds) => new Set(currentIds).add(course._id))
+			if (course.isFree) {
+				setFullyEnrolledCourseIds((currentIds) => new Set(currentIds).add(course._id))
+			}
+			navigate(`/learn/${course._id}`)
 		} catch (requestError) {
 			setError(requestError.response?.data?.message || 'Unable to enroll in this course.')
 		} finally {
 			setEnrolling('')
 		}
+	}
+
+	const openCourse = (course) => {
+		if (enrolledCourseIds.has(course._id)) {
+			navigate(`/learn/${course._id}`)
+			return
+		}
+		handleEnroll(course)
 	}
 
 	const handleMessageTeacher = async (course) => {
@@ -197,11 +215,12 @@ const StudentBrowse = () => {
 				<section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
 					{courses.map((course) => {
 						const isEnrolled = enrolledCourseIds.has(course._id)
+						const pricing = getCoursePricing(course.price, course.discountPercentage)
 
 						return (
 						<article key={course._id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
 							{/* A gradient and category icon make an empty thumbnail intentional; a future Cloudinary URL automatically replaces it. */}
-							<button type="button" onClick={() => navigate(`/dashboard/student/courses/${course._id}`)} className={`relative flex h-40 w-full items-center justify-center overflow-hidden bg-gradient-to-br ${getCategoryGradient(course.category)}`} aria-label={`View ${course.title}`}>
+							<button type="button" onClick={() => openCourse(course)} className={`relative flex h-40 w-full items-center justify-center overflow-hidden bg-gradient-to-br ${getCategoryGradient(course.category)}`} aria-label={`Preview ${course.title}`}>
 								{course.thumbnail ? <img src={course.thumbnail} alt="" className="h-full w-full object-cover" /> : <i className={`${getCategoryIcon(course.category)} text-5xl text-white/90`} aria-hidden="true" />}
 								<span className="absolute left-3 top-3 rounded-full bg-white/95 px-3 py-1 text-xs font-bold capitalize text-[#15803D] shadow-sm">{course.category}</span>
 								<span className="absolute right-3 top-3 rounded-full bg-slate-900/80 px-3 py-1 text-xs font-bold capitalize text-white">{course.level}</span>
@@ -211,7 +230,7 @@ const StudentBrowse = () => {
 								<div>
 									<h2 className="line-clamp-2 text-lg font-extrabold tracking-tight text-slate-900">{course.title}</h2>
 									<div className="mt-2 flex items-center gap-2">
-										<Avatar name={course.teacher?.name || 'Teacher'} size="sm" />
+											<Avatar name={course.teacher?.name || 'Teacher'} imageUrl={course.teacher?.profilePhoto} size="sm" />
 										<span className="text-sm text-slate-500">by {course.teacher?.name || 'Unknown'}</span>
 									</div>
 								</div>
@@ -229,7 +248,12 @@ const StudentBrowse = () => {
 											<span className="text-lg font-bold text-green-700">Free</span>
 										) : (
 											<div>
-												<span className="text-lg font-bold text-gray-900">{formatCurrency(course.price, course.currency || 'USD')}</span>
+													<div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+														<span className="text-lg font-bold text-gray-900">{formatCurrency(pricing.discountedPrice, course.currency || 'USD')}</span>
+														{pricing.discountPercentage > 0 && <span className="text-sm text-slate-500 line-through">{formatCurrency(pricing.originalPrice, course.currency || 'USD')}</span>}
+														{pricing.discountPercentage > 0 && <span className="rounded bg-red-50 px-2 py-1 text-xs font-bold text-red-700">{pricing.discountPercentage}% off</span>}
+													</div>
+													{pricing.discountPercentage > 0 && <p className="mt-1 text-xs font-medium text-green-800">Save {formatCurrency(pricing.discountAmount, course.currency || 'USD')}</p>}
 												{/* Showing familiar payment methods early lets learners decide before they
 												open checkout, reducing uncertainty at the point of purchase. */}
 												<p className="mt-0.5 text-xs text-gray-400">Pay via Telebirr · CBE · Mobile Money</p>
@@ -240,26 +264,27 @@ const StudentBrowse = () => {
 									learner a broader order summary and a clear point of confirmation before payment. */}
 									{isEnrolled ? (
 										<>
-										<button type="button" disabled className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-500">
-											<i className="fas fa-check" aria-hidden="true" />Enrolled
+												<button type="button" onClick={() => openCourse(course)} className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200">
+													<i className="fas fa-play" aria-hidden="true" />{fullyEnrolledCourseIds.has(course._id) ? 'Continue Learning' : 'Continue Preview'}
 										</button>
 										{/* The course-linked message action is shown only after enrollment; the API enforces the same rule. */}
-										<button type="button" onClick={() => handleMessageTeacher(course)} className="w-full text-sm font-semibold text-green-800 hover:text-green-900 hover:underline">
+												{fullyEnrolledCourseIds.has(course._id) && <button type="button" onClick={() => handleMessageTeacher(course)} className="w-full text-sm font-semibold text-green-800 hover:text-green-900 hover:underline">
 											<i className="fas fa-comments mr-1.5" aria-hidden="true" />Ask Teacher
-										</button>
+												</button>}
 										</>
 									) : course.isFree ? (
-										<button type="button" disabled={enrolling === course._id} onClick={() => handleEnroll(course._id)} className="w-full rounded-lg bg-[#16A34A] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#15803D] disabled:opacity-50">
+										<button type="button" disabled={enrolling === course._id} onClick={() => handleEnroll(course)} className="w-full rounded-lg bg-[#16A34A] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#15803D] disabled:opacity-50">
 											{enrolling === course._id ? 'Enrolling...' : 'Enroll Now — Free'}
 										</button>
 									) : (
 										<button
 											type="button"
-											onClick={() => navigate(`/checkout/course/${course._id}`)}
+											disabled={enrolling === course._id}
+											onClick={() => handleEnroll(course)}
 											className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-700 px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-green-800"
 										>
-											<i className="fas fa-shopping-cart" aria-hidden="true" />
-											{formatCurrency(course.price, course.currency || 'USD')}
+											<i className="fas fa-play" aria-hidden="true" />
+											{enrolling === course._id ? 'Starting Preview...' : 'Start Free Preview'}
 										</button>
 									)}
 								</div>

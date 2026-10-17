@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useAuth } from '../../../context/AuthContext'
+import { resizeImageFile } from '../../../utils/imageUtils'
 
 const emptyProfile = {
 	bio: '',
@@ -9,6 +10,7 @@ const emptyProfile = {
 	availableHoursPerWeek: 0,
 	availableDays: [],
 	portfolioLink: '',
+	profilePhoto: '',
 	specificSubject: '',
 	mainCategory: '',
 	teachingMethod: '',
@@ -26,7 +28,7 @@ const TeacherProfile = () => {
 	const [saving, setSaving] = useState(false)
 	const [error, setError] = useState('')
 	const [success, setSuccess] = useState('')
-	const { user, token, loading: authLoading } = useAuth()
+	const { user, token, updateUser, loading: authLoading } = useAuth()
 
 	useEffect(() => {
 		let isCurrent = true
@@ -44,6 +46,7 @@ const TeacherProfile = () => {
 					availableHoursPerWeek: application.availableHoursPerWeek ?? 0,
 					availableDays: application.availableDays || [],
 					portfolioLink: application.portfolioLink || '',
+					profilePhoto: user?.profilePhoto || '',
 					specificSubject: application.specificSubject || '',
 					mainCategory: application.mainCategory || '',
 					teachingMethod: application.teachingMethod || '',
@@ -66,7 +69,20 @@ const TeacherProfile = () => {
 		return () => {
 			isCurrent = false
 		}
-	}, [authLoading, token])
+	}, [authLoading, token, user?.profilePhoto])
+
+	const handleProfilePhotoChange = async (event) => {
+		const file = event.target.files?.[0]
+		if (!file) return
+
+		try {
+			const profilePhoto = await resizeImageFile(file)
+			handleChange('profilePhoto', profilePhoto)
+			setError('')
+		} catch (photoError) {
+			setError(photoError.message)
+		}
+	}
 
 	const handleChange = (field, value) => {
 		setProfile((currentProfile) => ({ ...currentProfile, [field]: value }))
@@ -102,6 +118,7 @@ const TeacherProfile = () => {
 					availableHoursPerWeek: Number(profile.availableHoursPerWeek) || 0,
 					availableDays: profile.availableDays,
 					portfolioLink: profile.portfolioLink,
+					profilePhoto: profile.profilePhoto,
 				},
 				{ headers: { Authorization: `Bearer ${token}` } }
 			)
@@ -116,6 +133,7 @@ const TeacherProfile = () => {
 			}
 			setProfile(updatedProfile)
 			setSavedProfile(updatedProfile)
+			updateUser({ profilePhoto: updatedProfile.profilePhoto })
 			setEditing(false)
 			setSuccess(response.data.message || 'Profile updated successfully.')
 		} catch (requestError) {
@@ -201,12 +219,19 @@ const TeacherProfile = () => {
 			{/* Display mode prioritizes scan-friendly profile reading; edit mode exposes only safe public profile fields. */}
 			<section className="grid gap-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[minmax(240px,0.8fr)_1.5fr] lg:p-8">
 				<div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-					<div
-						className="flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-[#22C55E] to-[#15803D] text-3xl font-extrabold text-white shadow-lg shadow-[#22C55E]/30 ring-4 ring-[#F0FDF4]"
-						aria-label={`Avatar initials ${initials}`}
-					>
-						{initials}
-					</div>
+					{profile.profilePhoto ? (
+						<img src={profile.profilePhoto} alt={`${user?.name || 'Teacher'} profile`} className="h-28 w-28 rounded-full object-cover shadow-lg ring-4 ring-[#F0FDF4]" />
+					) : (
+						<div className="flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-[#22C55E] to-[#15803D] text-3xl font-extrabold text-white shadow-lg shadow-[#22C55E]/30 ring-4 ring-[#F0FDF4]" aria-label={`Avatar initials ${initials}`}>
+							{initials}
+						</div>
+					)}
+					{editing && (
+						<label className="text-left text-sm font-semibold text-slate-700">
+							Change profile photo
+							<input className="mt-2 block w-full text-xs text-slate-600 file:mr-2 file:rounded-lg file:border-0 file:bg-green-50 file:px-3 file:py-2 file:font-semibold file:text-green-800" type="file" accept="image/*" onChange={handleProfilePhotoChange} />
+						</label>
+					)}
 					<h2 className="mt-5 text-2xl font-extrabold tracking-tight text-slate-900">{user?.name || 'Teacher'}</h2>
 					<span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#F0FDF4] px-3 py-1 text-sm font-bold text-[#16A34A] ring-1 ring-[#22C55E]/20">
 						<i className="fas fa-badge-check" aria-hidden="true" />

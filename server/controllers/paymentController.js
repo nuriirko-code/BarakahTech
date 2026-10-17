@@ -3,7 +3,7 @@ const Enrollment = require('../models/Enrollment')
 const Course = require('../models/Course')
 const EarningsLedger = require('../models/EarningsLedger')
 const User = require('../models/User')
-const { calculateFees, generatePaymentCode } = require('../utils/paymentUtils')
+const { calculateFees, calculateDiscountedPrice, generatePaymentCode } = require('../utils/paymentUtils')
 const {
   sendEnrollmentConfirmationEmail,
   sendPaymentReceivedNotificationEmail,
@@ -34,14 +34,15 @@ const initiateCoursePayment = async (req, res) => {
       return res.status(400).json({ message: 'This course is free. Use free enrollment instead.' })
     }
 
-    if (!Number.isFinite(Number(course.price)) || Number(course.price) <= 0) {
+    const payableAmount = calculateDiscountedPrice(course.price, course.discountPercentage)
+    if (!Number.isFinite(payableAmount) || payableAmount <= 0) {
       return res.status(400).json({ message: 'This course does not have a valid paid price' })
     }
 
     const studentId = getCurrentUserId(req)
     const existingEnrollment = await Enrollment.findOne({ student: studentId, course: courseId })
 
-    if (existingEnrollment) {
+    if (existingEnrollment?.isFullyEnrolled) {
       return res.status(400).json({ message: 'You are already enrolled in this course' })
     }
 
@@ -64,6 +65,10 @@ const initiateCoursePayment = async (req, res) => {
       // A student may leave before sending money. Reuse their existing order and code
       // so they can resume checkout without creating duplicate pending payment records.
       pendingPayment.paymentMethod = paymentMethod
+      pendingPayment.amount = payableAmount
+      const updatedFees = calculateFees(payableAmount, course.currency, pendingPayment.platformFeePercentage)
+      pendingPayment.platformFeeAmount = updatedFees.platformFeeAmount
+      pendingPayment.teacherEarningAmount = updatedFees.teacherEarningAmount
       await pendingPayment.save()
 
       return res.status(200).json({
@@ -75,7 +80,7 @@ const initiateCoursePayment = async (req, res) => {
 
     const currency = String(course.currency || 'ETB').toUpperCase()
     const commissionPercentage = Number(process.env.PLATFORM_COMMISSION_PERCENTAGE || 20)
-    const fees = calculateFees(course.price, currency, commissionPercentage)
+    const fees = calculateFees(payableAmount, currency, commissionPercentage)
     const platformPaymentCode = generatePaymentCode()
 
     // We create the record before money arrives so there is a known order and a code
@@ -85,7 +90,7 @@ const initiateCoursePayment = async (req, res) => {
       recipient: course.teacher,
       type: 'course_purchase',
       status: 'pending',
-      amount: course.price,
+      amount: payableAmount,
       currency,
       platformFeePercentage: commissionPercentage,
       platformFeeAmount: fees.platformFeeAmount,
@@ -188,21 +193,19 @@ const adminVerifyPayment = async (req, res) => {
 
     const existingEnrollment = await Enrollment.findOne({ student: payment.payer, course: payment.course })
 
-    if (existingEnrollment) {
-      return res.status(409).json({ message: 'The student is already enrolled in this course' })
-    }
-
-    const enrollment = await Enrollment.create({
+    const enrollment = existingEnrollment || new Enrollment({
       student: payment.payer,
       course: payment.course,
       teacher: course.teacher,
-      amountPaid: payment.amount,
-      currency: payment.currency,
-      paymentStatus: 'paid',
-      paymentReference: payment.manualPaymentReference,
-      isFullyEnrolled: true,
-      fullEnrollmentActivatedAt: new Date(),
     })
+    enrollment.amountPaid = payment.amount
+    enrollment.currency = payment.currency
+    enrollment.paymentStatus = 'paid'
+    enrollment.paymentReference = payment.manualPaymentReference
+    enrollment.isFullyEnrolled = true
+    enrollment.fullEnrollmentActivatedAt = new Date()
+    enrollment.isTrialComplete = false
+    await enrollment.save()
 
     course.totalEnrollments = Number(course.totalEnrollments || 0) + 1
     await course.save()

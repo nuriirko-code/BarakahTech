@@ -17,7 +17,7 @@ const port = process.env.PORT || 5000
 // Middleware
 app.use(cors({ origin: "http://localhost:5173" }))
 
-app.use(express.json())
+app.use(express.json({ limit: '3mb' }))
 
 // Routes
 app.get("/api/health", (req, res) => {

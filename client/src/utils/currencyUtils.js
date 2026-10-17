@@ -48,6 +48,19 @@ export const formatCurrency = (amount, currencyCode = 'USD') => {
   }
 }
 
+export const getCoursePricing = (price, discountPercentage = 0) => {
+  const originalPrice = Math.max(0, Number(price) || 0)
+  const discount = Math.min(99, Math.max(0, Number(discountPercentage) || 0))
+  const discountedPrice = Math.round((originalPrice * (1 - discount / 100) + Number.EPSILON) * 100) / 100
+
+  return {
+    originalPrice,
+    discountPercentage: discount,
+    discountAmount: Math.round((originalPrice - discountedPrice + Number.EPSILON) * 100) / 100,
+    discountedPrice,
+  }
+}
+
 // Supporting several currencies from the beginning prevents a later migration problem where
 // course pricing, teacher payouts, and student checkout logic would already be tightly coupled
 // to just one money system. This makes the foundation more trustworthy for a growing platform.
