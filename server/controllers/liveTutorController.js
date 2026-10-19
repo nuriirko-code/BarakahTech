@@ -43,6 +43,7 @@ const submitLiveTutorApplication = async (req, res) => {
       yearsOfExperience,
       teachingCertificate,
       governmentId,
+      profilePhoto,
       bio,
       teachingApproach,
       scenarioAnswers,
@@ -69,6 +70,7 @@ const submitLiveTutorApplication = async (req, res) => {
       !currency ||
       yearsOfExperience === undefined ||
       yearsOfExperience === null ||
+      !profilePhoto ||
       !bio ||
       !teachingApproach ||
       !timezone ||
@@ -77,6 +79,14 @@ const submitLiveTutorApplication = async (req, res) => {
     if (missingRequiredField) {
       return res.status(400).json({
         message: 'Please provide all required live tutor application fields',
+      })
+    }
+
+    // Profile images are stored as compressed data URLs until Cloudinary is
+    // introduced. This limit stays below Express's 3 MB JSON request limit.
+    if (profilePhoto.length > 2_500_000) {
+      return res.status(400).json({
+        message: 'Profile photo must be smaller than 2 MB after compression.',
       })
     }
 
@@ -121,6 +131,10 @@ const submitLiveTutorApplication = async (req, res) => {
       minimumSessionsPerWeek,
       advanceBookingHours,
     })
+
+    // The User owns the photo because it is reused in navigation, messaging,
+    // and the approved public profile. The application remains private.
+    user.profilePhoto = profilePhoto
 
     // Storing the status on User gives the frontend a quick, reliable account
     // state without first fetching the full private application document.
@@ -223,6 +237,7 @@ const reviewLiveTutorApplication = async (req, res) => {
           teachingLevel: application.teachingLevel,
           teachingLanguages: application.teachingLanguages,
           introVideoUrl: application.introVideoUrl,
+          profilePhoto: user.profilePhoto,
           sessionDurations: application.sessionDurations,
           hourlyRate: application.hourlyRate,
           currency: application.currency,

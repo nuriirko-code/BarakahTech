@@ -8,6 +8,9 @@ import RoleSelection from './pages/auth/RoleSelection'
 import StudentRegister from './pages/auth/StudentRegister'
 import TeacherRegister from './pages/auth/TeacherRegister'
 import TeacherWelcome from './pages/auth/TeacherWelcome'
+import TeachingPathSelection from './pages/auth/TeachingPathSelection'
+import LiveTutorWelcome from './pages/auth/LiveTutorWelcome'
+import LiveTutorRegister from './pages/auth/LiveTutorRegister'
 import ApplicationSubmitted from './pages/auth/ApplicationSubmitted'
 import Login from './pages/auth/Login'
 import ForgotPassword from './pages/auth/ForgotPassword'
@@ -17,6 +20,8 @@ import StudentOverview from './pages/dashboard/student/StudentOverview'
 import StudentCourses from './pages/dashboard/student/StudentCourses'
 import StudentBrowse from './pages/dashboard/student/StudentBrowse'
 import StudentProfile from './pages/dashboard/student/StudentProfile'
+import FindTutor from './pages/dashboard/student/FindTutor'
+import StudentSessions from './pages/dashboard/student/StudentSessions'
 import CourseViewer from './pages/learn/CourseViewer'
 import LessonViewer from './pages/learn/LessonViewer'
 import CourseCheckout from './pages/payment/CourseCheckout'
@@ -29,6 +34,7 @@ import TeacherCreateCourse from './pages/dashboard/teacher/TeacherCreateCourse'
 import TeacherSessions from './pages/dashboard/teacher/TeacherSessions'
 import TeacherProfile from './pages/dashboard/teacher/TeacherProfile'
 import AdminDashboard from './pages/dashboard/AdminDashboard'
+import LiveTutorApplication from './pages/live-tutor/LiveTutorApplication'
 
 function App() {
   return (
@@ -49,6 +55,9 @@ function App() {
 
           {/* Introduction for prospective teachers before they begin the application form. */}
           <Route path="/become-a-teacher" element={<TeacherWelcome />} />
+          <Route path="/choose-teaching-path" element={<TeachingPathSelection />} />
+          <Route path="/become-a-live-tutor" element={<LiveTutorWelcome />} />
+          <Route path="/register/live-tutor" element={<LiveTutorRegister />} />
 
           {/* Confirmation page for teachers whose application was submitted successfully. */}
           <Route path="/application-submitted" element={<ApplicationSubmitted />} />
@@ -87,12 +96,24 @@ function App() {
             )}
           />
 
+          {/* The application is standalone because it is a focused, multi-step
+              process rather than a page within the student dashboard layout. */}
+          <Route path="/apply/live-tutor" element={(
+            <ProtectedRoute allowedRoles={['student', 'pending_teacher', 'teacher']}>
+              <LiveTutorApplication />
+            </ProtectedRoute>
+          )} />
+
           {/* Student and teacher portals share a nested layout pattern, while each owns different dashboard content. */}
           <Route path="/dashboard/student" element={<StudentDashboard />}>
             <Route index element={<StudentOverview />} />
             <Route path="browse" element={<StudentBrowse />} />
             <Route path="courses" element={<StudentCourses />} />
             <Route path="profile" element={<StudentProfile />} />
+            {/* These remain nested so students keep the dashboard sidebar and
+                mobile layout while moving between live-learning pages. */}
+            <Route path="find-tutor" element={<FindTutor />} />
+            <Route path="my-sessions" element={<StudentSessions />} />
           </Route>
 
           {/* Nested routes keep the teacher portal shell while changing its page content. */}

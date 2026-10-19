@@ -20,7 +20,7 @@ const StudentDashboard = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 lg:flex lg:h-screen lg:overflow-hidden">
-      <div className="hidden lg:block">
+      <div className="hidden h-full lg:block">
         <StudentSidebar />
       </div>
 

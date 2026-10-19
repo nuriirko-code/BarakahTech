@@ -35,7 +35,7 @@ const RoleSelection = () => {
 
           <button
             type="button"
-            onClick={() => navigate('/become-a-teacher')}
+            onClick={() => navigate('/choose-teaching-path')}
             className="group flex-1 rounded-2xl border border-slate-200 bg-white p-10 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-[#22C55E]/40 hover:shadow-md"
           >
             <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F0FDF4] text-2xl text-[#16A34A]" aria-hidden="true">
@@ -43,7 +43,7 @@ const RoleSelection = () => {
             </span>
             <h2 className="mt-6 text-2xl font-extrabold tracking-tight text-slate-900">I want to Teach</h2>
             <p className="mt-3 text-gray-600">
-              Share your knowledge, create courses, and earn by teaching on BarakahTech
+              Choose whether you want to create courses, teach live, or add both from one account.
             </p>
             <span className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#22C55E] px-5 py-3 font-bold text-white shadow-sm shadow-[#22C55E]/25">
               <i className="fas fa-arrow-right text-xs" aria-hidden="true" />

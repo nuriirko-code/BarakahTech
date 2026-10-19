@@ -11,6 +11,13 @@ const navigationItems = [
   { to: '/dashboard/student/profile', label: 'My Profile', icon: 'fas fa-user' },
 ]
 
+// Keeping live-tutoring links separate makes the sidebar's two platform areas
+// clear: self-paced course learning above and future live learning below.
+const liveTutoringItems = [
+  { to: '/dashboard/student/find-tutor', label: 'Find a Tutor', icon: 'fas fa-magnifying-glass' },
+  { to: '/dashboard/student/my-sessions', label: 'My Sessions', icon: 'fas fa-video' },
+]
+
 const StudentSidebar = ({ onClose = () => {} }) => {
   const { user, logout } = useAuth()
   const unreadCount = useUnreadMessageCount()
@@ -23,9 +30,8 @@ const StudentSidebar = ({ onClose = () => {} }) => {
   }
 
   return (
-    <aside className="flex h-full min-h-screen w-[280px] shrink-0 flex-col justify-between border-r border-slate-200 bg-white">
-      <div>
-        <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-6">
+    <aside className="flex h-full min-h-0 w-[280px] shrink-0 flex-col border-r border-slate-200 bg-white">
+      <div className="flex shrink-0 items-center gap-3 border-b border-slate-100 px-5 py-6">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#22C55E] to-[#16A34A] text-lg text-white shadow-md shadow-[#22C55E]/30">
             <i className="fas fa-graduation-cap" aria-hidden="true" />
           </span>
@@ -33,8 +39,11 @@ const StudentSidebar = ({ onClose = () => {} }) => {
             <p className="truncate text-lg font-bold tracking-tight text-slate-900">BarakahTech</p>
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#16A34A]">Student Portal</p>
           </div>
-        </div>
+      </div>
 
+      {/* Only this middle area scrolls when navigation grows. The header and
+          profile/logout area stay reachable at every desktop screen height. */}
+      <div className="min-h-0 flex-1 overflow-y-auto py-2">
         <p className="px-5 pb-2 pt-6 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Menu</p>
         <nav aria-label="Student dashboard" className="space-y-1 px-3">
           {navigationItems.map((item) => (
@@ -62,10 +71,50 @@ const StudentSidebar = ({ onClose = () => {} }) => {
               )}
             </NavLink>
           ))}
+
+          {/* The divider and label give the new live-learning journeys their
+              own visual group without changing the established course menu. */}
+          <div className="mx-1 my-4 border-t border-slate-200" />
+          <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+            Live Tutoring
+          </p>
+
+          {liveTutoringItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              onClick={onClose}
+              className={({ isActive }) => `group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22C55E] ${isActive ? 'bg-[#F0FDF4] text-[#16A34A] shadow-sm ring-1 ring-[#22C55E]/20' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}
+            >
+              {({ isActive }) => (
+                <>
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm ${isActive ? 'bg-[#22C55E] text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'}`} aria-hidden="true">
+                    <i className={item.icon} />
+                  </span>
+                  <span className="truncate">{item.label}</span>
+                  {isActive && <i className="fas fa-chevron-right ml-auto text-[10px] text-[#22C55E]" aria-hidden="true" />}
+                </>
+              )}
+            </NavLink>
+          ))}
+
+          {/* The application is a standalone flow, but this shortcut gives
+              students a discoverable way to begin it from their portal. */}
+          <NavLink
+            to="/apply/live-tutor"
+            onClick={onClose}
+            className="mt-3 flex items-center justify-between rounded-xl border border-[#22C55E]/25 bg-[#F0FDF4] px-4 py-3 text-sm font-semibold text-[#15803D] transition hover:border-[#22C55E]/45 hover:bg-[#DCFCE7] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22C55E]"
+          >
+            <span className="flex items-center gap-3">
+              <i className="fas fa-chalkboard-user" aria-hidden="true" />
+              Apply as a Live Tutor
+            </span>
+            <i className="fas fa-arrow-right text-xs" aria-hidden="true" />
+          </NavLink>
         </nav>
       </div>
 
-      <div className="border-t border-slate-100 p-4">
+      <div className="shrink-0 border-t border-slate-100 p-4">
         <div className="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-100">
           {/* A personal avatar makes the dashboard feel owned and tailored to the student,
               not like a generic portal template. */}

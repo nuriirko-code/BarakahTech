@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
@@ -100,6 +100,20 @@ const TeacherRegister = () => {
   const navigate = useNavigate()
   const { login, updateUser, user, token } = useAuth()
 
+  // An existing learner or live tutor keeps the same User account when adding
+  // course teaching. Account details are reused, while this separate form
+  // still gathers the information needed for course-teacher review.
+  useEffect(() => {
+    if (!user) return
+
+    setFormData((currentData) => ({
+      ...currentData,
+      name: currentData.name || user.name || '',
+      email: currentData.email || user.email || '',
+      profilePhoto: currentData.profilePhoto || user.profilePhoto || '',
+    }))
+  }, [user])
+
   // This single updater handles ordinary inputs and also clears answers when
   // the subject changes, because answers to the former subject no longer apply.
   // when we type in any input this function runs. eg: handleChange('name', 'John') will update formData.name to 'John'
@@ -161,9 +175,9 @@ const TeacherRegister = () => {
     let invalidField = ''
             
     if (step === 1) {
-      const personalFields = [
-        'name', 'email', 'password', 'confirmPassword', 'phone', 'city', 'region', 'dateOfBirth', 'nationalId',
-      ]
+      const personalFields = user
+        ? ['name', 'email', 'phone', 'city', 'region', 'dateOfBirth', 'nationalId']
+        : ['name', 'email', 'password', 'confirmPassword', 'phone', 'city', 'region', 'dateOfBirth', 'nationalId']
       if (personalFields.some((field) => !String(formData[field]).trim())) {
         message = 'Please complete all personal information fields.'
         invalidField = personalFields.find((field) => !String(formData[field]).trim())
@@ -176,10 +190,10 @@ const TeacherRegister = () => {
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
         message = 'Please enter a valid email address.'
         invalidField = 'email'
-      } else if (formData.password !== formData.confirmPassword) {
+      } else if (!user && formData.password !== formData.confirmPassword) {
         message = 'Passwords do not match.'
         invalidField = 'confirmPassword'
-      } else if (formData.password.length < 8 || !/\p{L}/u.test(formData.password) || !/\d/.test(formData.password)) {
+      } else if (!user && (formData.password.length < 8 || !/\p{L}/u.test(formData.password) || !/\d/.test(formData.password))) {
         message = 'Use a password with at least 8 characters, including a letter and a number.'
         invalidField = 'password'
       } else if (!/^\+251\d{9}$/.test(formData.phone.trim())) {
@@ -310,7 +324,7 @@ const TeacherRegister = () => {
      //If we already created the account on a previous try → reuse token
      //Or if the user is already a pending_teacher → reuse token
      //Otherwise → accessToken is null (we must register first)
-      let accessToken = accountCreated || user?.role === 'pending_teacher' ? token : null
+      let accessToken = token || (accountCreated ? token : null)
        //If we don't have an access token, we need to register the user first. We send a POST request to the registration endpoint with the user's personal information. If the registration is successful, we extract the user and token from the response and log in the user. We also set accountCreated to true to indicate that the account has been created.
       if (!accessToken) {
         const registrationResponse = await axios.post('http://localhost:5000/api/auth/register', {
@@ -352,7 +366,7 @@ const TeacherRegister = () => {
         hourlyRate: Number(formData.hourlyRate) || 0,
       })
 
-      updateUser({ profilePhoto: formData.profilePhoto })
+      if (formData.profilePhoto) updateUser({ profilePhoto: formData.profilePhoto })
      
       navigate('/application-submitted')
     } catch (requestError) {
@@ -367,7 +381,10 @@ const TeacherRegister = () => {
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-900 sm:px-6">
-      <section className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
+      {/* Match the newer application form's readable scale while retaining this
+          form's existing fields and behaviour. Scoped selectors enlarge inputs,
+          choices, labels, and helper text without a risky rewrite of each step. */}
+      <section className="mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 text-base shadow-sm sm:p-10 [&_button]:text-base [&_input]:text-base [&_label]:text-base [&_select]:text-base [&_textarea]:text-base">
         <p className="flex items-center justify-center gap-2 text-2xl font-extrabold tracking-tight text-slate-900">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#22C55E] text-sm text-white"><i className="fas fa-graduation-cap" aria-hidden="true" /></span>
           BarakahTech
@@ -388,25 +405,28 @@ const TeacherRegister = () => {
 
         <form onSubmit={currentStep === 6 ? handleSubmit : (event) => { event.preventDefault(); handleNext() }} className="mt-8">
           {currentStep === 1 && (
+            <>
+            {user && <p className="mb-5 rounded-xl border border-green-200 bg-green-50 p-4 text-sm leading-6 text-green-900">You are applying with your existing BarakahTech account. Your account details and profile photo are reused; complete the remaining information needed for course-teaching review.</p>}
             <div className="grid gap-5 sm:grid-cols-2">
               <label className="space-y-2 text-sm font-medium">Full name<input className={inputClass} value={formData.name} onChange={(event) => handleChange('name', event.target.value)} autoComplete="name" />{renderFieldError('name')}</label>
               <label className="space-y-2 text-sm font-medium">Email address<input className={inputClass} type="email" value={formData.email} onChange={(event) => handleChange('email', event.target.value)} autoComplete="email" />{renderFieldError('email')}</label>
-              <label className="space-y-2 text-sm font-medium">Password<input className={inputClass} type="password" value={formData.password} onChange={(event) => handleChange('password', event.target.value)} autoComplete="new-password" />{renderFieldError('password')}</label>
-              <label className="space-y-2 text-sm font-medium">Confirm password<input className={inputClass} type="password" value={formData.confirmPassword} onChange={(event) => handleChange('confirmPassword', event.target.value)} autoComplete="new-password" />{renderFieldError('confirmPassword')}</label>
+              {!user && <><label className="space-y-2 text-sm font-medium">Password<input className={inputClass} type="password" value={formData.password} onChange={(event) => handleChange('password', event.target.value)} autoComplete="new-password" />{renderFieldError('password')}</label>
+              <label className="space-y-2 text-sm font-medium">Confirm password<input className={inputClass} type="password" value={formData.confirmPassword} onChange={(event) => handleChange('confirmPassword', event.target.value)} autoComplete="new-password" />{renderFieldError('confirmPassword')}</label></>}
               <label className="space-y-2 text-sm font-medium">Phone<input className={inputClass} type="tel" value={formData.phone} onChange={(event) => handleChange('phone', event.target.value)} autoComplete="tel" placeholder="+2519xxxxxxxx" />{renderFieldError('phone')}</label>
               <label className="space-y-2 text-sm font-medium">City<input className={inputClass} value={formData.city} onChange={(event) => handleChange('city', event.target.value)} autoComplete="address-level2" />{renderFieldError('city')}</label>
               <label className="space-y-2 text-sm font-medium">Region<input className={inputClass} value={formData.region} onChange={(event) => handleChange('region', event.target.value)} autoComplete="address-level1" />{renderFieldError('region')}</label>
               <label className="space-y-2 text-sm font-medium">Date of birth<input className={inputClass} type="date" value={formData.dateOfBirth} onChange={(event) => handleChange('dateOfBirth', event.target.value)} />{renderFieldError('dateOfBirth')}</label>
               <label className="space-y-2 text-sm font-medium sm:col-span-2">National ID<input className={inputClass} value={formData.nationalId} onChange={(event) => handleChange('nationalId', event.target.value)} />{renderFieldError('nationalId')}</label>
               <div className="flex flex-wrap items-center gap-4 sm:col-span-2">
-                <Avatar name={formData.name || 'Teacher'} imageUrl={formData.profilePhoto} size="xl" />
+                <Avatar name={formData.name || 'Teacher'} imageUrl={formData.profilePhoto || user?.profilePhoto} size="xl" />
                 <label className="space-y-2 text-sm font-medium">
-                  <span className="block">Profile photo (optional)</span>
+                  <span className="block">Profile photo {user?.profilePhoto ? '(already saved — optional replacement)' : '(optional)'}</span>
                   <input className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-green-50 file:px-4 file:py-2 file:font-semibold file:text-green-800 hover:file:bg-green-100" type="file" accept="image/*" onChange={handleProfilePhotoChange} />
                   <span className="block text-xs font-normal text-slate-500">Images are resized before upload. Maximum original size: 10 MB.</span>
                 </label>
               </div>
             </div>
+            </>
           )}
 
           {currentStep === 2 && (

@@ -10,9 +10,10 @@ const {
   updateTeacherProfile,
 } = require('../controllers/teacherApplicationController')
 
-// Only pending teacher applicants may submit; other roles have not entered or
-// are not eligible for the teacher-application review process.
-router.post('/', authMiddleware, authorize('pending_teacher'), submitApplication)
+// Course teaching is an independent capability, so an existing learner or live
+// tutor can apply without creating a second account. Duplicate applications
+// are still rejected by the controller.
+router.post('/', authMiddleware, authorize('student', 'pending_teacher', 'teacher'), submitApplication)
 
 router.get(
   '/my-application',

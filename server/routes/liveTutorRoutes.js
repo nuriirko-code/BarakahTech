@@ -9,9 +9,9 @@ const {
   reviewLiveTutorApplication,
 } = require('../controllers/liveTutorController')
 
-// Students and approved course teachers can both apply because live tutoring is
-// an additional capability, not a replacement for the account's existing role.
-router.post('/apply', authMiddleware, authorize('student', 'teacher'), submitLiveTutorApplication)
+// Learners, course-teacher applicants, and approved course teachers can all
+// apply because live tutoring is an additional capability, not a role swap.
+router.post('/apply', authMiddleware, authorize('student', 'pending_teacher', 'teacher'), submitLiveTutorApplication)
 router.get('/my-application', authMiddleware, getMyLiveTutorApplication)
 
 // Review remains admin-only: approval also creates the public profile students

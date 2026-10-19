@@ -74,6 +74,10 @@ const registerUser = async (req, res) => {
         email: user.email,
         role: user.role,
         profilePhoto: user.profilePhoto,
+        // The sidebar needs this capability immediately after registration or
+        // login, rather than waiting for a full-page refresh and /me request.
+        isLiveTutor: user.isLiveTutor,
+        liveTutorStatus: user.liveTutorStatus,
       }
     })
 
@@ -115,6 +119,10 @@ const loginUser = async (req, res) => {
         email: user.email,
         role: user.role,
         profilePhoto: user.profilePhoto,
+        // These are safe account-state fields, not private application data.
+        // They let the frontend select the appropriate live-tutoring menu.
+        isLiveTutor: user.isLiveTutor,
+        liveTutorStatus: user.liveTutorStatus,
       }
     })
   } catch (error) {

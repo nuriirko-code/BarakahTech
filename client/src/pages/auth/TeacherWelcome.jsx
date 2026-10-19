@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 
 const applicationSteps = [
   {
@@ -21,12 +22,14 @@ const applicationSteps = [
 // This introduction helps prospective teachers understand the platform and
 // review process before they begin the detailed application form.
 const TeacherWelcome = () => {
+  const { user } = useAuth()
+
   return (
     <main className="min-h-screen bg-green-50 px-5 py-12 text-gray-900 sm:px-8">
       <div className="mx-auto max-w-5xl">
-        <Link to="/register" className="inline-flex items-center gap-2 text-sm font-semibold text-[#15803D] hover:underline">
+        <Link to="/choose-teaching-path" className="inline-flex items-center gap-2 text-sm font-semibold text-[#15803D] hover:underline">
           <i className="fas fa-arrow-left text-xs" aria-hidden="true" />
-          Back to role selection
+          Back to teaching paths
         </Link>
 
         <header className="mt-8 rounded-2xl bg-slate-900 px-7 py-12 text-white sm:px-12 sm:py-16">
@@ -34,16 +37,16 @@ const TeacherWelcome = () => {
             <i className="fas fa-graduation-cap" aria-hidden="true" />
             BarakahTech Academy
           </p>
-          <h1 className="mt-4 max-w-2xl text-4xl font-extrabold tracking-tight sm:text-5xl">Teach on BarakahTech</h1>
+          <h1 className="mt-4 max-w-2xl text-4xl font-extrabold tracking-tight sm:text-5xl">Create courses that help learners grow</h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-green-50">
-            Share what you know, help learners grow, and teach in the way that works for you.
+            Organize your expertise into structured courses that learners can follow at their own pace.
           </p>
           <Link
             to="/register/teacher"
             className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#22C55E] px-6 py-3 font-bold text-slate-950 transition-colors hover:bg-[#86EFAC]"
           >
             <i className="fas fa-arrow-right" aria-hidden="true" />
-            Start Application
+            {user ? 'Continue with my account' : 'Start Application'}
           </Link>
         </header>
 
@@ -51,7 +54,7 @@ const TeacherWelcome = () => {
           <article className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
             <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">Why teach on BarakahTech?</h2>
             <p className="mt-4 leading-7 text-gray-600">
-              Reach learners looking for practical knowledge and supportive teaching. Share your expertise through live sessions, courses, or both, and teach in the language you choose.
+              Reach learners looking for practical knowledge and supportive teaching. Build clear lessons, share your expertise, and help learners progress over time.
             </p>
           </article>
 
@@ -79,14 +82,14 @@ const TeacherWelcome = () => {
         <section className="mt-6 rounded-2xl border border-[#22C55E]/20 bg-[#F0FDF4] p-7 sm:p-9">
           <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">Teaching and payment</h2>
           <p className="mt-4 max-w-3xl leading-7 text-slate-700">
-            Teachers can offer live sessions, upload courses, or do both. You can share your availability and, for live sessions, your proposed hourly rate in the application. Payment arrangements and applicable terms will be explained as the platform finalizes your teaching setup.
+            This application is for structured course teaching. You can add live tutoring through the separate live-tutor application later, using the same BarakahTech account and profile.
           </p>
         </section>
 
         <div className="mt-8 text-center">
           <Link to="/register/teacher" className="inline-flex items-center gap-2 rounded-xl bg-[#22C55E] px-7 py-3 font-bold text-white shadow-md shadow-[#22C55E]/25 transition hover:bg-[#16A34A]">
             <i className="fas fa-arrow-right" aria-hidden="true" />
-            Start Application
+            {user ? 'Continue with my account' : 'Start Application'}
           </Link>
         </div>
       </div>
