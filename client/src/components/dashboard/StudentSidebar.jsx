@@ -98,6 +98,19 @@ const StudentSidebar = ({ onClose = () => {} }) => {
             </NavLink>
           ))}
 
+          {/* An approved live-only tutor remains a student role, but this link
+              opens the same shared dashboard shell at tutor-specific tools. */}
+          {user?.isLiveTutor && (
+            <NavLink
+              to="/dashboard/teacher/live-schedule"
+              onClick={onClose}
+              className="mt-2 flex items-center justify-between rounded-xl border border-[#22C55E]/25 bg-[#F0FDF4] px-4 py-3 text-sm font-semibold text-[#15803D] transition hover:border-[#22C55E]/45 hover:bg-[#DCFCE7] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22C55E]"
+            >
+              <span className="flex items-center gap-3"><i className="fas fa-chalkboard-user" aria-hidden="true" /> My Tutor Tools</span>
+              <i className="fas fa-arrow-right text-xs" aria-hidden="true" />
+            </NavLink>
+          )}
+
           {/* The application is a standalone flow, but this shortcut gives
               students a discoverable way to begin it from their portal. */}
           <NavLink

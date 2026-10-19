@@ -35,7 +35,7 @@ const TeacherSidebar = ({ onClose = () => {} }) => {
               BarakahTech
             </p>
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#16A34A]">
-              Teacher Portal
+              {user?.role === 'teacher' ? 'Teacher Portal' : 'Live Tutor Portal'}
             </p>
           </div>
       </div>
@@ -50,7 +50,7 @@ const TeacherSidebar = ({ onClose = () => {} }) => {
 
         {/* Primary navigation */}
         <nav aria-label="Teacher dashboard" className="space-y-1 px-3">
-          {navigationItems.map((item) => (
+          {navigationItems.filter((item) => user?.role === 'teacher' || item.to === '/messages').map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -145,6 +145,48 @@ const TeacherSidebar = ({ onClose = () => {} }) => {
                   </>
                 )}
               </NavLink>
+              <NavLink
+                to="/dashboard/teacher/live-earnings"
+                onClick={onClose}
+                className={({ isActive }) =>
+                  `group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22C55E] ${
+                    isActive
+                      ? 'bg-[#F0FDF4] text-[#16A34A] shadow-sm ring-1 ring-[#22C55E]/20'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm ${isActive ? 'bg-[#22C55E] text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'}`} aria-hidden="true">
+                      <i className="fas fa-coins" />
+                    </span>
+                    <span className="truncate">Live Earnings</span>
+                    {isActive && <i className="fas fa-chevron-right ml-auto text-[10px] text-[#22C55E]" aria-hidden="true" />}
+                  </>
+                )}
+              </NavLink>
+              <NavLink
+                to="/dashboard/teacher/live-profile"
+                onClick={onClose}
+                className={({ isActive }) =>
+                  `group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22C55E] ${
+                    isActive
+                      ? 'bg-[#F0FDF4] text-[#16A34A] shadow-sm ring-1 ring-[#22C55E]/20'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`
+                }
+              >
+                {({ isActive }) => (
+                  <>
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm ${isActive ? 'bg-[#22C55E] text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'}`} aria-hidden="true">
+                      <i className="fas fa-id-card" />
+                    </span>
+                    <span className="truncate">Tutor Profile</span>
+                    {isActive && <i className="fas fa-chevron-right ml-auto text-[10px] text-[#22C55E]" aria-hidden="true" />}
+                  </>
+                )}
+              </NavLink>
             </>
           ) : (
             <button
@@ -176,7 +218,7 @@ const TeacherSidebar = ({ onClose = () => {} }) => {
                 {user?.name || 'Teacher'}
               </p>
               <p className="mt-0.5 inline-block rounded-full bg-[#F0FDF4] px-2 py-0.5 text-[11px] font-semibold capitalize text-[#16A34A] ring-1 ring-[#22C55E]/20">
-                {user?.role || 'teacher'}
+                {user?.isLiveTutor && user?.role !== 'teacher' ? 'Live Tutor' : (user?.role || 'teacher')}
               </p>
             </div>
           </div>

@@ -6,8 +6,8 @@ import { useAuth } from '../../context/AuthContext'
 const ApplicationSubmitted = () => {
   const [searchParams] = useSearchParams()
   const { user } = useAuth()
-  // One confirmation page can support both application flows without creating
-  // duplicate layouts. The query is set only after live tutor form submission.
+  // One confirmation page serves two application types. The URL query
+  // parameter identifies which text and next steps the visitor should see.
   const isLiveTutorApplication = searchParams.get('type') === 'live-tutor'
   // A live-tutor applicant may still have the student role while approval is
   // pending. Send them to the dashboard their current account can access.
@@ -20,24 +20,29 @@ const ApplicationSubmitted = () => {
           <i className="fas fa-circle-check" aria-hidden="true" />
         </span>
         <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-slate-900">
-          {isLiveTutorApplication ? 'Live Tutor Application Submitted' : 'Application Submitted Successfully'}
+          {isLiveTutorApplication ? 'Live Tutor Application Submitted!' : 'Application Submitted Successfully'}
         </h1>
         <p className="mt-3 text-lg text-gray-700">
           {isLiveTutorApplication
-            ? 'Thank you for applying to offer live tutoring on BarakahTech Academy.'
+            ? 'Thank you for applying to teach live sessions on BarakahTech. Our team will review your application and scenario answers within 3–5 business days.'
             : 'Thank you for applying to teach on BarakahTech Academy'}
         </p>
 
-        <p className="mt-6 text-left leading-7 text-gray-600">
-          {isLiveTutorApplication
-            ? 'Our team will carefully review your live teaching experience, availability, and responses. This process typically takes 3 to 5 business days.'
-            : 'Our team will carefully review your application and qualifications. This process typically takes 3 to 5 business days.'}
-        </p>
-        <p className="mt-4 text-left leading-7 text-gray-600">
-          {isLiveTutorApplication
-            ? 'We will contact you at the email address you provided with our decision. Once approved, your account will gain live-tutoring access.'
-            : 'We will contact you at the email address you provided with our decision. If approved, you will gain immediate access to your teacher dashboard.'}
-        </p>
+        {isLiveTutorApplication ? (
+          <section className="mt-6 rounded-xl border border-green-200 bg-[#F0FDF4] p-5 text-left">
+            <h2 className="font-bold text-[#15803D]">What happens next</h2>
+            <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
+              <li>We review your teaching approach and scenario answers.</li>
+              <li>If approved, you will gain access to your live tutor tools.</li>
+              <li>You can then set your availability and start accepting bookings.</li>
+            </ul>
+          </section>
+        ) : (
+          <>
+            <p className="mt-6 text-left leading-7 text-gray-600">Our team will carefully review your application and qualifications. This process typically takes 3 to 5 business days.</p>
+            <p className="mt-4 text-left leading-7 text-gray-600">We will contact you at the email address you provided with our decision. If approved, you will gain immediate access to your teacher dashboard.</p>
+          </>
+        )}
 
         <div className="mt-7 rounded-xl border border-amber-200 bg-amber-50 p-5 text-amber-900">
           <span className="font-semibold">Application Status:</span> Under Review
@@ -45,7 +50,7 @@ const ApplicationSubmitted = () => {
 
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Link to={isLiveTutorApplication ? dashboardPath : '/login'} className="rounded-xl bg-[#22C55E] px-5 py-3 font-bold text-white shadow-md shadow-[#22C55E]/25 transition hover:bg-[#16A34A]">
-            {isLiveTutorApplication ? 'Return to My Dashboard' : 'Return to Login'}
+            {isLiveTutorApplication ? 'Return to Dashboard' : 'Return to Login'}
           </Link>
           <Link to="/" className="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-50">
             Return to Home

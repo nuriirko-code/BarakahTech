@@ -51,8 +51,11 @@ const Login = () => {
 
       login(user, token)
 
-      if (user.role === 'student') navigate('/dashboard/student')
       if (user.role === 'teacher') navigate('/dashboard/teacher')
+      // A live-only tutor remains a student role but has the live-tutoring
+      // capability. Send them to the shared dashboard shell at their tools.
+      if (user.role === 'student' && user.isLiveTutor) navigate('/dashboard/teacher/live-schedule')
+      if (user.role === 'student' && !user.isLiveTutor) navigate('/dashboard/student')
       if (user.role === 'admin') navigate('/dashboard/admin')
     } catch (requestError) {
       setError(requestError.response?.data?.message || 'Login failed')

@@ -176,7 +176,7 @@ const getMyLiveTutorApplication = async (req, res) => {
 const getAllLiveTutorApplications = async (req, res) => {
   try {
     const applications = await LiveTutorApplication.find()
-      .populate('user', 'name email role isLiveTutor liveTutorStatus')
+      .populate('user', 'name email role profilePhoto isLiveTutor liveTutorStatus')
       .sort({ createdAt: -1 })
 
     return res.status(200).json({

@@ -33,6 +33,10 @@ import TeacherCourses from './pages/dashboard/teacher/TeacherCourses'
 import TeacherCreateCourse from './pages/dashboard/teacher/TeacherCreateCourse'
 import TeacherSessions from './pages/dashboard/teacher/TeacherSessions'
 import TeacherProfile from './pages/dashboard/teacher/TeacherProfile'
+import LiveTutorSchedule from './pages/dashboard/teacher/live/LiveTutorSchedule'
+import LiveTutorSessions from './pages/dashboard/teacher/live/LiveTutorSessions'
+import LiveTutorEarnings from './pages/dashboard/teacher/live/LiveTutorEarnings'
+import LiveTutorProfile from './pages/dashboard/teacher/live/LiveTutorProfile'
 import AdminDashboard from './pages/dashboard/AdminDashboard'
 import LiveTutorApplication from './pages/live-tutor/LiveTutorApplication'
 
@@ -128,6 +132,13 @@ function App() {
             <Route path="sessions" element={<TeacherSessions />} />
             {/* This child renders at /dashboard/teacher/profile. */}
             <Route path="profile" element={<TeacherProfile />} />
+            {/* Live-tutor tools are nested here so course teachers and tutors
+                keep one dashboard shell and sidebar while only the active
+                content panel changes. */}
+            <Route path="live-schedule" element={<LiveTutorSchedule />} />
+            <Route path="live-sessions" element={<LiveTutorSessions />} />
+            <Route path="live-earnings" element={<LiveTutorEarnings />} />
+            <Route path="live-profile" element={<LiveTutorProfile />} />
           </Route>
 
           {/* Frontend role checks improve navigation; backend authorization still protects admin APIs. */}
