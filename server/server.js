@@ -10,6 +10,7 @@ const adminRoutes = require("./routes/adminRoutes")
 const paymentRoutes = require("./routes/paymentRoutes")
 const feedbackRoutes = require("./routes/feedbackRoutes")
 const messageRoutes = require("./routes/messageRoutes")
+const liveTutorRoutes = require("./routes/liveTutorRoutes")
 
 const app = express()
 const port = process.env.PORT || 5000
@@ -32,6 +33,9 @@ app.use("/api/courses", courseRoutes)
 app.use("/api/payments", paymentRoutes)
 app.use("/api/feedback", feedbackRoutes)
 app.use("/api/messages", messageRoutes)
+// Live tutor applications are reviewed by admins and create a separate public
+// tutor profile; they are distinct from course-teacher applications.
+app.use("/api/live-tutors", liveTutorRoutes)
 // User-management routes are isolated behind the /api/admin prefix.
 app.use("/api/admin", adminRoutes)
 

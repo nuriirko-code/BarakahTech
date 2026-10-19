@@ -4,6 +4,23 @@ const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
 const { sendPasswordResetEmail, sendWelcomeEmail } = require('../utils/emailService')
 
+// A JWT is a signed snapshot of the account details middleware needs on every
+// protected request. Including isLiveTutor lets authorization decide whether a
+// user has live-tutoring access without running another database query first.
+const generateToken = (userId, role, isLiveTutor = false) => {
+  return jwt.sign(
+    {
+      userId,
+      role,
+      isLiveTutor,
+    },
+    process.env.JWT_SECRET,
+    // Existing installations use a seven-day token lifetime. JWT_EXPIRE can
+    // override it later without making the current configuration invalid.
+    { expiresIn: process.env.JWT_EXPIRE || '7d' }
+  )
+}
+
 const registerUser = async (req, res) => {
   try {
     const { name, email, password, role } = req.body
@@ -45,14 +62,7 @@ const registerUser = async (req, res) => {
 
     // Return a token so teacher applicants can immediately authenticate the
     // protected application submission after their pending_teacher account is created.
-    const token = jwt.sign(
-      {
-        userId: user._id,
-        role: user.role,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    )
+    const token = generateToken(user._id, user.role, user.isLiveTutor)
 
     // 6. Return success
     res.status(201).json({
@@ -94,14 +104,7 @@ const loginUser = async (req, res) => {
       })
     }
 
-    const token = jwt.sign(
-      {
-        userId: user._id,
-        role: user.role,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }
-    )
+    const token = generateToken(user._id, user.role, user.isLiveTutor)
 
     res.status(200).json({
       message: 'Login successful',

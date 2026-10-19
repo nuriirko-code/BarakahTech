@@ -12,13 +12,22 @@ function authorize(...allowedRoles) {
   // with the current request, response, and next function for each request.
   return (req, res, next) => {
     // authMiddleware runs before this middleware and stores the verified JWT
-    // payload on req.user. That payload contains the user's role at req.user.role.
+    // payload on req.user. The token includes isLiveTutor because middleware
+    // only receives the token payload, not the full User document.
     const userRole = req.user.role
+    const isLiveTutor = req.user.isLiveTutor
 
     // Array.includes() checks whether the user's role is one of the roles
     // permitted by the route. Calling next() allows the request to continue to
     // the route handler, so it should only be called after this check succeeds.
     if (allowedRoles.includes(userRole)) {
+      return next()
+    }
+
+    // live_tutor is intentionally a capability rather than a User.role value.
+    // A course teacher may also be an approved live tutor, so each permission
+    // is checked independently and either valid check grants route access.
+    if (allowedRoles.includes('live_tutor') && isLiveTutor) {
       return next()
     }
 

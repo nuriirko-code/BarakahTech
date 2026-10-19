@@ -48,6 +48,22 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Live tutoring is not another value in role because course teaching and
+    // live tutoring are independent capabilities: one account can do either or
+    // both. liveTutorStatus records the application lifecycle, while isLiveTutor
+    // is the quick boolean middleware can check after approval.
+    liveTutorStatus: {
+      type: String,
+      enum: ['none', 'pending', 'approved', 'rejected'],
+      default: 'none',
+      // none: never applied; pending: awaiting review; approved: may tutor;
+      // rejected: application was reviewed but not approved.
+    },
+    isLiveTutor: {
+      type: Boolean,
+      default: false,
+      // This becomes true only when liveTutorStatus is approved.
+    },
     // isActive supports soft deactivation: access can be disabled while the
     // account record remains available for auditing or later reactivation.
     isActive: {
