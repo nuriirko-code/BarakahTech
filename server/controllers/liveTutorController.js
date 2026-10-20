@@ -1,5 +1,6 @@
 const LiveTutorApplication = require('../models/LiveTutorApplication')
 const LiveTutorProfile = require('../models/LiveTutorProfile')
+const TutorAvailability = require('../models/TutorAvailability')
 const User = require('../models/User')
 
 // The project's existing JWT payload uses userId. Keeping that convention here
@@ -173,6 +174,69 @@ const getMyLiveTutorApplication = async (req, res) => {
   }
 }
 
+// Tutor browsing is public so learners can discover teaching options before
+// creating an account. A tutor who teaches "all" levels matches any level
+// search, while rating and session history surface trusted experience first.
+const getApprovedTutors = async (req, res) => {
+  try {
+    const { category, language, minRate, maxRate, subject, level } = req.query
+    const filter = {}
+
+    if (category) filter.mainCategory = category
+    if (language) filter.teachingLanguages = { $in: [language] }
+    if (subject) filter.subjects = { $in: [subject] }
+    if (level) filter.teachingLevel = { $in: [level, 'all'] }
+
+    if (minRate !== undefined || maxRate !== undefined) {
+      const hourlyRate = {}
+      const parsedMinRate = Number(minRate)
+      const parsedMaxRate = Number(maxRate)
+      if (minRate !== undefined && Number.isFinite(parsedMinRate) && parsedMinRate >= 0) hourlyRate.$gte = parsedMinRate
+      if (maxRate !== undefined && Number.isFinite(parsedMaxRate) && parsedMaxRate >= 0) hourlyRate.$lte = parsedMaxRate
+      if (Object.keys(hourlyRate).length) filter.hourlyRate = hourlyRate
+    }
+
+    const profiles = await LiveTutorProfile.find(filter)
+      .populate('user', 'name')
+      .sort({ rating: -1, totalSessionsTaught: -1 })
+      .lean()
+
+    const tutorIds = profiles.map((profile) => profile.user?._id || profile.user).filter(Boolean)
+    const availabilityRecords = await TutorAvailability.find({ tutor: { $in: tutorIds } })
+      .select('tutor isAcceptingBookings')
+      .lean()
+    const availabilityByTutor = new Map(availabilityRecords.map((record) => [String(record.tutor), record.isAcceptingBookings]))
+
+    const tutors = profiles.map((profile) => ({
+      ...profile,
+      // A tutor without a saved schedule is not bookable yet, so the card can
+      // save learners from opening a profile that cannot accept a booking.
+      isAcceptingBookings: availabilityByTutor.get(String(profile.user?._id || profile.user)) === true,
+    }))
+
+    return res.status(200).json({ tutors, count: tutors.length })
+  } catch (error) {
+    console.error('Browse approved tutors error:', error)
+    return res.status(500).json({ message: 'Server error while browsing tutors' })
+  }
+}
+
+const getTutorPublicProfile = async (req, res) => {
+  try {
+    const profile = await LiveTutorProfile.findById(req.params.profileId)
+      .populate('user', 'name')
+      .lean()
+
+    if (!profile) return res.status(404).json({ message: 'Tutor profile not found' })
+
+    const availability = await TutorAvailability.findOne({ tutor: profile.user?._id || profile.user }).lean()
+    return res.status(200).json({ profile, availability })
+  } catch (error) {
+    console.error('Get public tutor profile error:', error)
+    return res.status(500).json({ message: 'Server error while fetching tutor profile' })
+  }
+}
+
 const getAllLiveTutorApplications = async (req, res) => {
   try {
     const applications = await LiveTutorApplication.find()
@@ -270,6 +334,8 @@ const reviewLiveTutorApplication = async (req, res) => {
 module.exports = {
   submitLiveTutorApplication,
   getMyLiveTutorApplication,
+  getApprovedTutors,
+  getTutorPublicProfile,
   getAllLiveTutorApplications,
   reviewLiveTutorApplication,
 }

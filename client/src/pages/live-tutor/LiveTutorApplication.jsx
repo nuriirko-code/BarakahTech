@@ -129,7 +129,7 @@ const LiveTutorApplication = () => {
     setFormData((currentData) => {
       const items = currentData[field]
       const hasItem = items.includes(item)
-
+        
       return {
         ...currentData,
         [field]: hasItem ? items.filter((entry) => entry !== item) : [...items, item],

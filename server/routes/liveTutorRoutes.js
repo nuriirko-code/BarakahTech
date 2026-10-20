@@ -5,9 +5,17 @@ const authorize = require('../middleware/roleMiddleware')
 const {
   submitLiveTutorApplication,
   getMyLiveTutorApplication,
+  getApprovedTutors,
+  getTutorPublicProfile,
   getAllLiveTutorApplications,
   reviewLiveTutorApplication,
 } = require('../controllers/liveTutorController')
+
+// Public discovery lets prospective students compare tutors before signing up.
+// These routes are placed before protected application/review routes so public
+// marketplace URLs stay clearly separated from account-specific actions.
+router.get('/browse', getApprovedTutors)
+router.get('/profile/:profileId', getTutorPublicProfile)
 
 // Learners, course-teacher applicants, and approved course teachers can all
 // apply because live tutoring is an additional capability, not a role swap.

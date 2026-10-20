@@ -39,6 +39,8 @@ import LiveTutorEarnings from './pages/dashboard/teacher/live/LiveTutorEarnings'
 import LiveTutorProfile from './pages/dashboard/teacher/live/LiveTutorProfile'
 import AdminDashboard from './pages/dashboard/AdminDashboard'
 import LiveTutorApplication from './pages/live-tutor/LiveTutorApplication'
+import TutorProfilePage from './pages/tutors/TutorProfilePage'
+import BookingPage from './pages/tutors/BookingPage'
 
 function App() {
   return (
@@ -105,6 +107,15 @@ function App() {
           <Route path="/apply/live-tutor" element={(
             <ProtectedRoute allowedRoles={['student', 'pending_teacher', 'teacher']}>
               <LiveTutorApplication />
+            </ProtectedRoute>
+          )} />
+
+          {/* Tutor profiles are public standalone pages: visitors can evaluate
+              a tutor before registering, without entering either dashboard. */}
+          <Route path="/tutors/:profileId" element={<TutorProfilePage />} />
+          <Route path="/book/:profileId" element={(
+            <ProtectedRoute allowedRoles={['student']}>
+              <BookingPage />
             </ProtectedRoute>
           )} />
 

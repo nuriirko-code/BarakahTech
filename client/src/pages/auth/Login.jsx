@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 
@@ -11,6 +11,7 @@ const Login = () => {
   const [fieldErrors, setFieldErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
   const { login, successMessage } = useAuth()
 
   const handleChange = (event) => {
@@ -77,7 +78,7 @@ const Login = () => {
         </p>
         <h1 className="mt-6 text-center text-3xl font-extrabold tracking-tight text-slate-900">Welcome back</h1>
 
-        {successMessage && <div role="status" className="mt-6 rounded-xl border border-[#22C55E]/20 bg-[#F0FDF4] p-3 text-[#15803D]">{successMessage}</div>}
+        {(successMessage || location.state?.message) && <div role="status" className="mt-6 rounded-xl border border-[#22C55E]/20 bg-[#F0FDF4] p-3 text-[#15803D]">{successMessage || location.state.message}</div>}
         {error && !Object.values(fieldErrors).some(Boolean) && <div role="alert" className="mt-6 rounded-xl border border-red-200 bg-red-50 p-3 text-red-700">{error}</div>}
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">

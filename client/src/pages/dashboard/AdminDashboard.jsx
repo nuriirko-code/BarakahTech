@@ -128,7 +128,7 @@ const AdminDashboard = () => {
         if (isCurrent) setLiveTutorLoading(false)
       }
     }
-
+     
     fetchLiveTutorApplications()
     return () => {
       isCurrent = false
@@ -198,7 +198,7 @@ const AdminDashboard = () => {
         ...updatedApplication,
         user: selectedApplication.user,
       }
-
+       
       // Updating local state keeps the table and open details in sync without
       // another request after the backend has already returned the updated record.
       setApplications((currentApplications) => currentApplications.map((application) => (
@@ -320,7 +320,7 @@ const AdminDashboard = () => {
       </main>
     )
   }
-
+                   
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900">
       <header className="border-b border-slate-200 bg-white">
