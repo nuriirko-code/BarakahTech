@@ -72,11 +72,9 @@ const createInitialFormData = () => ({
   subjects: [],
   teachingLevel: '',
   teachingLanguages: [],
-  sessionDurations: [],
-  hourlyRate: '',
+  sessionDuration: '',
+  sessionPrice: '',
   currency: 'USD',
-  trialSessionOffered: false,
-  trialSessionRate: 0,
   timezone: '',
   weeklyAvailability: [],
   minimumSessionsPerWeek: 1,
@@ -94,7 +92,6 @@ const LiveTutorApplication = () => {
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState(createInitialFormData)
   const [subjectInput, setSubjectInput] = useState('')
-  const [sessionDurationInput, setSessionDurationInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
@@ -192,34 +189,6 @@ const LiveTutorApplication = () => {
     setFieldErrors((currentErrors) => ({ ...currentErrors, mainCategory: '', subjects: '' }))
   }
 
-  const addSessionDuration = () => {
-    const duration = Number(sessionDurationInput)
-    if (!Number.isFinite(duration) || duration <= 0) {
-      setFieldErrors((currentErrors) => ({
-        ...currentErrors,
-        sessionDurations: 'Enter a session length greater than zero minutes.',
-      }))
-      return
-    }
-
-    if (!formData.sessionDurations.includes(duration)) {
-      setFormData((currentData) => ({
-        ...currentData,
-        sessionDurations: [...currentData.sessionDurations, duration],
-      }))
-    }
-
-    setSessionDurationInput('')
-    clearFieldError('sessionDurations')
-  }
-
-  const handleSessionDurationKeyDown = (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      addSessionDuration()
-    }
-  }
-
   const toggleDay = (day) => {
     setFormData((currentData) => {
       const isSelected = currentData.weeklyAvailability.some((slot) => slot.day === day)
@@ -267,8 +236,8 @@ const LiveTutorApplication = () => {
     }
 
     if (step === 2) {
-      if (!formData.sessionDurations.length) nextFieldErrors.sessionDurations = 'Add at least one session length.'
-      if (Number(formData.hourlyRate) <= 0) nextFieldErrors.hourlyRate = 'Enter an hourly rate greater than zero.'
+      if (!Number.isInteger(Number(formData.sessionDuration)) || Number(formData.sessionDuration) < 1) nextFieldErrors.sessionDuration = 'Enter a whole session length greater than zero.'
+      if (Number(formData.sessionPrice) <= 0) nextFieldErrors.sessionPrice = 'Enter a session price greater than zero.'
     }
 
     if (step === 3) {
@@ -341,9 +310,8 @@ const LiveTutorApplication = () => {
       const applicationData = {
         ...formData,
         profilePhoto: formData.profilePhoto || user?.profilePhoto || '',
-        sessionDurations: formData.sessionDurations.map(Number),
-        hourlyRate: Number(formData.hourlyRate),
-        trialSessionRate: formData.trialSessionOffered ? Number(formData.trialSessionRate) || 0 : 0,
+        sessionDuration: Number(formData.sessionDuration),
+        sessionPrice: Number(formData.sessionPrice),
         minimumSessionsPerWeek: Number(formData.minimumSessionsPerWeek),
         advanceBookingHours: Number(formData.advanceBookingHours),
         yearsOfExperience: Number(formData.yearsOfExperience),
@@ -543,54 +511,34 @@ const LiveTutorApplication = () => {
 
             {currentStep === 2 && (
               <div className="space-y-8">
-                <fieldset>
-                  <legend className="text-base font-bold text-slate-900">Session length you offer</legend>
-                  <p className="mt-1 text-base leading-7 text-slate-500">Choose your own session length in minutes. You can add more than one option if you offer different session lengths.</p>
-                  <div className="mt-3 flex gap-2">
-                    <input type="number" min="1" step="1" value={sessionDurationInput} onChange={(event) => setSessionDurationInput(event.target.value)} onKeyDown={handleSessionDurationKeyDown} className={`${inputClass} ${errorInputClass('sessionDurations')}`} placeholder="For example, 50" aria-label="Session length in minutes" />
-                    <button type="button" onClick={addSessionDuration} className="shrink-0 rounded-xl bg-blue-600 px-5 py-3.5 text-base font-bold text-white transition hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">Add</button>
-                  </div>
-                  {renderFieldError('sessionDurations')}
-                  {formData.sessionDurations.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {formData.sessionDurations.map((duration) => (
-                        <button key={duration} type="button" onClick={() => toggleArrayItem('sessionDurations', duration)} className="inline-flex items-center gap-2 rounded-full bg-[#F0FDF4] px-4 py-2 text-base font-semibold text-[#15803D] ring-1 ring-[#22C55E]/20 transition hover:bg-[#DCFCE7]" aria-label={`Remove ${duration}-minute session`}>
-                          {duration} minutes <i className="fas fa-xmark text-xs" aria-hidden="true" />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </fieldset>
-
                 <section className="rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:p-6">
-                  <h2 className="text-lg font-bold text-slate-900">Your hourly rate</h2>
+                  <h2 className="text-lg font-bold text-slate-900">Your paid session offer</h2>
+                  <p className="mt-1 text-base leading-7 text-slate-500">Students see exactly one session duration and one price. They will not need to calculate an hourly rate.</p>
                   <div className="mt-4 grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
                     <label className="space-y-2 text-base font-semibold text-slate-700">Currency
                       <select value={formData.currency} onChange={(event) => handleChange('currency', event.target.value)} className={inputClass}>
                         {getSupportedCurrencies().map((currency) => <option key={currency.code} value={currency.code}>{currency.symbol} {currency.code} — {currency.name}</option>)}
                       </select>
                     </label>
-                    <label className="space-y-2 text-base font-semibold text-slate-700">Rate per hour
-                      <input type="number" min="0.01" step="0.01" value={formData.hourlyRate} onChange={(event) => handleChange('hourlyRate', event.target.value)} className={`${inputClass} ${errorInputClass('hourlyRate')}`} placeholder="25" />
-                      {renderFieldError('hourlyRate')}
+                    <label className="space-y-2 text-base font-semibold text-slate-700">Paid session price
+                      <input type="number" min="0.01" step="0.01" value={formData.sessionPrice} onChange={(event) => handleChange('sessionPrice', event.target.value)} className={`${inputClass} ${errorInputClass('sessionPrice')}`} placeholder="25" />
+                      {renderFieldError('sessionPrice')}
                     </label>
                   </div>
-                  <p className="mt-3 text-base leading-7 text-slate-500">This is your rate per hour. For 30-minute sessions, students pay half this rate.</p>
+                  <label className="mt-5 block max-w-sm space-y-2 text-base font-semibold text-slate-700">Paid session length in minutes
+                    <input type="number" min="1" step="1" value={formData.sessionDuration} onChange={(event) => handleChange('sessionDuration', event.target.value)} className={`${inputClass} ${errorInputClass('sessionDuration')}`} placeholder="For example, 60" />
+                    {renderFieldError('sessionDuration')}
+                  </label>
                 </section>
                    
-                <section className="rounded-2xl border border-slate-200 p-5 sm:p-6">
-                  <label className="flex cursor-pointer items-start gap-3">
-                    <input type="checkbox" checked={formData.trialSessionOffered} onChange={(event) => handleChange('trialSessionOffered', event.target.checked)} className="mt-1 h-4 w-4 rounded border-slate-300 accent-[#22C55E]" />
-                    <span>
-                      <span className="block text-base font-bold text-slate-900">I offer a trial session at a reduced rate</span>
-                      <span className="mt-1 block text-base leading-7 text-slate-500">A short first session can help students decide whether your teaching style suits them.</span>
-                    </span>
-                  </label>
-                  {formData.trialSessionOffered && (
-                    <label className="mt-5 block max-w-sm space-y-2 text-base font-semibold text-slate-700">Trial session rate
-                      <input type="number" min="0" step="0.01" value={formData.trialSessionRate} onChange={(event) => handleChange('trialSessionRate', event.target.value)} className={inputClass} placeholder="10" />
-                    </label>
-                  )}
+                <section className="rounded-2xl border border-green-200 bg-green-50 p-5 sm:p-6">
+                  <div className="flex gap-3">
+                    <i className="fas fa-gift mt-1 text-green-700" aria-hidden="true" />
+                    <div>
+                      <h2 className="text-lg font-bold text-green-900">Free introductory sessions are included</h2>
+                      <p className="mt-1 text-base leading-7 text-green-800">Every new student can book one free 30-minute introductory session with you. This gives both of you a chance to meet before the student chooses paid sessions.</p>
+                    </div>
+                  </div>
                 </section>
               </div>
             )}

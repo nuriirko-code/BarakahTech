@@ -139,6 +139,38 @@ const sendPaymentReceivedNotificationEmail = async (teacher, student, course, pa
   return sendEmail({ to: teacher.email, subject, html: getEmailTemplate(subject, body) })
 }
 
+// Both participants receive the same confirmed-session facts, while the
+// dashboard link differs so each person arrives at their own session list.
+const sendLiveSessionConfirmedEmails = async (student, tutor, booking) => {
+  if (!student || !tutor) return false
+
+  const date = new Intl.DateTimeFormat('en-US', {
+    dateStyle: 'full',
+    timeZone: booking.timezone || 'UTC',
+  }).format(new Date(booking.sessionDate))
+  const sessionDetails = `<p><strong>Date:</strong> ${escapeHtml(date)}</p>
+    <p><strong>Time:</strong> ${escapeHtml(booking.startTime)} - ${escapeHtml(booking.endTime)} (${escapeHtml(booking.timezone)})</p>
+    <p><strong>Duration:</strong> ${escapeHtml(booking.duration)} minutes</p>`
+  const trialNote = booking.isTrialSession
+    ? '<p>This is a free 30-minute introductory session.</p>'
+    : '<p>Your payment has been verified and the session is confirmed.</p>'
+
+  const [studentResult, tutorResult] = await Promise.all([
+    sendEmail({
+      to: student.email,
+      subject: 'Your live tutoring session is confirmed',
+      html: getEmailTemplate('Your session is confirmed', `<p>Hello ${escapeHtml(student.name)},</p>${trialNote}${sessionDetails}<p><a href="${getFrontendUrl()}/dashboard/student/my-sessions" style="color:#15803d;font-weight:700;">View your sessions</a></p>`),
+    }),
+    sendEmail({
+      to: tutor.email,
+      subject: 'A live tutoring session is confirmed',
+      html: getEmailTemplate('Your session is confirmed', `<p>Hello ${escapeHtml(tutor.name)},</p><p>${escapeHtml(student.name)} has a confirmed session with you.</p>${trialNote}${sessionDetails}<p><a href="${getFrontendUrl()}/dashboard/teacher/live-sessions" style="color:#15803d;font-weight:700;">View your sessions</a></p>`),
+    }),
+  ])
+
+  return studentResult && tutorResult
+}
+
 // Message notifications intentionally include no message body: email inboxes can be shared
 // or forwarded, while the actual conversation remains behind authenticated platform access.
 const sendNewMessageEmail = async (recipient, sender, conversationSubject = '') => {
@@ -203,6 +235,7 @@ module.exports = {
   sendEnrollmentConfirmationEmail,
   sendPaymentVerifiedEmail,
   sendPaymentReceivedNotificationEmail,
+  sendLiveSessionConfirmedEmails,
   sendNewMessageEmail,
   sendPasswordResetEmail,
   sendAdminAnnouncementEmail,

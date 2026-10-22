@@ -9,6 +9,8 @@ const sessionBookingSchema = new mongoose.Schema(
     tutor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     tutorProfile: { type: mongoose.Schema.Types.ObjectId, ref: 'LiveTutorProfile', required: true },
 
+    // The tutor selection establishes the teaching area, so this is recorded
+    // automatically from the tutor profile instead of asking the learner twice.
     subject: { type: String, required: true, trim: true },
     sessionDate: { type: Date, required: true },
     // Wall-clock values stay as strings because calculating from a Date alone
@@ -24,9 +26,13 @@ const sessionBookingSchema = new mongoose.Schema(
     currency: { type: String, required: true, uppercase: true, trim: true },
     platformFee: { type: Number, default: 0, min: 0 },
     tutorEarning: { type: Number, default: 0, min: 0 },
-    paymentStatus: { type: String, enum: ['pending', 'paid', 'refunded'], default: 'pending' },
+    paymentStatus: { type: String, enum: ['not_required', 'pending', 'paid', 'refunded'], default: 'pending' },
     paymentReference: { type: String, default: '', trim: true },
     paymentMethod: { type: String, default: 'manual', trim: true },
+
+    // One free, fixed-length introductory session is allowed for each
+    // student-tutor pair before their paid learning relationship begins.
+    isTrialSession: { type: Boolean, default: false, index: true },
 
     // pending_payment means the time is held temporarily but is not a confirmed
     // session until the platform verifies the student's manual transfer.
@@ -50,6 +56,12 @@ const sessionBookingSchema = new mongoose.Schema(
 )
 
 sessionBookingSchema.index({ tutor: 1, sessionDate: 1, startTime: 1 })
+// The database enforces the free-trial policy even if two booking requests
+// arrive at the same moment from separate browser tabs.
+sessionBookingSchema.index(
+  { student: 1, tutor: 1, isTrialSession: 1 },
+  { unique: true, partialFilterExpression: { isTrialSession: true } }
+)
 
 const SessionBooking = mongoose.model('SessionBooking', sessionBookingSchema)
 

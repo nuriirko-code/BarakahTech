@@ -52,6 +52,19 @@ const liveTutorProfileSchema = new mongoose.Schema(
       default: '',
     },
 
+    // A tutor publishes one straightforward paid-session offer so learners
+    // see one duration and one price rather than derived hourly calculations.
+    sessionDuration: {
+      type: Number,
+      min: 1,
+    },
+    sessionPrice: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    // These legacy fields remain temporarily to display existing profiles
+    // created before the direct session-price policy was introduced.
     sessionDurations: {
       type: [Number],
       default: [],
@@ -66,7 +79,7 @@ const liveTutorProfileSchema = new mongoose.Schema(
     },
     trialSessionOffered: {
       type: Boolean,
-      default: false,
+      default: true,
     },
     trialSessionRate: {
       type: Number,

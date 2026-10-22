@@ -67,22 +67,35 @@ const liveTutorApplicationSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Tutors choose one clear paid offer. Students see this exact duration and
+    // price together, rather than needing to calculate an hourly rate.
+    sessionDuration: {
+      type: Number,
+      min: 1,
+    },
+    sessionPrice: {
+      type: Number,
+      min: 0,
+    },
+    // Retained only to read applications submitted before direct session
+    // pricing. New applications use sessionDuration and sessionPrice above.
     sessionDurations: {
       type: [Number],
-      required: true,
+      default: undefined,
     },
     hourlyRate: {
       type: Number,
-      required: true,
-      min: 1,
+      default: undefined,
     },
     currency: {
       type: String,
       default: 'USD',
     },
+    // Every approved tutor participates in the platform-wide free 30-minute
+    // introductory session policy; applicants are informed before applying.
     trialSessionOffered: {
       type: Boolean,
-      default: false,
+      default: true,
     },
     trialSessionRate: {
       type: Number,

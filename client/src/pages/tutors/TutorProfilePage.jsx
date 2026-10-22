@@ -54,8 +54,8 @@ const TutorProfilePage = () => {
     return () => { isCurrent = false }
   }, [profileId])
 
-  // Prices are derived from the hourly rate instead of stored separately, so
-  // 30-, 60-, and 90-minute options always stay mathematically consistent.
+  // The booking page decides whether this student receives the free trial or
+  // the tutor's fixed paid offer after it securely checks their booking history.
   const handleBookSession = () => {
     if (!user) {
       navigate('/login', { state: { message: 'Login to book a session' } })
@@ -73,7 +73,11 @@ const TutorProfilePage = () => {
   }
 
   const tutorName = profile.user?.name || 'Qualified tutor'
-  const offeredDurations = [...new Set(profile.sessionDurations || [])].sort((first, second) => first - second)
+  const paidDuration = Number(profile.sessionDuration || profile.sessionDurations?.[0] || 60)
+  const directPrice = Number(profile.sessionPrice)
+  const paidPrice = Number.isFinite(directPrice) && directPrice > 0
+    ? directPrice
+    : Number(((Number(profile.hourlyRate || 0) / 60) * paidDuration).toFixed(2))
   const activeSlots = (availability?.weeklySlots || []).filter((slot) => slot.isActive !== false)
   const isAcceptingBookings = availability?.isAcceptingBookings === true
   const videoEmbedUrl = profile.introVideoUrl ? getVideoEmbedUrl(profile.introVideoUrl) : ''
@@ -85,7 +89,24 @@ const TutorProfilePage = () => {
         <aside className="space-y-6 lg:sticky lg:top-24">
           <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"><div className={`relative flex h-28 items-center justify-center bg-gradient-to-br ${getCategoryGradient(profile.mainCategory)}`}><i className={`${getCategoryIcon(profile.mainCategory)} text-4xl text-white/50`} aria-hidden="true" /></div><div className="relative px-6 pb-6 text-center"><div className="-mt-12 flex justify-center"><span className="rounded-full bg-white p-1 shadow-md"><Avatar name={tutorName} imageUrl={profile.profilePhoto} size="xl" /></span></div><h1 className="mt-4 text-2xl font-extrabold tracking-tight">{tutorName}</h1>{profile.isVerified && <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#F0FDF4] px-3 py-1 text-xs font-bold text-[#15803D]"><i className="fas fa-shield-halved" aria-hidden="true" />Verified Tutor</span>}<div className="mt-4 flex items-center justify-center gap-2 text-sm"><span className="text-amber-500">{[1, 2, 3, 4, 5].map((star) => <i key={star} className={`fas fa-star ${star <= roundedRating ? '' : 'text-slate-200'}`} aria-hidden="true" />)}</span><span className="text-slate-600">{Number(profile.rating || 0).toFixed(1)} · {profile.totalSessionsTaught || 0} sessions</span></div><div className="mt-5 flex flex-wrap justify-center gap-2">{(profile.teachingLanguages || []).map((language) => <span key={language} className="rounded-full bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-800">{language}</span>)}<span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold capitalize text-blue-800">{profile.teachingLevel === 'all' ? 'All levels' : profile.teachingLevel}</span></div><p className="mt-5 flex items-center justify-center gap-2 text-sm text-slate-600"><i className="fas fa-clock text-[#16A34A]" aria-hidden="true" />Usually responds within {profile.responseTimeHours || 24} hours</p></div></section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="text-lg font-extrabold">Session Rates</h2><div className="mt-4 space-y-3">{offeredDurations.map((duration) => <div key={duration} className="flex items-center justify-between border-b border-slate-100 pb-3 text-sm"><span className="text-slate-600">{duration} min session</span><span className="font-extrabold text-[#15803D]">{formatCurrency(Number(profile.hourlyRate) * (duration / 60), profile.currency)}</span></div>)}{profile.trialSessionOffered && <div className="flex items-center justify-between rounded-xl bg-amber-50 p-3 text-sm"><span className="font-semibold text-amber-900">Trial session</span><span className="font-extrabold text-amber-900">{formatCurrency(profile.trialSessionRate, profile.currency)}</span></div>}</div><button type="button" disabled={!isAcceptingBookings} onClick={handleBookSession} className={`mt-6 flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3.5 font-bold transition ${isAcceptingBookings ? 'bg-[#16A34A] text-white hover:bg-[#15803D]' : 'cursor-not-allowed bg-slate-200 text-slate-500'}`}><i className="fas fa-calendar-plus" aria-hidden="true" />{isAcceptingBookings ? 'Book a Session' : 'Not accepting bookings'}</button></section>
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-extrabold">Session</h2>
+            <div className="mt-4 rounded-xl bg-slate-50 p-4">
+              <p className="text-sm text-slate-600">Paid session</p>
+              <div className="mt-1 flex items-baseline justify-between gap-3">
+                <p className="font-bold text-slate-900">{paidDuration} minutes</p>
+                <p className="text-lg font-extrabold text-[#15803D]">{formatCurrency(paidPrice, profile.currency)}</p>
+              </div>
+            </div>
+            <div className="mt-3 rounded-xl bg-green-50 p-4 text-sm text-green-800">
+              <p className="font-bold">Free first introduction</p>
+              <p className="mt-1 leading-6">Every new student receives one free 30-minute introductory session with this tutor.</p>
+            </div>
+            <button type="button" disabled={!isAcceptingBookings} onClick={handleBookSession} className={`mt-6 flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3.5 font-bold transition ${isAcceptingBookings ? 'bg-[#16A34A] text-white hover:bg-[#15803D]' : 'cursor-not-allowed bg-slate-200 text-slate-500'}`}>
+              <i className="fas fa-calendar-plus" aria-hidden="true" />
+              {isAcceptingBookings ? 'Book a Session' : 'Not accepting bookings'}
+            </button>
+          </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="flex items-center gap-2 text-lg font-extrabold"><i className="fas fa-calendar-days text-[#16A34A]" aria-hidden="true" />Availability</h2>{availability ? <><p className="mt-3 text-sm font-semibold text-slate-700">{availability.timezone}</p><div className="mt-4 space-y-2">{activeSlots.length ? activeSlots.map((slot) => <div key={slot.day} className="flex justify-between gap-4 rounded-lg bg-slate-50 px-3 py-2.5 text-sm"><span className="font-semibold text-slate-800">{slot.day}</span><span className="text-slate-600">{formatTime(slot.startTime)} — {formatTime(slot.endTime)}</span></div>) : <p className="text-sm text-slate-500">No active times are currently listed.</p>}</div><p className="mt-4 text-xs leading-5 text-slate-500">All times shown in {availability.timezone}.</p></> : <p className="mt-3 text-sm text-slate-500">This tutor has not published availability yet.</p>}</section>
         </aside>

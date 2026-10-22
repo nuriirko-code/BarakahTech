@@ -36,11 +36,9 @@ const submitLiveTutorApplication = async (req, res) => {
       subjects,
       mainCategory,
       teachingLevel,
-      sessionDurations,
-      hourlyRate,
+      sessionDuration,
+      sessionPrice,
       currency,
-      trialSessionOffered,
-      trialSessionRate,
       yearsOfExperience,
       teachingCertificate,
       governmentId,
@@ -64,10 +62,10 @@ const submitLiveTutorApplication = async (req, res) => {
       subjects.length === 0 ||
       !mainCategory ||
       !teachingLevel ||
-      !Array.isArray(sessionDurations) ||
-      sessionDurations.length === 0 ||
-      hourlyRate === undefined ||
-      hourlyRate === null ||
+      sessionDuration === undefined ||
+      sessionDuration === null ||
+      sessionPrice === undefined ||
+      sessionPrice === null ||
       !currency ||
       yearsOfExperience === undefined ||
       yearsOfExperience === null ||
@@ -81,6 +79,12 @@ const submitLiveTutorApplication = async (req, res) => {
       return res.status(400).json({
         message: 'Please provide all required live tutor application fields',
       })
+    }
+
+    const paidDuration = Number(sessionDuration)
+    const paidPrice = Number(sessionPrice)
+    if (!Number.isInteger(paidDuration) || paidDuration < 1 || !Number.isFinite(paidPrice) || paidPrice < 0) {
+      return res.status(400).json({ message: 'Choose a valid paid session duration and price.' })
     }
 
     // Profile images are stored as compressed data URLs until Cloudinary is
@@ -115,11 +119,11 @@ const submitLiveTutorApplication = async (req, res) => {
       subjects,
       mainCategory,
       teachingLevel,
-      sessionDurations,
-      hourlyRate,
+      sessionDuration: paidDuration,
+      sessionPrice: paidPrice,
       currency,
-      trialSessionOffered,
-      trialSessionRate,
+      trialSessionOffered: true,
+      trialSessionRate: 0,
       yearsOfExperience,
       teachingCertificate,
       governmentId,
@@ -188,12 +192,12 @@ const getApprovedTutors = async (req, res) => {
     if (level) filter.teachingLevel = { $in: [level, 'all'] }
 
     if (minRate !== undefined || maxRate !== undefined) {
-      const hourlyRate = {}
+      const sessionPrice = {}
       const parsedMinRate = Number(minRate)
       const parsedMaxRate = Number(maxRate)
-      if (minRate !== undefined && Number.isFinite(parsedMinRate) && parsedMinRate >= 0) hourlyRate.$gte = parsedMinRate
-      if (maxRate !== undefined && Number.isFinite(parsedMaxRate) && parsedMaxRate >= 0) hourlyRate.$lte = parsedMaxRate
-      if (Object.keys(hourlyRate).length) filter.hourlyRate = hourlyRate
+      if (minRate !== undefined && Number.isFinite(parsedMinRate) && parsedMinRate >= 0) sessionPrice.$gte = parsedMinRate
+      if (maxRate !== undefined && Number.isFinite(parsedMaxRate) && parsedMaxRate >= 0) sessionPrice.$lte = parsedMaxRate
+      if (Object.keys(sessionPrice).length) filter.sessionPrice = sessionPrice
     }
 
     const profiles = await LiveTutorProfile.find(filter)
@@ -302,11 +306,11 @@ const reviewLiveTutorApplication = async (req, res) => {
           teachingLanguages: application.teachingLanguages,
           introVideoUrl: application.introVideoUrl,
           profilePhoto: user.profilePhoto,
-          sessionDurations: application.sessionDurations,
-          hourlyRate: application.hourlyRate,
+          sessionDuration: application.sessionDuration || application.sessionDurations?.[0] || 60,
+          sessionPrice: application.sessionPrice ?? application.hourlyRate ?? 0,
           currency: application.currency,
-          trialSessionOffered: application.trialSessionOffered,
-          trialSessionRate: application.trialSessionRate,
+          trialSessionOffered: true,
+          trialSessionRate: 0,
         },
         { new: true, upsert: true, setDefaultsOnInsert: true }
       )

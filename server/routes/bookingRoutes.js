@@ -3,6 +3,7 @@ const router = express.Router()
 const authMiddleware = require('../middleware/authMiddleware')
 const authorize = require('../middleware/roleMiddleware')
 const {
+  getBookingOffer,
   createBooking,
   confirmBookingPayment,
   adminConfirmBookingPayment,
@@ -11,6 +12,8 @@ const {
   cancelBooking,
 } = require('../controllers/bookingController')
 
+// A student sees the correct free-trial or paid offer before choosing a time.
+router.get('/tutor/:tutorProfileId/offer', authMiddleware, authorize('student'), getBookingOffer)
 // The server checks time overlap before creating a record, which prevents two
 // students from successfully booking the same tutor slot at the same time.
 router.post('/tutor/:tutorProfileId', authMiddleware, authorize('student'), createBooking)

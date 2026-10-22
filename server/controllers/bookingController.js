@@ -2,12 +2,18 @@ const SessionBooking = require('../models/SessionBooking')
 const LiveTutorProfile = require('../models/LiveTutorProfile')
 const TutorAvailability = require('../models/TutorAvailability')
 const Payment = require('../models/Payment')
+const User = require('../models/User')
 const { calculateFees, generatePaymentCode } = require('../utils/paymentUtils')
+const { sendLiveSessionConfirmedEmails } = require('../utils/emailService')
 
-const getCurrentUserId = (req) => req.user?.userId || req.user?.id
+const FREE_TRIAL_DURATION = 30
 const validLevels = ['beginner', 'intermediate', 'advanced']
 const validPaymentMethods = ['telebirr', 'cbe_birr', 'other_mobile', 'manual']
 
+const getCurrentUserId = (req) => req.user?.userId || req.user?.id
+
+// Converts wall-clock values into minutes so availability and conflict checks
+// compare numbers instead of unreliable time strings.
 const toMinutes = (time) => {
   const [hours, minutes] = String(time || '').split(':').map(Number)
   return Number.isInteger(hours) && Number.isInteger(minutes) && hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60
@@ -17,6 +23,7 @@ const toMinutes = (time) => {
 
 const toTime = (minutes) => `${String(Math.floor(minutes / 60) % 24).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
 const bookingDayName = (date) => ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][date.getUTCDay()]
+
 const dateBounds = (date) => {
   const start = new Date(date)
   start.setUTCHours(0, 0, 0, 0)
@@ -25,19 +32,61 @@ const dateBounds = (date) => {
   return { start, end }
 }
 
-// Conflicts are checked on the server rather than trusting displayed UI slots;
-// two students could otherwise submit the same time at nearly the same moment.
+// New profiles have a direct offer; the fallback keeps tutors created before
+// this policy visible while their price is updated through a future editor.
+const getPaidOffer = (profile) => {
+  const duration = Number(profile.sessionDuration || profile.sessionDurations?.[0] || 60)
+  const directPrice = Number(profile.sessionPrice)
+  const legacyPrice = Number(((Number(profile.hourlyRate || 0) / 60) * duration).toFixed(2))
+
+  return {
+    duration,
+    price: Number.isFinite(directPrice) && directPrice > 0 ? directPrice : legacyPrice,
+    currency: String(profile.currency || 'USD').toUpperCase(),
+  }
+}
+
+const hasUsedFreeTrial = (studentId, tutorId) => SessionBooking.exists({
+  student: studentId,
+  tutor: tutorId,
+  isTrialSession: true,
+})
+
+// This authenticated endpoint tells the booking page whether it should display
+// the platform's free first session or the tutor's normal paid offer.
+const getBookingOffer = async (req, res) => {
+  try {
+    const tutorProfile = await LiveTutorProfile.findById(req.params.tutorProfileId)
+    if (!tutorProfile) return res.status(404).json({ message: 'Tutor profile not found.' })
+
+    const trialAlreadyUsed = await hasUsedFreeTrial(getCurrentUserId(req), tutorProfile.user)
+    const paidOffer = getPaidOffer(tutorProfile)
+    const isTrialEligible = !trialAlreadyUsed
+
+    return res.status(200).json({
+      isTrialEligible,
+      offer: isTrialEligible
+        ? { label: 'Free introductory session', duration: FREE_TRIAL_DURATION, price: 0, currency: paidOffer.currency }
+        : { label: 'Paid session', ...paidOffer },
+    })
+  } catch (error) {
+    console.error('Get booking offer error:', error)
+    return res.status(500).json({ message: 'Server error while preparing this booking.' })
+  }
+}
+
+// The server creates the price and duration itself. This prevents a browser
+// from changing a paid price, or pretending it is still eligible for a trial.
 const createBooking = async (req, res) => {
   try {
     const studentId = getCurrentUserId(req)
     const { tutorProfileId } = req.params
-    const { subject, sessionDate, startTime, duration, studentGoals, studentLevel, paymentMethod } = req.body
-    const durationNumber = Number(duration)
+    const { sessionDate, startTime, studentGoals, studentLevel } = req.body
     const startMinutes = toMinutes(startTime)
     const date = new Date(`${sessionDate}T00:00:00.000Z`)
 
-    if (!subject?.trim() || !sessionDate || startMinutes === null || !Number.isFinite(durationNumber) || durationNumber <= 0 || Number.isNaN(date.getTime())) {
-      return res.status(400).json({ message: 'Subject, date, start time, and duration are required.' })
+    if (!sessionDate || startMinutes === null || Number.isNaN(date.getTime())) {
+      return res.status(400).json({ message: 'Choose a valid session date and start time.' })
     }
     if (studentLevel && !validLevels.includes(studentLevel)) {
       return res.status(400).json({ message: 'Choose a valid current level.' })
@@ -50,10 +99,15 @@ const createBooking = async (req, res) => {
     const availability = await TutorAvailability.findOne({ tutor: tutorProfile.user })
     if (!availability) return res.status(404).json({ message: 'This tutor has not set their availability yet.' })
     if (!availability.isAcceptingBookings) return res.status(400).json({ message: 'This tutor is not accepting bookings at the moment.' })
-    if (!tutorProfile.sessionDurations.includes(durationNumber)) return res.status(400).json({ message: 'Choose one of this tutor’s offered session durations.' })
 
-    const endMinutes = startMinutes + durationNumber
+    const isTrialSession = !(await hasUsedFreeTrial(studentId, tutorProfile.user))
+    const paidOffer = getPaidOffer(tutorProfile)
+    const duration = isTrialSession ? FREE_TRIAL_DURATION : paidOffer.duration
+    const price = isTrialSession ? 0 : paidOffer.price
+    const endMinutes = startMinutes + duration
+
     if (endMinutes > (24 * 60)) return res.status(400).json({ message: 'This session would end after midnight.' })
+
     const daySlot = availability.weeklySlots.find((slot) => slot.day === bookingDayName(date) && slot.isActive !== false)
     if (!daySlot || startMinutes < toMinutes(daySlot.startTime) || endMinutes > toMinutes(daySlot.endTime)) {
       return res.status(400).json({ message: 'Choose a time inside the tutor’s available hours.' })
@@ -61,7 +115,9 @@ const createBooking = async (req, res) => {
 
     const noticeTime = new Date(Date.now() + (Number(availability.advanceBookingHours || 0) * 60 * 60 * 1000))
     const sessionStartForNotice = new Date(`${sessionDate}T${startTime}:00`)
-    if (sessionStartForNotice <= noticeTime) return res.status(400).json({ message: `Sessions must be booked at least ${availability.advanceBookingHours} hours ahead.` })
+    if (sessionStartForNotice <= noticeTime) {
+      return res.status(400).json({ message: `Sessions must be booked at least ${availability.advanceBookingHours} hours ahead.` })
+    }
 
     const { start: dateStart, end: dateEnd } = dateBounds(date)
     const possibleConflicts = await SessionBooking.find({
@@ -69,33 +125,50 @@ const createBooking = async (req, res) => {
       sessionDate: { $gte: dateStart, $lt: dateEnd },
       status: { $nin: ['cancelled'] },
     }).select('startTime endTime')
-    const conflicts = possibleConflicts.some((booking) => startMinutes < toMinutes(booking.endTime) && endMinutes > toMinutes(booking.startTime))
-    if (conflicts) return res.status(409).json({ message: 'This time slot is already booked. Please choose a different time.' })
+    const hasConflict = possibleConflicts.some((booking) => (
+      startMinutes < toMinutes(booking.endTime) && endMinutes > toMinutes(booking.startTime)
+    ))
+    if (hasConflict) return res.status(409).json({ message: 'This time slot is already booked. Please choose a different time.' })
 
-    const price = Number(((Number(tutorProfile.hourlyRate) / 60) * durationNumber).toFixed(2))
-    const currency = String(tutorProfile.currency || 'USD').toUpperCase()
-    const fees = calculateFees(price, currency, Number(process.env.PLATFORM_COMMISSION_PERCENTAGE || 20))
-    const platformPaymentCode = generatePaymentCode()
-    const safePaymentMethod = validPaymentMethods.includes(paymentMethod) ? paymentMethod : 'manual'
-
+    const commission = Number(process.env.PLATFORM_COMMISSION_PERCENTAGE || 20)
+    const fees = calculateFees(price, paidOffer.currency, commission)
     const booking = await SessionBooking.create({
       student: studentId,
       tutor: tutorProfile.user,
       tutorProfile: tutorProfile._id,
-      subject: subject.trim(),
+      subject: tutorProfile.subjects?.[0] || tutorProfile.mainCategory || 'Live tutoring',
       sessionDate: date,
       startTime,
       endTime: toTime(endMinutes),
-      duration: durationNumber,
+      duration,
       timezone: availability.timezone,
       studentGoals: String(studentGoals || '').trim(),
       studentLevel: studentLevel || '',
       price,
-      currency,
-      platformFee: fees.platformFeeAmount,
-      tutorEarning: fees.teacherEarningAmount,
-      paymentMethod: safePaymentMethod,
+      currency: paidOffer.currency,
+      platformFee: isTrialSession ? 0 : fees.platformFeeAmount,
+      tutorEarning: isTrialSession ? 0 : fees.teacherEarningAmount,
+      paymentStatus: isTrialSession ? 'not_required' : 'pending',
+      paymentMethod: isTrialSession ? 'free_trial' : 'manual',
+      status: isTrialSession ? 'confirmed' : 'pending_payment',
+      isTrialSession,
     })
+
+    if (isTrialSession) {
+      const [student, tutor] = await Promise.all([
+        User.findById(studentId).select('name email'),
+        User.findById(tutorProfile.user).select('name email'),
+      ])
+      sendLiveSessionConfirmedEmails(student, tutor, booking).catch((error) => {
+        console.error('Free trial confirmation email error:', error)
+      })
+
+      return res.status(201).json({
+        message: 'Your free 30-minute introductory session is confirmed.',
+        booking,
+        requiresPayment: false,
+      })
+    }
 
     const payment = await Payment.create({
       payer: studentId,
@@ -103,18 +176,26 @@ const createBooking = async (req, res) => {
       type: 'session_booking',
       status: 'pending',
       amount: price,
-      currency,
-      platformFeePercentage: Number(process.env.PLATFORM_COMMISSION_PERCENTAGE || 20),
+      currency: paidOffer.currency,
+      platformFeePercentage: commission,
       platformFeeAmount: fees.platformFeeAmount,
       teacherEarningAmount: fees.teacherEarningAmount,
       booking: booking._id,
       gateway: 'manual',
-      paymentMethod: safePaymentMethod,
-      platformPaymentCode,
+      paymentMethod: 'manual',
+      platformPaymentCode: generatePaymentCode(),
     })
 
-    return res.status(201).json({ message: 'Booking created. Complete payment to request confirmation.', booking: { ...booking.toObject(), payment }, payment })
+    return res.status(201).json({
+      message: 'Booking created. Complete payment to request confirmation.',
+      booking: { ...booking.toObject(), payment },
+      payment,
+      requiresPayment: true,
+    })
   } catch (error) {
+    if (error?.code === 11000) {
+      return res.status(409).json({ message: 'You have already used your free introductory session with this tutor.' })
+    }
     console.error('Create session booking error:', error)
     return res.status(500).json({ message: 'Server error while creating booking.' })
   }
@@ -128,7 +209,7 @@ const confirmBookingPayment = async (req, res) => {
     const booking = await SessionBooking.findById(req.params.bookingId)
     if (!booking) return res.status(404).json({ message: 'Booking not found.' })
     if (String(booking.student) !== String(getCurrentUserId(req))) return res.status(403).json({ message: 'You can only confirm payment for your own booking.' })
-    if (booking.status !== 'pending_payment') return res.status(400).json({ message: 'This booking is no longer awaiting payment.' })
+    if (booking.isTrialSession || booking.status !== 'pending_payment') return res.status(400).json({ message: 'This booking does not require payment confirmation.' })
 
     const payment = await Payment.findOne({ booking: booking._id })
     if (!payment) return res.status(404).json({ message: 'Payment record not found.' })
@@ -152,6 +233,7 @@ const adminConfirmBookingPayment = async (req, res) => {
   try {
     const { action } = req.body
     if (!['approve', 'reject'].includes(action)) return res.status(400).json({ message: 'Action must be approve or reject.' })
+
     const booking = await SessionBooking.findById(req.params.bookingId)
     if (!booking) return res.status(404).json({ message: 'Booking not found.' })
     const payment = await Payment.findOne({ booking: booking._id })
@@ -164,6 +246,15 @@ const adminConfirmBookingPayment = async (req, res) => {
       payment.verifiedBy = getCurrentUserId(req)
       payment.verifiedAt = new Date()
       await Promise.all([booking.save(), payment.save()])
+
+      const [student, tutor] = await Promise.all([
+        User.findById(booking.student).select('name email'),
+        User.findById(booking.tutor).select('name email'),
+      ])
+      sendLiveSessionConfirmedEmails(student, tutor, booking).catch((error) => {
+        console.error('Paid booking confirmation email error:', error)
+      })
+
       return res.status(200).json({ message: 'Session booking payment approved.', booking })
     }
 
@@ -183,7 +274,7 @@ const getMyBookingsAsStudent = async (req, res) => {
   try {
     const bookings = await SessionBooking.find({ student: getCurrentUserId(req) })
       .populate('tutor', 'name')
-      .populate('tutorProfile', 'bio subjects hourlyRate currency')
+      .populate('tutorProfile', 'bio subjects sessionDuration sessionPrice currency')
       .sort({ sessionDate: -1 })
     return res.status(200).json({ bookings })
   } catch (error) {
@@ -194,7 +285,6 @@ const getMyBookingsAsStudent = async (req, res) => {
 
 const getMyBookingsAsTutor = async (req, res) => {
   try {
-    // Ascending date order gives tutors their nearest upcoming commitments first.
     const bookings = await SessionBooking.find({ tutor: getCurrentUserId(req) })
       .populate('student', 'name')
       .sort({ sessionDate: 1, startTime: 1 })
@@ -238,4 +328,12 @@ const cancelBooking = async (req, res) => {
   }
 }
 
-module.exports = { createBooking, confirmBookingPayment, adminConfirmBookingPayment, getMyBookingsAsStudent, getMyBookingsAsTutor, cancelBooking }
+module.exports = {
+  getBookingOffer,
+  createBooking,
+  confirmBookingPayment,
+  adminConfirmBookingPayment,
+  getMyBookingsAsStudent,
+  getMyBookingsAsTutor,
+  cancelBooking,
+}

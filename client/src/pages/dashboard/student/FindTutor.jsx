@@ -11,6 +11,16 @@ const categoryOptions = ['technology', 'languages', 'sciences', 'business', 'lea
 const languageOptions = ['English', 'Amharic', 'Arabic', 'Afaan Oromo', 'French']
 const levelOptions = ['beginner', 'intermediate', 'advanced']
 
+// Existing tutor records may still have the former hourly-rate fields. This
+// fallback lets their cards remain usable until their public offer is updated.
+const getTutorSessionPrice = (tutor) => {
+  const directPrice = Number(tutor.sessionPrice)
+  if (Number.isFinite(directPrice) && directPrice > 0) return directPrice
+
+  const duration = Number(tutor.sessionDuration || tutor.sessionDurations?.[0] || 60)
+  return Number(((Number(tutor.hourlyRate || 0) / 60) * duration).toFixed(2))
+}
+
 // The marketplace refetches when a filter changes. This keeps the list aligned
 // with server filtering, just like a course browse page, without filtering a
 // stale or incomplete client-side copy of all tutor data.
@@ -63,8 +73,8 @@ const FindTutor = () => {
           <label className="text-sm font-semibold text-slate-700">Category<select value={filters.category} onChange={(event) => updateFilter('category', event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10"><option value="">All categories</option>{categoryOptions.map((category) => <option key={category} value={category}>{category.charAt(0).toUpperCase() + category.slice(1)}</option>)}</select></label>
           <label className="text-sm font-semibold text-slate-700">Language<select value={filters.language} onChange={(event) => updateFilter('language', event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10"><option value="">All languages</option>{languageOptions.map((language) => <option key={language} value={language}>{language}</option>)}</select></label>
           <label className="text-sm font-semibold text-slate-700">Level<select value={filters.level} onChange={(event) => updateFilter('level', event.target.value)} className="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10"><option value="">All levels</option>{levelOptions.map((level) => <option key={level} value={level}>{level.charAt(0).toUpperCase() + level.slice(1)}</option>)}</select></label>
-          <label className="text-sm font-semibold text-slate-700">Min. rate<input type="number" min="0" value={filters.minRate} onChange={(event) => updateFilter('minRate', event.target.value)} placeholder="Any" className="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" /></label>
-          <label className="text-sm font-semibold text-slate-700">Max. rate<input type="number" min="0" value={filters.maxRate} onChange={(event) => updateFilter('maxRate', event.target.value)} placeholder="Any" className="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" /></label>
+          <label className="text-sm font-semibold text-slate-700">Min. session price<input type="number" min="0" value={filters.minRate} onChange={(event) => updateFilter('minRate', event.target.value)} placeholder="Any" className="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" /></label>
+          <label className="text-sm font-semibold text-slate-700">Max. session price<input type="number" min="0" value={filters.maxRate} onChange={(event) => updateFilter('maxRate', event.target.value)} placeholder="Any" className="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" /></label>
         </div>
         {hasFilters && <button type="button" onClick={clearFilters} className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#15803D] hover:underline"><i className="fas fa-filter-circle-xmark" aria-hidden="true" />Clear filters</button>}
       </section>
@@ -91,7 +101,7 @@ const FindTutor = () => {
                   <div className="mt-3 flex flex-wrap gap-1.5">{(tutor.teachingLanguages || []).map((language) => <span key={language} className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-800">{language}</span>)}<span className="rounded-full bg-[#F0FDF4] px-2.5 py-1 text-xs font-semibold capitalize text-[#15803D]">{tutor.teachingLevel === 'all' ? 'All levels' : tutor.teachingLevel}</span></div>
                   {/* Availability appears before the profile click so students do not waste time opening tutors who paused bookings. */}
                   <p className={`mt-4 flex items-center gap-2 text-sm font-semibold ${tutor.isAcceptingBookings ? 'text-[#15803D]' : 'text-slate-500'}`}><span className={`h-2.5 w-2.5 rounded-full ${tutor.isAcceptingBookings ? 'bg-[#22C55E]' : 'bg-slate-400'}`} />{tutor.isAcceptingBookings ? 'Available' : 'Not accepting bookings'}</p>
-                  <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4"><p className="font-extrabold text-[#15803D]">{formatCurrency(tutor.hourlyRate, tutor.currency)}<span className="ml-1 text-xs font-medium text-slate-500">/hour</span></p><button type="button" onClick={() => navigate(`/tutors/${tutor._id}`)} className="rounded-xl border border-[#22C55E]/40 px-3 py-2 text-sm font-bold text-[#15803D] transition hover:bg-[#F0FDF4]">View Profile</button></div>
+                  <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4"><p className="font-extrabold text-[#15803D]">{formatCurrency(getTutorSessionPrice(tutor), tutor.currency)}<span className="ml-1 text-xs font-medium text-slate-500">/session</span></p><button type="button" onClick={() => navigate(`/tutors/${tutor._id}`)} className="rounded-xl border border-[#22C55E]/40 px-3 py-2 text-sm font-bold text-[#15803D] transition hover:bg-[#F0FDF4]">View Profile</button></div>
                 </div>
               </article>
             )
