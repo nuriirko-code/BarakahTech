@@ -9,6 +9,8 @@ const {
   adminConfirmBookingPayment,
   getMyBookingsAsStudent,
   getMyBookingsAsTutor,
+  getSessionBooking,
+  getSessionToken,
   cancelBooking,
 } = require('../controllers/bookingController')
 
@@ -23,6 +25,10 @@ router.post('/:bookingId/confirm-payment', authMiddleware, authorize('student'),
 router.put('/:bookingId/admin-confirm', authMiddleware, authorize('admin'), adminConfirmBookingPayment)
 router.get('/my-sessions/student', authMiddleware, authorize('student'), getMyBookingsAsStudent)
 router.get('/my-sessions/tutor', authMiddleware, authorize('live_tutor'), getMyBookingsAsTutor)
+// Both parties may read their own session and request a token. The backend,
+// not the browser, decides whether the caller is the tutor room owner.
+router.get('/:bookingId/session-token', authMiddleware, getSessionToken)
+router.get('/:bookingId', authMiddleware, getSessionBooking)
 // Cancellation verifies hours remaining against the tutor’s policy, preventing
 // last-minute removals that would leave the other participant unprepared.
 router.delete('/:bookingId/cancel', authMiddleware, cancelBooking)

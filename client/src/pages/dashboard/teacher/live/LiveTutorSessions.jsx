@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../../context/AuthContext'
 
 const API_BASE_URL = 'http://localhost:5000/api'
@@ -32,6 +33,7 @@ const formatCountdown = (booking, now) => {
 
 const LiveTutorSessions = () => {
   const { token } = useAuth()
+  const navigate = useNavigate()
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -96,6 +98,11 @@ const LiveTutorSessions = () => {
                   {isConfirmed ? formatCountdown(booking, now) : booking.status.replace('_', ' ')}
                 </div>
               </div>
+              {isConfirmed && (
+                <button type="button" onClick={() => navigate(`/session/${booking._id}`)} className="mt-4 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-green-700">
+                  <i className="fas fa-video mr-2" aria-hidden="true" />Join session
+                </button>
+              )}
             </article>
           )
         })}

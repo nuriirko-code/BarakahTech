@@ -41,6 +41,8 @@ import AdminDashboard from './pages/dashboard/AdminDashboard'
 import LiveTutorApplication from './pages/live-tutor/LiveTutorApplication'
 import TutorProfilePage from './pages/tutors/TutorProfilePage'
 import BookingPage from './pages/tutors/BookingPage'
+import SessionRoom from './pages/session/SessionRoom'
+import SessionFeedback from './pages/session/SessionFeedback'
 
 function App() {
   return (
@@ -116,6 +118,19 @@ function App() {
           <Route path="/book/:profileId" element={(
             <ProtectedRoute allowedRoles={['student']}>
               <BookingPage />
+            </ProtectedRoute>
+          )} />
+          {/* A session room is outside dashboard shells so the video call can
+              use the full screen, while backend checks still limit access to
+              the student and tutor assigned to that booking. */}
+          <Route path="/session/:bookingId" element={(
+            <ProtectedRoute allowedRoles={['student', 'teacher', 'live_tutor']}>
+              <SessionRoom />
+            </ProtectedRoute>
+          )} />
+          <Route path="/session/:bookingId/feedback" element={(
+            <ProtectedRoute allowedRoles={['student', 'teacher', 'live_tutor']}>
+              <SessionFeedback />
             </ProtectedRoute>
           )} />
 

@@ -43,8 +43,8 @@ const sessionBookingSchema = new mongoose.Schema(
     cancellationReason: { type: String, default: '', trim: true },
     cancelledAt: { type: Date, default: null },
 
-    // Room details remain empty initially. Creating a room only after payment
-    // verification prevents abandoned/unpaid bookings from creating resources.
+    // Room details remain empty until the booking is confirmed. Free trials are
+    // confirmed immediately; paid sessions are confirmed after payment review.
     roomUrl: { type: String, default: '' },
     roomName: { type: String, default: '' },
     recordingUrl: { type: String, default: '' },

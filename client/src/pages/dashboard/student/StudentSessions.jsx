@@ -100,6 +100,11 @@ const StudentSessions = () => {
                   Continue learning with this tutor
                 </button>
               )}
+              {isConfirmed && (
+                <button type="button" onClick={() => navigate(`/session/${booking._id}`)} className="mt-4 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-green-700">
+                  <i className="fas fa-video mr-2" aria-hidden="true" />Join session
+                </button>
+              )}
             </article>
           )
         })}
