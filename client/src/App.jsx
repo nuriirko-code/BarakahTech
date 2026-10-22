@@ -129,7 +129,7 @@ function App() {
             </ProtectedRoute>
           )} />
           <Route path="/session/:bookingId/feedback" element={(
-            <ProtectedRoute allowedRoles={['student', 'teacher', 'live_tutor']}>
+            <ProtectedRoute allowedRoles={['student']}>
               <SessionFeedback />
             </ProtectedRoute>
           )} />

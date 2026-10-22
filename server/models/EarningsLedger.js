@@ -32,7 +32,7 @@ const earningsLedgerSchema = new mongoose.Schema(
     },
     booking: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Booking',
+      ref: 'SessionBooking',
       default: null,
     },
 

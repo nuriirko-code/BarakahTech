@@ -398,7 +398,7 @@ const getSessionBooking = async (req, res) => {
     const booking = await SessionBooking.findById(req.params.bookingId)
       .populate('student', 'name')
       .populate('tutor', 'name')
-      .populate('tutorProfile', 'subjects')
+      .populate('tutorProfile', 'subjects profilePhoto')
     if (!booking) return res.status(404).json({ message: 'Session booking not found.' })
 
     const currentUserId = String(getCurrentUserId(req))
@@ -458,7 +458,7 @@ const getMyBookingsAsStudent = async (req, res) => {
   try {
     const bookings = await SessionBooking.find({ student: getCurrentUserId(req) })
       .populate('tutor', 'name')
-      .populate('tutorProfile', 'bio subjects sessionDuration sessionPrice currency')
+      .populate('tutorProfile', 'bio subjects sessionDuration sessionPrice currency profilePhoto')
       .sort({ sessionDate: -1 })
     return res.status(200).json({ bookings })
   } catch (error) {

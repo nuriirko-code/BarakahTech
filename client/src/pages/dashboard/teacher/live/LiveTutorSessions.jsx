@@ -38,6 +38,7 @@ const LiveTutorSessions = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [now, setNow] = useState(0)
+  const [completingId, setCompletingId] = useState('')
 
   useEffect(() => {
     const updateNow = () => setNow(Date.now())
@@ -65,6 +66,23 @@ const LiveTutorSessions = () => {
     if (token) loadBookings()
     return () => { isCurrent = false }
   }, [token])
+
+  const markComplete = async (bookingId) => {
+    if (!window.confirm('Mark this session as complete? The student will then be able to submit feedback.')) return
+
+    setCompletingId(bookingId)
+    setError('')
+    try {
+      const response = await axios.put(`${API_BASE_URL}/bookings/${bookingId}/complete`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      setBookings((current) => current.map((booking) => booking._id === bookingId ? response.data.booking : booking))
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || 'Could not mark this session complete.')
+    } finally {
+      setCompletingId('')
+    }
+  }
 
   if (loading) return <div className="space-y-4"><div className="h-28 animate-pulse rounded-2xl bg-slate-200" /><div className="h-48 animate-pulse rounded-2xl bg-slate-200" /></div>
 
@@ -99,9 +117,16 @@ const LiveTutorSessions = () => {
                 </div>
               </div>
               {isConfirmed && (
-                <button type="button" onClick={() => navigate(`/session/${booking._id}`)} className="mt-4 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-green-700">
-                  <i className="fas fa-video mr-2" aria-hidden="true" />Join session
-                </button>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button type="button" onClick={() => navigate(`/session/${booking._id}`)} className="rounded-xl bg-green-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-green-700">
+                    <i className="fas fa-video mr-2" aria-hidden="true" />Join session
+                  </button>
+                  {/* Completion deliberately requires a tutor action: only then
+                      can the student make the feedback-based earnings decision. */}
+                  <button type="button" onClick={() => markComplete(booking._id)} disabled={completingId === booking._id} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60">
+                    <i className="fas fa-circle-check mr-2 text-green-600" aria-hidden="true" />{completingId === booking._id ? 'Completing...' : 'Mark complete'}
+                  </button>
+                </div>
               )}
             </article>
           )

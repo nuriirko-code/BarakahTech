@@ -120,9 +120,9 @@ const SessionCallUI = ({ roomUrl, meetingToken, bookingId, booking }) => {
     try {
       await daily?.leave()
     } finally {
-      // Feedback is its own route so the call interface stays focused only on
-      // live learning, then naturally moves into the post-session experience.
-      navigate(`/session/${bookingId}/feedback`)
+      // Only the student submits financial feedback. Tutors return to their
+      // sessions list, where they mark the completed session for review.
+      navigate(user?.role === 'student' ? `/session/${bookingId}/feedback` : '/dashboard/teacher/live-sessions')
     }
   }
 
