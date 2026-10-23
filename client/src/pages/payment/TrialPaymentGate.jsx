@@ -131,7 +131,7 @@ const TrialPaymentGate = () => {
                 <Avatar name={course.teacher?.name || 'Teacher'} size="md" />
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Teacher</p>
-                  <p className="text-sm font-bold text-slate-900">{course.teacher?.name || 'BarakahTech Teacher'}</p>
+                  <p className="text-sm font-bold text-slate-900">{course.teacher?.name || 'Barakah Academy Teacher'}</p>
                 </div>
               </div>
 

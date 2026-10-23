@@ -33,7 +33,7 @@ const StudentDashboard = () => {
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[#22C55E] to-[#15803D] text-white shadow-md shadow-[#22C55E]/30">
               <i className="fas fa-graduation-cap text-xs" aria-hidden="true" />
             </span>
-            BarakahTech
+            Barakah Academy
           </button>
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#22C55E] to-[#15803D] text-xs font-bold text-white">
             {(user?.name || 'S').charAt(0).toUpperCase()}

@@ -7,6 +7,7 @@ import { getCategoryGradient, getCategoryIcon } from '../../utils/courseUtils'
 import { getGoogleDriveEmbedUrl, getYouTubeEmbedUrl } from '../../utils/videoUtils'
 import Avatar from '../../components/common/Avatar'
 import Navbar from '../../components/common/Navbar'
+import Footer from '../../components/common/Footer'
 
 const formatTime = (time) => {
   const [hours, minutes] = String(time || '').split(':').map(Number)
@@ -65,11 +66,11 @@ const TutorProfilePage = () => {
   }
 
   if (loading || authLoading) {
-    return <><Navbar /><main className="mx-auto max-w-7xl space-y-6 px-5 py-8 sm:px-8"><div className="h-20 animate-pulse rounded-2xl bg-slate-200" /><div className="grid gap-6 lg:grid-cols-[minmax(280px,1fr)_minmax(0,2fr)]"><div className="h-[580px] animate-pulse rounded-2xl bg-slate-200" /><div className="h-[580px] animate-pulse rounded-2xl bg-slate-200" /></div></main></>
+    return <><Navbar /><main className="mx-auto min-h-[65vh] max-w-7xl space-y-6 px-5 py-8 sm:px-8"><div className="h-20 animate-pulse rounded-2xl bg-slate-200" /><div className="grid gap-6 lg:grid-cols-[minmax(280px,1fr)_minmax(0,2fr)]"><div className="h-[580px] animate-pulse rounded-2xl bg-slate-200" /><div className="h-[580px] animate-pulse rounded-2xl bg-slate-200" /></div></main><Footer /></>
   }
 
   if (error || !profile) {
-    return <><Navbar /><main className="mx-auto flex min-h-[70vh] max-w-2xl items-center px-5 py-10"><section className="w-full rounded-2xl border border-red-200 bg-white p-8 text-center shadow-sm"><i className="fas fa-circle-exclamation text-4xl text-red-500" aria-hidden="true" /><h1 className="mt-5 text-2xl font-extrabold text-slate-900">Tutor profile unavailable</h1><p className="mt-3 text-slate-600">{error || 'This tutor profile could not be found.'}</p><button type="button" onClick={() => navigate(-1)} className="mt-6 rounded-xl bg-[#16A34A] px-5 py-3 font-bold text-white hover:bg-[#15803D]">Go back</button></section></main></>
+    return <><Navbar /><main className="mx-auto flex min-h-[70vh] max-w-2xl items-center px-5 py-10"><section className="w-full rounded-2xl border border-red-200 bg-white p-8 text-center shadow-sm"><i className="fas fa-circle-exclamation text-4xl text-red-500" aria-hidden="true" /><h1 className="mt-5 text-2xl font-extrabold text-slate-900">Tutor profile unavailable</h1><p className="mt-3 text-slate-600">{error || 'This tutor profile could not be found.'}</p><button type="button" onClick={() => navigate(-1)} className="mt-6 rounded-xl bg-[#16A34A] px-5 py-3 font-bold text-white hover:bg-[#15803D]">Go back</button></section></main><Footer /></>
   }
 
   const tutorName = profile.user?.name || 'Qualified tutor'
@@ -113,7 +114,7 @@ const TutorProfilePage = () => {
 
         <div className="space-y-6"><section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"><h2 className="text-2xl font-extrabold tracking-tight">About {tutorName}</h2><p className="mt-4 whitespace-pre-wrap text-base leading-8 text-slate-700">{profile.bio}</p></section><section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"><h2 className="flex items-center gap-3 text-2xl font-extrabold tracking-tight"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F0FDF4] text-[#15803D]"><i className="fas fa-chalkboard-user" aria-hidden="true" /></span>Teaching Approach</h2><p className="mt-4 whitespace-pre-wrap text-base leading-8 text-slate-700">{profile.teachingApproach}</p></section><section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"><h2 className="text-2xl font-extrabold tracking-tight">Subjects I Teach</h2><div className="mt-5 flex flex-wrap gap-3">{(profile.subjects || []).map((subject) => <span key={subject} className="rounded-xl bg-[#F0FDF4] px-4 py-2 text-sm font-bold text-[#15803D] ring-1 ring-[#22C55E]/20">{subject}</span>)}</div></section>{profile.introVideoUrl && <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"><h2 className="text-2xl font-extrabold tracking-tight">Introduction Video</h2><div className="mt-5 aspect-video overflow-hidden rounded-xl bg-slate-950"><iframe title={`${tutorName} introduction video`} src={videoEmbedUrl} className="h-full w-full" allowFullScreen /></div></section>}<section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"><h2 className="text-2xl font-extrabold tracking-tight">Student Reviews</h2>{profile.totalRatings > 0 ? <p className="mt-4 text-slate-600">Reviews will be loaded here in Phase 10.</p> : <p className="mt-4 text-slate-600">No reviews yet. Be the first to book a session!</p>}</section></div>
       </div>
-    </div></main></>
+    </div></main><Footer /></>
   )
 }
 

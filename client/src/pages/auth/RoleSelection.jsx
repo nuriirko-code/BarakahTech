@@ -1,4 +1,5 @@
 import { useNavigate, Link } from 'react-router-dom'
+import Navbar from '../../components/common/Navbar'
 
 // This page separates the student and teacher journeys before collecting details.
 // Choosing a role first keeps each later form focused and prevents users from
@@ -7,10 +8,12 @@ const RoleSelection = () => {
   const navigate = useNavigate()
 
   return (
+    <>
+    <Navbar />
     <main className="min-h-screen bg-green-50 px-6 py-16 text-gray-900">
       <div className="mx-auto max-w-5xl text-center">
         <h1 className="text-4xl font-extrabold tracking-tight text-slate-900">
-          How are you joining BarakahTech?
+          How are you joining Barakah Academy?
         </h1>
         <p className="mt-3 text-lg text-gray-600">Choose your path to get started</p>
 
@@ -60,6 +63,7 @@ const RoleSelection = () => {
         </p>
       </div>
     </main>
+    </>
   )
 }
 

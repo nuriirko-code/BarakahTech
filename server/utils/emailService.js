@@ -14,7 +14,7 @@ const getFrontendUrl = () => String(process.env.FRONTEND_URL || 'http://localhos
 // The template centralizes responsive inline styles and trusted platform chrome. Dynamic
 // values are escaped by callers so names, notes, and announcements cannot inject markup.
 const getEmailTemplate = (title, bodyContent) => {
-  const supportEmail = process.env.SUPPORT_EMAIL || process.env.FROM_EMAIL || 'support@barakahtech.com'
+  const supportEmail = process.env.SUPPORT_EMAIL || process.env.FROM_EMAIL || 'support@barakah-academy.com'
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -25,14 +25,14 @@ const getEmailTemplate = (title, bodyContent) => {
   <body style="margin:0;padding:24px 12px;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">
     <div style="max-width:600px;margin:0 auto;">
       <header style="padding:20px 24px;background:#15803d;border-radius:10px 10px 0 0;color:#ffffff;font-size:22px;font-weight:700;">
-        BarakahTech Academy
+        Barakah Academy
       </header>
       <main style="padding:28px 24px;background:#ffffff;border:1px solid #e5e7eb;border-top:0;">
         <h1 style="margin:0 0 18px;color:#14532d;font-size:22px;line-height:1.35;">${escapeHtml(title)}</h1>
         <div style="font-size:15px;line-height:1.7;">${bodyContent}</div>
       </main>
       <footer style="padding:18px 24px;background:#f9fafb;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 10px 10px;color:#6b7280;font-size:12px;line-height:1.6;">
-        BarakahTech Academy · Questions? <a href="mailto:${escapeHtml(supportEmail)}" style="color:#15803d;">${escapeHtml(supportEmail)}</a>
+        Barakah Academy · Questions? <a href="mailto:${escapeHtml(supportEmail)}" style="color:#15803d;">${escapeHtml(supportEmail)}</a>
       </footer>
     </div>
   </body>
@@ -89,19 +89,19 @@ const sendWelcomeEmail = async (user) => {
   const body = `<p>Hello ${escapeHtml(user.name)},</p>
     <p>Your account has been created successfully.</p>
     <p>${roleCopy}</p>
-    <p><a href="${getFrontendUrl()}" style="color:#15803d;font-weight:700;">Visit BarakahTech Academy</a></p>`
+    <p><a href="${getFrontendUrl()}" style="color:#15803d;font-weight:700;">Visit Barakah Academy</a></p>`
 
   return sendEmail({
     to: user.email,
-    subject: 'Welcome to BarakahTech Academy',
-    html: getEmailTemplate('Welcome to BarakahTech Academy', body),
+    subject: 'Welcome to Barakah Academy',
+    html: getEmailTemplate('Welcome to Barakah Academy', body),
   })
 }
 
 const sendTeacherApprovalEmail = async (user, approved, adminNote = '') => {
   const title = approved
     ? 'Congratulations! Your teacher application was approved'
-    : 'Update on your BarakahTech teacher application'
+    : 'Update on your Barakah Academy teacher application'
   const body = approved
     ? `<p>Hello ${escapeHtml(user.name)},</p><p>Congratulations! Your teacher application was approved. You can now log in and create courses.</p><p><a href="${getFrontendUrl()}/login" style="color:#15803d;font-weight:700;">Log in to your teacher account</a></p>`
     : `<p>Hello ${escapeHtml(user.name)},</p><p>We are unable to approve your teacher application at this time.</p><p><strong>Review note:</strong> ${escapeHtml(adminNote || 'Please contact support for more information.')}</p><p>You are welcome to address the feedback and reapply.</p>`
@@ -174,7 +174,7 @@ const sendLiveSessionConfirmedEmails = async (student, tutor, booking) => {
 // Message notifications intentionally include no message body: email inboxes can be shared
 // or forwarded, while the actual conversation remains behind authenticated platform access.
 const sendNewMessageEmail = async (recipient, sender, conversationSubject = '') => {
-  const subject = `New message from ${sender.name} on BarakahTech`
+  const subject = `New message from ${sender.name} on Barakah Academy`
   const body = `<p>Hello ${escapeHtml(recipient.name)},</p>
     <p>${escapeHtml(sender.name)} sent you a new message${conversationSubject ? ` about <strong>${escapeHtml(conversationSubject)}</strong>` : ''}.</p>
     <p><a href="${getFrontendUrl()}/messages" style="color:#15803d;font-weight:700;">Open your messages</a></p>`
@@ -183,7 +183,7 @@ const sendNewMessageEmail = async (recipient, sender, conversationSubject = '') 
 }
 
 const sendPasswordResetEmail = async (user, resetToken) => {
-  const subject = 'Reset your BarakahTech password'
+  const subject = 'Reset your Barakah Academy password'
   const resetUrl = `${getFrontendUrl()}/reset-password/${encodeURIComponent(resetToken)}`
   const body = `<p>Hello ${escapeHtml(user.name)},</p>
     <p><a href="${resetUrl}" style="color:#15803d;font-weight:700;">Reset your password</a></p>
@@ -203,7 +203,7 @@ const sendAdminAnnouncementEmail = async (recipients, subject, content) => {
       return false
     }
 
-    const title = `[BarakahTech] ${subject}`
+    const title = `[Barakah Academy] ${subject}`
     const html = getEmailTemplate(title, `<p>${escapeHtml(content).replace(/\n/g, '<br>')}</p>`)
     const emailBatch = recipientList.map((recipient) => ({ from, to: recipient.email, subject: title, html }))
 

@@ -12,7 +12,7 @@ const contactPatterns = {
 }
 
 // Keeping messages on-platform protects student privacy, preserves a support trail,
-// and ensures paid learning conversations remain within BarakahTech's trust boundary.
+// and ensures paid learning conversations remain within Barakah Academy's trust boundary.
 const scanForExternalContacts = (text) => {
   const content = String(text || '')
   const violations = []
@@ -34,12 +34,12 @@ const scanForExternalContacts = (text) => {
   }
 
   const urls = content.match(contactPatterns.url) || []
-  // Official BarakahTech links remain usable inside the platform; unrelated domains
+  // Official Barakah Academy links remain usable inside the platform; unrelated domains
   // can move learners off-platform and bypass support, safety, and payment records.
   const containsExternalUrl = urls.some((url) => {
     const normalizedUrl = url.replace(/[.,!?;:]+$/, '')
-    return !/^https?:\/\/(?:[a-z0-9-]+\.)*barakahtech\.com(?:[/:?#]|$)/i.test(normalizedUrl)
-      && !/^www\.(?:[a-z0-9-]+\.)*barakahtech\.com(?:[/:?#]|$)/i.test(normalizedUrl)
+    return !/^https?:\/\/(?:[a-z0-9-]+\.)*barakah-academy\.com(?:[/:?#]|$)/i.test(normalizedUrl)
+      && !/^www\.(?:[a-z0-9-]+\.)*barakah-academy\.com(?:[/:?#]|$)/i.test(normalizedUrl)
   })
 
   if (containsExternalUrl) {
@@ -62,14 +62,14 @@ const scanForExternalContacts = (text) => {
 // exchange phone details, so the send flow can warn proportionally or block contact sharing.
 const getSafeWarningMessage = (severity) => {
   if (severity === 'low') {
-    return 'Please keep communication on BarakahTech. Sharing external social media may limit your account.'
+    return 'Please keep communication on Barakah Academy. Sharing external social media may limit your account.'
   }
 
   if (severity === 'high') {
     return 'Phone numbers and direct contact sharing is not permitted. Your message was not sent. Repeated violations may result in account suspension.'
   }
 
-  return 'External links and emails are not allowed in messages. Please communicate through BarakahTech only.'
+  return 'External links and emails are not allowed in messages. Please communicate through Barakah Academy only.'
 }
 
 module.exports = {

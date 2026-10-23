@@ -266,7 +266,7 @@ const MessagesPage = () => {
   const conversationName = activeConversation?.type === 'announcement'
     ? 'Announcement'
     : isSupportForUser
-      ? 'BarakahTech Support'
+      ? 'Barakah Academy Support'
       : otherParticipant?.name || (activeConversation?.type === 'support' ? 'Support request' : 'Conversation')
   const conversationIcon = activeConversation?.type === 'announcement'
     ? 'fas fa-bullhorn'

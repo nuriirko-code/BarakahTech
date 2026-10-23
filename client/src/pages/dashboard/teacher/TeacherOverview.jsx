@@ -288,7 +288,7 @@ const TeacherOverview = () => {
 			{/* Getting started checklist */}
 			{!loading && stats.totalCourses === 0 && (
 				<section className="overflow-hidden rounded-2xl border border-[#22C55E]/20 bg-gradient-to-br from-[#F0FDF4] to-white p-6 shadow-sm sm:p-8">
-					<h2 className="text-xl font-extrabold tracking-tight text-slate-900">Getting started on BarakahTech</h2>
+					<h2 className="text-xl font-extrabold tracking-tight text-slate-900">Getting started on Barakah Academy</h2>
 					<p className="mt-2 text-slate-500">Take these first steps to help learners discover and book your teaching.</p>
 					<ol className="mt-6 grid gap-4 md:grid-cols-3">
 						{gettingStartedSteps.map((step) => (

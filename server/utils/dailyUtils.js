@@ -1,4 +1,4 @@
-// Daily.co provides the WebRTC video rooms used for BarakahTech live sessions.
+// Daily.co provides the WebRTC video rooms used for Barakah Academy live sessions.
 // Keeping these API calls here prevents controllers from handling provider
 // request formats or exposing the Daily API key to a browser.
 
@@ -40,7 +40,7 @@ const createDailyRoom = async (bookingId, sessionStart, durationMinutes) => {
   // the life of a copied room URL without stopping an active lesson early.
   const expiryTime = new Date(start.getTime() + ((Number(durationMinutes) + 30) * 60 * 1000))
   const room = await dailyRequest('/rooms', {
-    name: `barakahtech-session-${bookingId}`,
+    name: `barakah-academy-session-${bookingId}`,
     privacy: 'private',
     properties: {
       exp: Math.floor(expiryTime.getTime() / 1000),

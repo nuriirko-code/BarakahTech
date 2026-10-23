@@ -24,8 +24,8 @@ const ApplicationSubmitted = () => {
         </h1>
         <p className="mt-3 text-lg text-gray-700">
           {isLiveTutorApplication
-            ? 'Thank you for applying to teach live sessions on BarakahTech. Our team will review your application and scenario answers within 3–5 business days.'
-            : 'Thank you for applying to teach on BarakahTech Academy'}
+            ? 'Thank you for applying to teach live sessions on Barakah Academy. Our team will review your application and scenario answers within 3–5 business days.'
+            : 'Thank you for applying to teach on Barakah Academy'}
         </p>
 
         {isLiveTutorApplication ? (

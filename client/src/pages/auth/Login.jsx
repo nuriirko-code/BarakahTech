@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
+import Navbar from '../../components/common/Navbar'
 
 const Login = () => {
   // One login page serves every role because the backend identifies the account
@@ -70,11 +71,13 @@ const Login = () => {
     : null
 
   return (
+    <>
+    <Navbar />
     <main className="min-h-screen bg-green-50 px-6 py-12 text-gray-900">
       <div className="mx-auto max-w-lg rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
         <p className="flex items-center justify-center gap-2 text-2xl font-extrabold tracking-tight text-slate-900">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#22C55E] text-sm text-white"><i className="fas fa-graduation-cap" aria-hidden="true" /></span>
-          BarakahTech
+          Barakah Academy
         </p>
         <h1 className="mt-6 text-center text-3xl font-extrabold tracking-tight text-slate-900">Welcome back</h1>
 
@@ -97,6 +100,7 @@ const Login = () => {
         </p>
       </div>
     </main>
+    </>
   )
 }
 

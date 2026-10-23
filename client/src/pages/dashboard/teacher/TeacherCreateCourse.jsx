@@ -76,9 +76,9 @@ const TeacherCreateCourse = () => {
 	const { user, token, setSuccess } = useAuth()
 	const navigate = useNavigate()
 	const lessonDraftStorageKey = courseId
-		? `barakahtech_lesson_draft_${user?.id || user?._id || 'teacher'}_${courseId}`
+		? `barakah-academy_lesson_draft_${user?.id || user?._id || 'teacher'}_${courseId}`
 		: null
-	const courseDraftStorageKey = `barakahtech_course_form_${user?.id || user?._id || 'teacher'}`
+	const courseDraftStorageKey = `barakah-academy_course_form_${user?.id || user?._id || 'teacher'}`
 
 	useEffect(() => {
 		if (location.state?.courseId) {
@@ -1053,7 +1053,7 @@ const TeacherCreateCourse = () => {
 								<div className="flex flex-wrap items-start justify-between gap-4">
 									<div>
 										<h3 className="text-xl font-extrabold text-slate-900">Ready to publish?</h3>
-										<p className="mt-2 text-slate-600">Your course will be visible to all students on BarakahTech once published.</p>
+										<p className="mt-2 text-slate-600">Your course will be visible to all students on Barakah Academy once published.</p>
 									</div>
 									<span className="rounded-full bg-white px-3 py-1 text-sm font-bold text-[#15803D] ring-1 ring-[#22C55E]/20">{lessons.length} lessons</span>
 								</div>

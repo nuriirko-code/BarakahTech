@@ -11,7 +11,7 @@ const LiveTutorWelcome = () => {
       <section className="mx-auto max-w-5xl">
         <Link to="/choose-teaching-path" className="inline-flex items-center gap-2 text-base font-semibold text-[#15803D] hover:underline"><i className="fas fa-arrow-left text-sm" aria-hidden="true" /> Back to teaching paths</Link>
         <header className="mt-8 rounded-2xl bg-slate-900 px-7 py-12 text-white sm:px-12 sm:py-16">
-          <p className="text-base font-bold uppercase tracking-wide text-[#86EFAC]">BarakahTech Academy</p>
+          <p className="text-base font-bold uppercase tracking-wide text-[#86EFAC]">Barakah Academy</p>
           <h1 className="mt-4 max-w-2xl text-4xl font-extrabold tracking-tight sm:text-5xl">Teach live. Change lives.</h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-green-50">Help learners through one-to-one or small-group sessions, set your availability, and share your expertise in the subjects you know best.</p>
           <Link to={startPath} className="mt-8 inline-flex items-center gap-2 rounded-xl bg-[#22C55E] px-6 py-3 text-base font-bold text-slate-950 transition hover:bg-[#86EFAC]">{user ? 'Continue to application' : 'Create account and apply'} <i className="fas fa-arrow-right" aria-hidden="true" /></Link>

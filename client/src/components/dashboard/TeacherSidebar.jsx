@@ -32,7 +32,7 @@ const TeacherSidebar = ({ onClose = () => {} }) => {
           </span>
           <div className="min-w-0">
             <p className="truncate text-lg font-bold tracking-tight text-slate-900">
-              BarakahTech
+              Barakah Academy
             </p>
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#16A34A]">
               {user?.role === 'teacher' ? 'Teacher Portal' : 'Live Tutor Portal'}

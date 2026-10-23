@@ -24,3 +24,15 @@ export const getCategoryIcon = (category) => {
 
   return iconMap[category] || 'fas fa-layer-group'
 }
+
+export const getCategoryEmoji = (category) => {
+  const emojiMap = {
+    technology: '💻',
+    languages: '🌍',
+    sciences: '🔬',
+    business: '📈',
+    leadership: '⭐',
+  }
+
+  return emojiMap[category] || '📚'
+}

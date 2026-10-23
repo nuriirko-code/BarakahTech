@@ -76,7 +76,7 @@ const MessageInput = ({ onSendMessage, disabled = false, placeholder = 'Write a 
           {/* Repeating this reminder at composition time helps prevent accidental off-platform
               contact sharing before the scanner has to intervene. */}
           <i className="fas fa-shield-halved" aria-hidden="true" />
-          Keep all communication on BarakahTech. Sharing external contact info is not permitted.
+          Keep all communication on Barakah Academy. Sharing external contact info is not permitted.
         </p>
         <span className="shrink-0 tabular-nums">{text.length} / 5000</span>
       </div>

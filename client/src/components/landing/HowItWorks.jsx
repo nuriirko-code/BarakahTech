@@ -16,13 +16,13 @@ const steps = [
   {
     title: "Complete",
     description:
-      "Complete your learning journey and, where applicable, receive BarakahTech Academy certification.",
+      "Complete your learning journey and, where applicable, receive Barakah Academy certification.",
   },
 ]
 
 const HowItWorks = () => {
   return (
-    <section className="bg-green-50 px-6 py-16 sm:px-10 lg:px-12 lg:py-24">
+    <section id="how-it-works" className="bg-green-50 px-6 py-16 sm:px-10 lg:px-12 lg:py-24">
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto max-w-3xl text-center">
           <p className="inline-flex rounded-full bg-green-100 px-4 py-2 text-sm font-bold uppercase tracking-widest text-green-800">

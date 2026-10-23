@@ -147,7 +147,7 @@ const CourseCheckout = () => {
   // Vite exposes VITE_ values to the browser, so these must be student-facing details, never secrets.
   const telebirrNumber = import.meta.env.VITE_TELEBIRR_NUMBER
   const cbeAccount = import.meta.env.VITE_CBE_ACCOUNT
-  const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL || 'support@barakahtech.com'
+  const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL || 'support@barakah-academy.com'
   const paymentDestination = selectedMethod === 'telebirr'
     ? telebirrNumber || `Payment number is not configured. Contact ${supportEmail}.`
     : selectedMethod === 'cbe_birr'
@@ -204,7 +204,7 @@ const CourseCheckout = () => {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="text-sm text-slate-500">Instructor</p>
-                <p className="font-semibold text-slate-900">{course.teacher?.name || 'BarakahTech Teacher'}</p>
+                <p className="font-semibold text-slate-900">{course.teacher?.name || 'Barakah Academy Teacher'}</p>
               </div>
               <div className="text-right">
                 <p className="text-xl font-extrabold text-slate-900">{formatCurrency(payableAmount, course.currency || 'ETB')}</p>

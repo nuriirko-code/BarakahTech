@@ -26,7 +26,7 @@ const ForStudentsTeachers = () => {
             One platform, two ways to grow.
           </h2>
           <p className="mt-5 text-lg leading-8 text-gray-600">
-            BarakahTech Academy is being shaped to help learners build skills
+            Barakah Academy is being shaped to help learners build skills
             and give teachers a meaningful place to share knowledge.
           </p>
         </div>

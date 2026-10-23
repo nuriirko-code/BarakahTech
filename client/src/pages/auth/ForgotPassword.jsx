@@ -22,7 +22,7 @@ const ForgotPassword = () => {
     try {
       await axios.post('http://localhost:5000/api/auth/forgot-password', { email: email.trim() })
       // The same success state is shown for known and unknown addresses so the form
-      // cannot be used to discover which emails have BarakahTech accounts.
+      // cannot be used to discover which emails have Barakah Academy accounts.
       setSuccess(true)
     } catch (requestError) {
       setError(requestError.response?.data?.message || 'Unable to request a password reset. Try again.')

@@ -22,7 +22,7 @@ const paymentSchema = new mongoose.Schema(
     // needs to audit historical financial data across multiple product names.
     platform: {
       type: String,
-      default: 'BarakahTech',
+      default: 'Barakah Academy',
       trim: true,
     },
 

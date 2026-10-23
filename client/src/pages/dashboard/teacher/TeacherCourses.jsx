@@ -133,7 +133,7 @@ const TeacherCourses = () => {
 					</span>
 					<h2 className="mt-6 text-2xl font-extrabold tracking-tight text-slate-900">No courses yet</h2>
 					<p className="mt-3 max-w-lg leading-7 text-slate-500">
-						Create your first course and start sharing your knowledge with students on BarakahTech
+						Create your first course and start sharing your knowledge with students on Barakah Academy
 					</p>
 					<button type="button" onClick={createCourse} className="mt-7 inline-flex items-center gap-2 rounded-xl bg-[#22C55E] px-6 py-3 font-bold text-white shadow-md shadow-[#22C55E]/25 transition hover:bg-[#16A34A]">
 						<i className="fas fa-plus text-xs" aria-hidden="true" />

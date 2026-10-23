@@ -43,6 +43,11 @@ import TutorProfilePage from './pages/tutors/TutorProfilePage'
 import BookingPage from './pages/tutors/BookingPage'
 import SessionRoom from './pages/session/SessionRoom'
 import SessionFeedback from './pages/session/SessionFeedback'
+import CoursesPage from './pages/public/CoursesPage'
+import TutorsPage from './pages/public/TutorsPage'
+import CourseDetailPage from './pages/public/CourseDetailPage'
+import AboutPage from './pages/public/AboutPage'
+import ContactPage from './pages/public/ContactPage'
 
 function App() {
   return (
@@ -51,6 +56,14 @@ function App() {
         <Routes>
           {/* Landing page for visitors arriving at the application root. */}
           <Route path="/" element={<Landing />} />
+
+          {/* These public catalogs let visitors explore learning options before
+              registering; protected enrollment and booking happen afterward. */}
+          <Route path="/courses" element={<CoursesPage />} />
+          <Route path="/courses/:courseId" element={<CourseDetailPage />} />
+          <Route path="/tutors" element={<TutorsPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
 
           {/* Role selection for visitors choosing a student or teacher registration path. */}
           <Route path="/register" element={<RoleSelection />} />

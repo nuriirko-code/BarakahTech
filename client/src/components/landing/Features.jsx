@@ -20,7 +20,7 @@ const features = [
   {
     title: "Progress & Certification",
     description:
-      "Tools designed to help students follow progress toward completion and earn BarakahTech Academy certification where applicable.",
+      "Tools designed to help students follow progress toward completion and earn Barakah Academy certification where applicable.",
     label: "Progress",
   },
 ]
@@ -39,7 +39,7 @@ const Features = () => {
             </h2>
           </div>
           <p className="max-w-2xl text-lg leading-8 text-gray-600 lg:justify-self-end">
-            BarakahTech Academy is being shaped to make learning more
+            Barakah Academy is being shaped to make learning more
             structured, personal, and measurable for both students and
             teachers.
           </p>

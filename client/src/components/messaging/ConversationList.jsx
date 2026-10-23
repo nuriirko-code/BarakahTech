@@ -38,7 +38,7 @@ const ConversationList = ({ conversations = [], activeConversationId = null, onS
       const displayName = isAnnouncement
         ? 'Announcement'
         : isSupport
-          ? 'BarakahTech Support'
+          ? 'Barakah Academy Support'
           : otherParticipant?.name || 'Conversation'
       const icon = isAnnouncement ? 'fas fa-bullhorn' : isSupport ? 'fas fa-shield-halved' : ''
       const preview = conversation.subject || conversation.lastMessage || 'Start a conversation'

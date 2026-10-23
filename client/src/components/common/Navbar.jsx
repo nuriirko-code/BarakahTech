@@ -1,68 +1,441 @@
-import { Link } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import useUnreadMessageCount from '../../hooks/useUnreadMessageCount'
 
+const languages = [
+  { code: 'en', label: 'English', flag: '🇬🇧' },
+  { code: 'am', label: 'አማርኛ', flag: '🇪🇹' },
+  { code: 'om', label: 'Afaan Oromo', flag: '🇪🇹' },
+  { code: 'ar', label: 'العربية', flag: '🇸🇦' },
+]
+
 const Navbar = () => {
+  const { t, i18n } = useTranslation()
   const { user, logout } = useAuth()
   const unreadCount = useUnreadMessageCount()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [coursesHovered, setCoursesHovered] = useState(false)
+  const [languageHovered, setLanguageHovered] = useState(false)
+  // Refs keep timer IDs between renders without scheduling additional renders.
+  const coursesTimeout = useRef(null)
+  const languageTimeout = useRef(null)
 
+  const categories = [
+    { key: 'technology', icon: 'fa-laptop-code', label: t('cat_technology') },
+    { key: 'languages', icon: 'fa-language', label: t('cat_languages') },
+    { key: 'sciences', icon: 'fa-flask', label: t('cat_sciences') },
+    { key: 'business', icon: 'fa-chart-line', label: t('cat_business') },
+    { key: 'leadership', icon: 'fa-star', label: t('cat_leadership') },
+  ]
+
+  const handleCoursesEnter = () => {
+    clearTimeout(coursesTimeout.current)
+    setCoursesHovered(true)
+  }
+
+  const handleCoursesLeave = () => {
+    coursesTimeout.current = setTimeout(() => setCoursesHovered(false), 150)
+  }
+
+  const handleLanguageEnter = () => {
+    clearTimeout(languageTimeout.current)
+    setLanguageHovered(true)
+  }
+
+  const handleLanguageLeave = () => {
+    languageTimeout.current = setTimeout(() => setLanguageHovered(false), 150)
+  }
+
+  const handleLogout = () => {
+    logout()
+    setMobileMenuOpen(false)
+    navigate('/')
+  }
+
+  const handleLanguageChange = (code) => {
+    i18n.changeLanguage(code)
+    setLanguageHovered(false)
+    setMobileMenuOpen(false)
+  }
+
+  // Distinct roles use distinct dashboards; live-tutor students enter their tutor workspace.
+  const getDashboardPath = () => {
+    if (!user) return '/login'
+    if (user.role === 'admin') return '/dashboard/admin'
+    if (user.role === 'teacher') return '/dashboard/teacher'
+    if (user.role === 'student' && user.isLiveTutor) return '/dashboard/teacher/live-schedule'
+    return '/dashboard/student'
+  }
+
+  const isActivePath = (path) => {
+    if (path === '/') return location.pathname === '/'
+    if (path === '/courses') return location.pathname.startsWith('/courses')
+    if (path === '/tutors') return location.pathname.startsWith('/tutors')
+    return location.pathname === path
+  }
+
+  const navLinkStyle = (active) => ({
+    color: active ? '#ffffff' : '#f59e0b',
+    borderBottom: active ? '2px solid #f59e0b' : '2px solid transparent',
+  })
+
+  // Inline colors preserve the exact brand palette, including the active link's white state.
+  const handleNavHover = (event, active = false) => {
+    event.currentTarget.style.color = active ? '#ffffff' : '#fbbf24'
+  }
+
+  const handleNavLeave = (event, active = false) => {
+    event.currentTarget.style.color = active ? '#ffffff' : '#f59e0b'
+  }
+
+  const handleLiveSessionHover = (event) => {
+    event.currentTarget.style.background = 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)'
+  }
+
+  const handleLiveSessionLeave = (event) => {
+    event.currentTarget.style.background = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)'
+  }
+
+  const currentLanguage = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0]
+
+  useEffect(() => () => {
+    clearTimeout(coursesTimeout.current)
+    clearTimeout(languageTimeout.current)
+  }, [])
+
+  // Exact brand colors are inline because they are specific to this design system,
+  // rather than relying on the default Tailwind color palette.
   return (
-    <nav className="sticky top-0 z-50 flex items-center justify-between border-b border-green-100 bg-white/95 px-6 py-4 shadow-sm backdrop-blur sm:px-10">
-      <Link to="/" className="flex items-center gap-3 text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#22C55E] text-sm text-white shadow-md shadow-[#22C55E]/25" aria-hidden="true">
-          <i className="fas fa-graduation-cap" />
-        </span>
-        <span><span className="text-[#16A34A]">BarakahTech</span> Academy</span>
-      </Link>
+    <nav style={{ backgroundColor: '#0a2416' }} className="sticky top-0 z-50 shadow-lg">
+      <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between gap-2 sm:gap-4">
+          <Link to="/" className="flex shrink-0 items-center gap-1" aria-label="Barakah Academy home">
+            <span className="whitespace-nowrap text-lg font-bold sm:text-xl" style={{ color: '#ffffff' }}>Barakah</span>
+            <span className="whitespace-nowrap text-lg font-bold sm:text-xl" style={{ color: '#fbbf24' }}>Academy</span>
+          </Link>
 
-      {/* Right side */}
-      <div className="flex items-center gap-4">
-        {user ? (
-          <>
-            <span className="text-gray-700 font-medium">
-              {user.name}
-            </span>
-            <Link to="/messages" aria-label={`Messages${unreadCount ? `, ${unreadCount} unread` : ''}`} title="Messages" className="relative inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-600 transition hover:bg-green-50 hover:text-green-800">
-              <i className="fas fa-comments" aria-hidden="true" />
-              {unreadCount > 0 && (
-                // The 9+ cap keeps a large unread total from stretching the compact navigation badge.
-                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-green-600 px-1 text-[10px] font-bold text-white">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
+          <div className="hidden items-center gap-4 lg:flex">
+            <Link
+              to="/"
+              className="flex items-center gap-1.5 rounded-lg border-b-2 px-3 py-2 text-sm font-medium transition-all duration-200 hover:text-[#fbbf24]"
+              style={navLinkStyle(isActivePath('/'))}
+              aria-current={isActivePath('/') ? 'page' : undefined}
+              onMouseEnter={(event) => handleNavHover(event, isActivePath('/'))}
+              onMouseLeave={(event) => handleNavLeave(event, isActivePath('/'))}
+            >
+              <i className="fas fa-home text-xs" aria-hidden="true" />
+              {t('nav_home')}
             </Link>
-            {user.role === 'admin' && (
-              // Role-aware navigation helps admins find their workspace; server authorization remains the security boundary.
-              <Link
-                to="/dashboard/admin"
-                className="inline-flex items-center gap-2 rounded-xl px-3 py-2 font-semibold text-[#16A34A] transition hover:bg-[#F0FDF4]"
+
+            <div
+              className="relative"
+              onMouseEnter={handleCoursesEnter}
+              onMouseLeave={handleCoursesLeave}
+            >
+              <button
+                type="button"
+                aria-expanded={coursesHovered}
+                aria-haspopup="true"
+                onClick={() => setCoursesHovered((open) => !open)}
+                className="flex items-center gap-1 rounded-lg border-b-2 px-3 py-2 text-sm font-medium transition-all duration-200 hover:text-[#fbbf24]"
+                style={navLinkStyle(isActivePath('/courses'))}
+                onMouseEnter={(event) => handleNavHover(event, isActivePath('/courses'))}
+                onMouseLeave={(event) => handleNavLeave(event, isActivePath('/courses'))}
               >
-                <i className="fas fa-gauge-high text-sm" aria-hidden="true" />
-                Admin Dashboard
-              </Link>
+                <i className="fas fa-graduation-cap text-xs" aria-hidden="true" />
+                {t('nav_courses')}
+                <i className={`fas fa-chevron-down text-xs transition-transform duration-200 ${coursesHovered ? 'rotate-180' : ''}`} aria-hidden="true" />
+              </button>
+
+              {coursesHovered && (
+                <div
+                  className="absolute left-0 top-full z-50 mt-2 w-56 rounded-xl border border-gray-100 bg-white py-2 shadow-xl"
+                  onMouseEnter={handleCoursesEnter}
+                  onMouseLeave={handleCoursesLeave}
+                >
+                  {categories.map((category) => (
+                    <Link
+                      key={category.key}
+                      to={`/courses?category=${category.key}`}
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 transition-colors hover:bg-amber-50 hover:text-amber-700"
+                      onClick={() => setCoursesHovered(false)}
+                    >
+                      <i className={`fas ${category.icon} w-4 text-xs text-amber-600`} aria-hidden="true" />
+                      <span className="font-medium">{category.label}</span>
+                    </Link>
+                  ))}
+                  <div className="mt-1 border-t border-gray-100 pt-1">
+                    <Link
+                      to="/courses"
+                      className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold text-green-700 transition-colors hover:bg-green-50"
+                      onClick={() => setCoursesHovered(false)}
+                    >
+                      <i className="fas fa-th-large w-4 text-xs" aria-hidden="true" />
+                      {t('nav_browse_all')}
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* The warm amber gradient distinguishes the primary live-tutoring action. */}
+            <Link
+              to="/tutors"
+              className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:scale-105 hover:shadow-lg"
+              style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}
+              onMouseEnter={handleLiveSessionHover}
+              onMouseLeave={handleLiveSessionLeave}
+            >
+              <i className="fas fa-video text-xs" aria-hidden="true" />
+              Join Live Session
+            </Link>
+          </div>
+
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div
+              className="relative"
+              onMouseEnter={handleLanguageEnter}
+              onMouseLeave={handleLanguageLeave}
+            >
+              <button
+                type="button"
+                aria-label={t('nav_language')}
+                aria-expanded={languageHovered}
+                aria-haspopup="true"
+                onClick={() => setLanguageHovered((open) => !open)}
+                className="flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm font-semibold text-[#ffd166] transition-all duration-200 hover:text-white"
+                style={{
+                  borderColor: 'rgba(255,209,102,0.65)',
+                  backgroundColor: 'rgba(255,209,102,0.16)',
+                }}
+                onMouseEnter={(event) => { event.currentTarget.style.color = '#ffffff' }}
+                onMouseLeave={(event) => { event.currentTarget.style.color = '#ffd166' }}
+              >
+                <i className="fas fa-globe hidden text-xs sm:inline" aria-hidden="true" />
+                <span className="uppercase">{currentLanguage}</span>
+                <i className={`fas fa-chevron-down hidden text-xs transition-transform duration-200 sm:inline ${languageHovered ? 'rotate-180' : ''}`} aria-hidden="true" />
+              </button>
+
+              {languageHovered && (
+                <div
+                  className="absolute right-0 top-full z-50 mt-2 w-44 rounded-xl border border-gray-100 bg-white py-2 shadow-xl"
+                  onMouseEnter={handleLanguageEnter}
+                  onMouseLeave={handleLanguageLeave}
+                >
+                  {languages.map((language) => (
+                    <button
+                      key={language.code}
+                      type="button"
+                      onClick={() => handleLanguageChange(language.code)}
+                      className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-gray-50 ${
+                        currentLanguage === language.code
+                          ? 'bg-amber-50 font-semibold text-amber-700'
+                          : 'text-gray-700'
+                      }`}
+                    >
+                      <span className="text-base" aria-hidden="true">{language.flag}</span>
+                      <span>{language.label}</span>
+                      {currentLanguage === language.code && (
+                        <i className="fas fa-check ml-auto text-xs text-amber-600" aria-hidden="true" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {user ? (
+              <div className="flex items-center gap-3">
+                <span className="hidden max-w-28 truncate text-sm font-medium text-[#ffd166] sm:inline">
+                  {user.name?.trim().split(/\s+/)[0] || user.name}
+                </span>
+                <Link
+                  to="/messages"
+                  aria-label={`Messages${unreadCount ? `, ${unreadCount} unread` : ''}`}
+                  title="Messages"
+                  className="relative hidden h-9 w-9 items-center justify-center rounded-lg text-[#ffd166] transition hover:bg-amber-400/10 hover:text-white sm:inline-flex"
+                >
+                  <i className="fas fa-comments" aria-hidden="true" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold text-white">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </Link>
+                <Link
+                  to={getDashboardPath()}
+                  className="hidden rounded-lg border px-3 py-1.5 text-sm font-semibold text-[#ffd166] transition-all duration-200 hover:bg-amber-400/15 hover:text-white sm:inline-flex"
+                  style={{ borderColor: 'rgba(255,209,102,0.65)' }}
+                >
+                  <i className="fas fa-th-large mr-1.5 text-xs" aria-hidden="true" />
+                  {t('nav_dashboard')}
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="hidden rounded-lg px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:text-red-300 sm:inline-flex"
+                >
+                  <i className="fas fa-sign-out-alt mr-1 text-xs" aria-hidden="true" />
+                  {t('nav_logout')}
+                </button>
+              </div>
+            ) : (
+              // Visitors see both actions because authentication state cannot tell whether they have an account.
+              <div className="flex items-center gap-1 sm:gap-2">
+                <Link
+                  to="/login"
+                  className="whitespace-nowrap px-2 py-2 text-sm font-bold text-[#fbbf24] transition-colors hover:text-white sm:px-3"
+                  style={{ color: '#fbbf24' }}
+                >
+                  {t('nav_login')}
+                </Link>
+                <Link
+                  to="/register"
+                  className="hidden rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-green-600 sm:inline-flex"
+                >
+                  {t('nav_sign_up')}
+                </Link>
+              </div>
             )}
-            <button
-              onClick={logout}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#22C55E] px-4 py-2.5 font-bold text-white transition hover:bg-[#16A34A]">
-              <i className="fas fa-right-from-bracket text-xs" aria-hidden="true" />
-              Logout
-            </button>
-          </>
-        ) : (
-          <>
-            <Link
-              to="/login"
-              className="rounded-xl px-3 py-2 font-semibold text-[#16A34A] transition hover:bg-[#F0FDF4]">
-              Login
-            </Link>
-            <Link
-              to="/register"
-              className="rounded-xl bg-[#22C55E] px-4 py-2.5 font-bold text-white transition hover:bg-[#16A34A]">
-              Register
-            </Link>
-          </>
-        )}
+          </div>
+
+          <button
+            type="button"
+            className="rounded-lg p-2 text-[#f59e0b] transition-colors hover:bg-amber-400/10 lg:hidden"
+            onClick={() => setMobileMenuOpen((open) => !open)}
+            aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={mobileMenuOpen}
+          >
+            <i className={`fas ${mobileMenuOpen ? 'fa-times' : 'fa-bars'} text-xl`} aria-hidden="true" />
+          </button>
+        </div>
       </div>
+
+      {mobileMenuOpen && (
+        // The slightly lighter mobile panel adds depth while keeping the same dark-green palette.
+        <div style={{ backgroundColor: '#0d2e1a' }} className="border-t border-green-900 px-4 py-4 lg:hidden">
+          <div className="mb-4 space-y-1">
+            <Link
+              to="/"
+              className={`flex items-center gap-3 rounded-lg border-b-2 px-3 py-2.5 text-sm font-medium ${
+                isActivePath('/') ? 'border-[#f59e0b] text-white' : 'border-transparent text-[#f59e0b]'
+              }`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <i className="fas fa-home w-4 text-xs" aria-hidden="true" />
+              {t('nav_home')}
+            </Link>
+
+            <p className="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-amber-400/60">
+              {t('nav_courses')}
+            </p>
+            {categories.map((category) => (
+              <Link
+                key={category.key}
+                to={`/courses?category=${category.key}`}
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#f59e0b] hover:bg-amber-400/10 hover:text-[#fbbf24]"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <i className={`fas ${category.icon} w-4 text-xs opacity-70`} aria-hidden="true" />
+                {category.label}
+              </Link>
+            ))}
+            <Link
+              to="/courses"
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[#f59e0b] hover:bg-amber-400/10 hover:text-[#fbbf24]"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <i className="fas fa-th-large w-4 text-xs" aria-hidden="true" />
+              {t('nav_browse_all')}
+            </Link>
+            <Link
+              to="/tutors"
+              className="mx-3 my-2 flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white"
+              style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <i className="fas fa-video text-xs" aria-hidden="true" />
+              Join Live Session
+            </Link>
+          </div>
+
+          <div className="mb-4 border-t border-green-900 pt-4">
+            <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-amber-400/60">
+              {t('nav_language')}
+            </p>
+            {/* A two-column language grid makes the choices easy to scan on narrow screens. */}
+            <div className="grid grid-cols-2 gap-1">
+              {languages.map((language) => (
+                <button
+                  key={language.code}
+                  type="button"
+                  onClick={() => handleLanguageChange(language.code)}
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-[#f59e0b] transition-colors hover:bg-amber-400/10 ${
+                    currentLanguage === language.code ? 'bg-amber-400/10 font-semibold' : 'opacity-80'
+                  }`}
+                >
+                  <span aria-hidden="true">{language.flag}</span>
+                  <span>{language.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="border-t border-green-900 pt-4">
+            {user ? (
+              <div className="space-y-2">
+                <p className="px-3 text-sm font-semibold text-[#f59e0b]">{user.name}</p>
+                <Link
+                  to={getDashboardPath()}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[#f59e0b] hover:bg-amber-400/10"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <i className="fas fa-th-large w-4 text-xs" aria-hidden="true" />
+                  {t('nav_dashboard')}
+                </Link>
+                <Link
+                  to="/messages"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#f59e0b] hover:bg-amber-400/10"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <i className="fas fa-comments w-4 text-xs" aria-hidden="true" />
+                  Messages{unreadCount > 0 ? ` (${unreadCount > 9 ? '9+' : unreadCount} unread)` : ''}
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-red-400 hover:bg-red-400/10"
+                >
+                  <i className="fas fa-sign-out-alt w-4 text-xs" aria-hidden="true" />
+                  {t('nav_logout')}
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <Link
+                  to="/login"
+                  className="rounded-lg border px-4 py-2.5 text-center text-sm font-medium text-[#f59e0b]"
+                  style={{ borderColor: 'rgba(245,158,11,0.4)' }}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t('nav_login')}
+                </Link>
+                <Link
+                  to="/register"
+                  className="rounded-lg bg-green-700 px-4 py-2.5 text-center text-sm font-semibold text-white"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {t('nav_sign_up')}
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   )
 }

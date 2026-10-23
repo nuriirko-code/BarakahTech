@@ -18,14 +18,14 @@ export const AuthProvider = ({ children }) => {
   const [successMessage, setSuccessMessage] = useState('')
 
   const login = (userData, tokenValue) => {
-    localStorage.setItem('barakahtech_token', tokenValue)
+    localStorage.setItem('barakah-academy_token', tokenValue)
     axios.defaults.headers.common.Authorization = `Bearer ${tokenValue}`
     setToken(tokenValue)
     setUser(userData)
   }
 
   const logout = () => {
-    localStorage.removeItem('barakahtech_token')
+    localStorage.removeItem('barakah-academy_token')
     delete axios.defaults.headers.common.Authorization
     setToken(null)
     setUser(null)
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // localStorage lets a user remain signed in after refreshing the browser.
-    const storedToken = localStorage.getItem('barakahtech_token')
+    const storedToken = localStorage.getItem('barakah-academy_token')
 
     if (!storedToken) {
       setLoading(false)
@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }) => {
         setUser(response.data.user)
         setToken(storedToken)
       } catch (error) {
-        localStorage.removeItem('barakahtech_token')
+        localStorage.removeItem('barakah-academy_token')
         delete axios.defaults.headers.common.Authorization
         setToken(null)
         setUser(null)

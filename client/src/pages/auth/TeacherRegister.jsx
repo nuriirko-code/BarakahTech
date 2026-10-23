@@ -387,7 +387,7 @@ const TeacherRegister = () => {
       <section className="mx-auto max-w-4xl rounded-2xl border border-slate-200 bg-white p-6 text-base shadow-sm sm:p-10 [&_button]:text-base [&_input]:text-base [&_label]:text-base [&_select]:text-base [&_textarea]:text-base">
         <p className="flex items-center justify-center gap-2 text-2xl font-extrabold tracking-tight text-slate-900">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#22C55E] text-sm text-white"><i className="fas fa-graduation-cap" aria-hidden="true" /></span>
-          BarakahTech
+          Barakah Academy
         </p>
         <div className="mt-8">
           <div className="flex items-center justify-between text-sm font-semibold text-gray-600">
@@ -406,7 +406,7 @@ const TeacherRegister = () => {
         <form onSubmit={currentStep === 6 ? handleSubmit : (event) => { event.preventDefault(); handleNext() }} className="mt-8">
           {currentStep === 1 && (
             <>
-            {user && <p className="mb-5 rounded-xl border border-green-200 bg-green-50 p-4 text-sm leading-6 text-green-900">You are applying with your existing BarakahTech account. Your account details and profile photo are reused; complete the remaining information needed for course-teaching review.</p>}
+            {user && <p className="mb-5 rounded-xl border border-green-200 bg-green-50 p-4 text-sm leading-6 text-green-900">You are applying with your existing Barakah Academy account. Your account details and profile photo are reused; complete the remaining information needed for course-teaching review.</p>}
             <div className="grid gap-5 sm:grid-cols-2">
               <label className="space-y-2 text-sm font-medium">Full name<input className={inputClass} value={formData.name} onChange={(event) => handleChange('name', event.target.value)} autoComplete="name" />{renderFieldError('name')}</label>
               <label className="space-y-2 text-sm font-medium">Email address<input className={inputClass} type="email" value={formData.email} onChange={(event) => handleChange('email', event.target.value)} autoComplete="email" />{renderFieldError('email')}</label>
@@ -595,7 +595,7 @@ const TeacherRegister = () => {
               </label>
               <label className="flex items-start gap-3 rounded-lg border p-4">
                 <input className="mt-1 accent-[#22C55E]" type="checkbox" checked={formData.agreedToStandards} onChange={(event) => handleChange('agreedToStandards', event.target.checked)} />
-                <span>I agree to BarakahTech teaching standards and code of conduct{renderFieldError('agreedToStandards')}</span>
+                <span>I agree to Barakah Academy teaching standards and code of conduct{renderFieldError('agreedToStandards')}</span>
               </label>
               <label className="flex items-start gap-3 rounded-lg border p-4">
                 <input className="mt-1 accent-[#22C55E]" type="checkbox" checked={formData.agreedToBackgroundCheck} onChange={(event) => handleChange('agreedToBackgroundCheck', event.target.checked)} />

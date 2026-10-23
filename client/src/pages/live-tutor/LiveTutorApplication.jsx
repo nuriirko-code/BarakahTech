@@ -359,11 +359,11 @@ const LiveTutorApplication = () => {
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-900 sm:px-6">
       <div className="mx-auto max-w-4xl">
-        <Link to="/" className="mx-auto flex w-fit items-center gap-3 rounded-xl px-3 py-2 transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22C55E]" aria-label="Go to BarakahTech Academy home">
+        <Link to="/" className="mx-auto flex w-fit items-center gap-3 rounded-xl px-3 py-2 transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22C55E]" aria-label="Go to Barakah Academy home">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#22C55E] to-[#15803D] text-white shadow-md shadow-[#22C55E]/30">
             <i className="fas fa-graduation-cap" aria-hidden="true" />
           </span>
-          <span className="text-lg font-extrabold tracking-tight text-slate-900">BarakahTech Academy</span>
+          <span className="text-lg font-extrabold tracking-tight text-slate-900">Barakah Academy</span>
         </Link>
 
         <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:mt-8 sm:p-10">
@@ -613,7 +613,7 @@ const LiveTutorApplication = () => {
                       <input type="file" accept="image/*" onChange={handleProfilePhotoChange} className="block w-full text-base font-normal text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-600 file:px-4 file:py-2.5 file:font-semibold file:text-white hover:file:bg-blue-700" />
                       <span className="block text-base font-normal leading-7 text-slate-500">
                         {user?.profilePhoto
-                          ? 'We found your existing BarakahTech profile photo. You can keep it or choose a newer one for all of your teaching activity.'
+                          ? 'We found your existing Barakah Academy profile photo. You can keep it or choose a newer one for all of your teaching activity.'
                           : 'Students use this photo to recognize you in tutor search results. Choose a clear photo of yourself. Images are resized automatically; maximum original size is 10 MB.'}
                       </span>
                     </label>

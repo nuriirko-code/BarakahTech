@@ -36,7 +36,7 @@ const StudentSidebar = ({ onClose = () => {} }) => {
             <i className="fas fa-graduation-cap" aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <p className="truncate text-lg font-bold tracking-tight text-slate-900">BarakahTech</p>
+            <p className="truncate text-lg font-bold tracking-tight text-slate-900">Barakah Academy</p>
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#16A34A]">Student Portal</p>
           </div>
       </div>

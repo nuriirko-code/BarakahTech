@@ -326,7 +326,7 @@ const AdminDashboard = () => {
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <div>
-            <p className="text-sm font-bold text-[#16A34A]">BarakahTech Academy</p>
+            <p className="text-sm font-bold text-[#16A34A]">Barakah Academy</p>
             <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900">Admin Dashboard</h1>
             <p className="mt-1 text-sm text-gray-600">Review teacher applications and platform accounts</p>
           </div>

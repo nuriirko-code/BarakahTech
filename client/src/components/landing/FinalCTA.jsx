@@ -12,7 +12,7 @@ const FinalCTA = () => {
             Begin building the skills that move you forward.
           </h2>
           <p className="mt-5 text-lg leading-8 text-slate-300">
-            Join BarakahTech Academy and take the next meaningful step in your
+            Join Barakah Academy and take the next meaningful step in your
             learning journey.
           </p>
 

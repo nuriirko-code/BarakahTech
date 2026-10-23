@@ -24,7 +24,7 @@ app.use(express.json({ limit: '3mb' }))
 
 // Routes
 app.get("/api/health", (req, res) => {
-  res.json({ message: "BarakahTech Academy API is running" })
+  res.json({ message: "Barakah Academy API is running" })
 })
 app.use("/api/auth", authRoutes)
 // Express prefixes each route in this router with /api/teacher-applications.
@@ -47,7 +47,7 @@ const startServer = async () => {
   await connectDB()
 
   app.listen(port, () => {
-    console.log(`BarakahTech Academy API is running on port ${port}`)
+    console.log(`Barakah Academy API is running on port ${port}`)
   })
 }
 

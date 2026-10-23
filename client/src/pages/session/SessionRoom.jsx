@@ -134,7 +134,7 @@ const SessionCallUI = ({ roomUrl, meetingToken, bookingId, booking }) => {
       <section className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between border-b border-white/10 bg-slate-900/95 px-4 py-3 sm:px-6">
           <div className="min-w-0">
-            <p className="truncate text-base font-extrabold tracking-tight sm:text-lg">BarakahTech Academy</p>
+            <p className="truncate text-base font-extrabold tracking-tight sm:text-lg">Barakah Academy</p>
             <p className="truncate text-xs text-slate-400">{sessionTitle}</p>
           </div>
           <div className="ml-4 flex items-center gap-3 text-sm font-semibold text-slate-200">

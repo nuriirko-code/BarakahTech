@@ -19,7 +19,7 @@ const LearningCategories = () => {
             Learning for every kind of goal.
           </h2>
           <p className="mt-5 text-lg leading-8 text-gray-600">
-            BarakahTech Academy is designed to support meaningful learning
+            Barakah Academy is designed to support meaningful learning
             across a growing range of subjects and disciplines.
           </p>
         </div>

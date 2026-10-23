@@ -103,7 +103,7 @@ const BookingPage = () => {
     }
   }
 
-  const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL || 'support@barakahtech.com'
+  const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL || 'support@barakah-academy.com'
   const paymentDestination = paymentForm.selectedMethod === 'telebirr'
     ? (import.meta.env.VITE_TELEBIRR_NUMBER || `Contact ${supportEmail} for Telebirr details.`)
     : paymentForm.selectedMethod === 'cbe_birr'

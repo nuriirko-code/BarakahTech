@@ -2,7 +2,7 @@ const pillars = [
   {
     title: "Structured Courses",
     description:
-      "Enroll in teacher-led courses, progress through organized lessons, and earn BarakahTech Academy certification when you complete your learning path.",
+      "Enroll in teacher-led courses, progress through organized lessons, and earn Barakah Academy certification when you complete your learning path.",
   },
   {
     title: "Live Learning",
@@ -22,13 +22,13 @@ const About = () => {
       <div className="mx-auto max-w-7xl">
         <div className="max-w-3xl">
           <p className="inline-flex rounded-full bg-green-100 px-4 py-2 text-sm font-bold uppercase tracking-widest text-green-800">
-            About BarakahTech Academy
+            About Barakah Academy
           </p>
           <h2 className="mt-5 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
             Empowering Students Through Practical Education
           </h2>
           <p className="mt-6 text-lg leading-8 text-gray-600">
-            BarakahTech Academy is a hybrid learning platform that combines
+            Barakah Academy is a hybrid learning platform that combines
             structured courses with live tutoring. Students can learn
             progressively through teacher-organized content, join one-to-one
             or small-group sessions, and develop skills across a wide range of

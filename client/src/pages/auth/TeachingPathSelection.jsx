@@ -9,7 +9,7 @@ const TeachingPathSelection = () => (
         <i className="fas fa-arrow-left text-sm" aria-hidden="true" /> Back to registration choices
       </Link>
       <header className="mt-8 max-w-3xl">
-        <p className="text-base font-bold text-[#15803D]">Teach on BarakahTech Academy</p>
+        <p className="text-base font-bold text-[#15803D]">Teach on Barakah Academy</p>
         <h1 className="mt-2 text-4xl font-extrabold tracking-tight sm:text-5xl">Choose how you want to teach</h1>
         <p className="mt-4 text-lg leading-8 text-slate-600">You need only one account. You can apply for the other teaching path later if your goals change.</p>
       </header>

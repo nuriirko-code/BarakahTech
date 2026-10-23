@@ -35,7 +35,7 @@ const TeacherWelcome = () => {
         <header className="mt-8 rounded-2xl bg-slate-900 px-7 py-12 text-white sm:px-12 sm:py-16">
           <p className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-[#86EFAC]">
             <i className="fas fa-graduation-cap" aria-hidden="true" />
-            BarakahTech Academy
+            Barakah Academy
           </p>
           <h1 className="mt-4 max-w-2xl text-4xl font-extrabold tracking-tight sm:text-5xl">Create courses that help learners grow</h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-green-50">
@@ -52,7 +52,7 @@ const TeacherWelcome = () => {
 
         <section className="mt-10 grid gap-6 md:grid-cols-2">
           <article className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
-            <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">Why teach on BarakahTech?</h2>
+            <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">Why teach on Barakah Academy?</h2>
             <p className="mt-4 leading-7 text-gray-600">
               Reach learners looking for practical knowledge and supportive teaching. Build clear lessons, share your expertise, and help learners progress over time.
             </p>
@@ -61,7 +61,7 @@ const TeacherWelcome = () => {
           <article className="rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
             <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">What happens after you apply?</h2>
             <p className="mt-4 leading-7 text-gray-600">
-              The BarakahTech team reviews your application and qualifications. We will contact you at the email address you provide with our decision. Applications are typically reviewed within 3 to 5 business days.
+              The Barakah Academy team reviews your application and qualifications. We will contact you at the email address you provide with our decision. Applications are typically reviewed within 3 to 5 business days.
             </p>
           </article>
         </section>
@@ -82,7 +82,7 @@ const TeacherWelcome = () => {
         <section className="mt-6 rounded-2xl border border-[#22C55E]/20 bg-[#F0FDF4] p-7 sm:p-9">
           <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">Teaching and payment</h2>
           <p className="mt-4 max-w-3xl leading-7 text-slate-700">
-            This application is for structured course teaching. You can add live tutoring through the separate live-tutor application later, using the same BarakahTech account and profile.
+            This application is for structured course teaching. You can add live tutoring through the separate live-tutor application later, using the same Barakah Academy account and profile.
           </p>
         </section>
 
