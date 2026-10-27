@@ -20,7 +20,7 @@ const RoleSelection = () => {
         <div className="mt-12 flex flex-col gap-8 md:flex-row">
           <button
             type="button"
-            onClick={() => navigate('/register/student')}
+            onClick={() => navigate('/welcome-student')}
             className="group flex-1 rounded-2xl border border-slate-200 bg-white p-10 text-left shadow-sm transition-all hover:-translate-y-1 hover:border-[#22C55E]/40 hover:shadow-md"
           >
             <span className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F0FDF4] text-2xl text-[#16A34A]" aria-hidden="true">

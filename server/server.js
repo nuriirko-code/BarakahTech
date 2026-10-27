@@ -13,6 +13,7 @@ const messageRoutes = require("./routes/messageRoutes")
 const liveTutorRoutes = require("./routes/liveTutorRoutes")
 const availabilityRoutes = require("./routes/availabilityRoutes")
 const bookingRoutes = require("./routes/bookingRoutes")
+const landingRoutes = require("./routes/landingRoutes")
 
 const app = express()
 const port = process.env.PORT || 5000
@@ -26,6 +27,7 @@ app.use(express.json({ limit: '3mb' }))
 app.get("/api/health", (req, res) => {
   res.json({ message: "Barakah Academy API is running" })
 })
+app.use("/api/landing", landingRoutes)
 app.use("/api/auth", authRoutes)
 // Express prefixes each route in this router with /api/teacher-applications.
 app.use("/api/teacher-applications", teacherApplicationRoutes)

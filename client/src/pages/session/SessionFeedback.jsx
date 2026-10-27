@@ -20,6 +20,7 @@ const SessionFeedback = () => {
     rating: 0,
     wasHelpful: null,
     comment: '',
+    isPublic: false,
     wouldBookAgain: true,
   })
 
@@ -149,6 +150,21 @@ const SessionFeedback = () => {
           {/* Comments remain optional so the student can make the important
               financial decision quickly, while still having room for detail. */}
           <label className="mt-7 block text-sm font-bold text-slate-800">Share more <span className="font-normal text-slate-500">(optional)</span><textarea value={feedbackForm.comment} onChange={(event) => setFeedbackForm((current) => ({ ...current, comment: event.target.value }))} rows="4" placeholder="Share what you liked or what could be improved (optional)" className="mt-2 w-full resize-y rounded-xl border border-slate-300 px-3 py-3 font-normal text-slate-800 outline-none focus:border-green-600 focus:ring-2 focus:ring-green-100" /></label>
+
+          <label className="mt-4 flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+            <input
+              type="checkbox"
+              checked={feedbackForm.isPublic}
+              onChange={(event) => setFeedbackForm((current) => ({ ...current, isPublic: event.target.checked }))}
+              className="mt-0.5 h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-green-500"
+            />
+            <span>
+              <span className="font-semibold">Share my comment anonymously on the public homepage.</span>
+              <span className="mt-1 block text-xs leading-5 text-slate-500">
+              Your name and account details will not be displayed. Avoid including personal details in the comment. This is optional and does not affect your feedback submission.
+              </span>
+            </span>
+          </label>
 
           <button type="submit" disabled={submitting} className="mt-7 w-full rounded-xl bg-green-600 px-5 py-3.5 font-bold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-slate-300">{submitting ? 'Submitting feedback...' : 'Submit Feedback'}</button>
         </form>

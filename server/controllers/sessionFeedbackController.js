@@ -35,6 +35,7 @@ const submitSessionFeedback = async (req, res) => {
     const studentId = getCurrentUserId(req)
     const rating = Number(req.body.rating)
     const { wasHelpful, comment, wouldBookAgain } = req.body
+    const isPublic = req.body.isPublic === true
 
     if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
       return res.status(400).json({ message: 'Choose a rating from 1 to 5.' })
@@ -69,6 +70,7 @@ const submitSessionFeedback = async (req, res) => {
       rating,
       wasHelpful,
       comment: String(comment || '').trim(),
+      isPublic,
       wouldBookAgain: wouldBookAgain !== false,
     })
 

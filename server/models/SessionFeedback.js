@@ -37,6 +37,12 @@ const sessionFeedbackSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    // Public display is opt-in so students control whether their written
+    // feedback may appear anonymously on the landing page.
+    isPublic: {
+      type: Boolean,
+      default: false,
+    },
     wouldBookAgain: {
       type: Boolean,
       default: true,

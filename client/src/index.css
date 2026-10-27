@@ -22,3 +22,44 @@
 	--color-gray-900: #0f172a;
 	--color-gray-950: #020617;
 }
+
+@keyframes scroll-left {
+	0% { transform: translateX(0); }
+	100% { transform: translateX(-50%); }
+}
+
+@keyframes scroll-right {
+	0% { transform: translateX(-50%); }
+	100% { transform: translateX(0); }
+}
+
+@keyframes scroll-single {
+	0% { transform: translateX(100vw); }
+	100% { transform: translateX(-100%); }
+}
+
+.animate-scroll-left {
+	animation: scroll-left 30s linear infinite;
+}
+
+.animate-scroll-right {
+	animation: scroll-right 35s linear infinite;
+}
+
+.animate-scroll-single {
+	animation: scroll-single 22s linear infinite;
+}
+
+.animate-scroll-left:hover,
+.animate-scroll-right:hover,
+.animate-scroll-single:hover {
+	animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.animate-scroll-left,
+	.animate-scroll-right,
+	.animate-scroll-single {
+		animation: none;
+	}
+}

@@ -11,6 +11,7 @@ import TeacherWelcome from './pages/auth/TeacherWelcome'
 import TeachingPathSelection from './pages/auth/TeachingPathSelection'
 import LiveTutorWelcome from './pages/auth/LiveTutorWelcome'
 import LiveTutorRegister from './pages/auth/LiveTutorRegister'
+import StudentWelcome from './pages/auth/StudentWelcome'
 import ApplicationSubmitted from './pages/auth/ApplicationSubmitted'
 import Login from './pages/auth/Login'
 import ForgotPassword from './pages/auth/ForgotPassword'
@@ -45,6 +46,7 @@ import SessionRoom from './pages/session/SessionRoom'
 import SessionFeedback from './pages/session/SessionFeedback'
 import CoursesPage from './pages/public/CoursesPage'
 import TutorsPage from './pages/public/TutorsPage'
+import TeacherProfilePage from './pages/public/TeacherProfilePage'
 import CourseDetailPage from './pages/public/CourseDetailPage'
 import AboutPage from './pages/public/AboutPage'
 import ContactPage from './pages/public/ContactPage'
@@ -62,6 +64,7 @@ function App() {
           <Route path="/courses" element={<CoursesPage />} />
           <Route path="/courses/:courseId" element={<CourseDetailPage />} />
           <Route path="/tutors" element={<TutorsPage />} />
+          <Route path="/teachers/:teacherId" element={<TeacherProfilePage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
 
@@ -69,6 +72,7 @@ function App() {
           <Route path="/register" element={<RoleSelection />} />
 
           {/* Student registration page for users creating student accounts. */}
+          <Route path="/welcome-student" element={<StudentWelcome />} />
           <Route path="/register/student" element={<StudentRegister />} />
 
           {/* Teacher registration page for users applying to become teachers. */}

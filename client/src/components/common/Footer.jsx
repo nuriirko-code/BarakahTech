@@ -10,7 +10,7 @@ const socialLinks = [
   { icon: 'fa-instagram', href: 'https://instagram.com/barakah-academy', label: 'Instagram' },
   { icon: 'fa-linkedin-in', href: 'https://linkedin.com/company/barakah-academy', label: 'LinkedIn' },
   // Telegram is included because it is widely used by learners in Ethiopia and the Middle East.
-  { icon: 'fa-telegram', href: 'https://t.me/barakah-academy', label: 'Telegram' },
+  { icon: 'fa-telegram', href: 'https://t.me/barakahacademy1', label: 'Telegram' },
   { icon: 'fa-youtube', href: 'https://youtube.com/@barakah-academy', label: 'YouTube' },
 ]
 
@@ -48,8 +48,8 @@ const Footer = () => {
     {
       title: t('footer_teach'),
       links: [
-        { label: t('footer_become_teacher'), to: '/register/teacher' },
-        { label: t('footer_apply_tutor'), to: '/apply/live-tutor' },
+        { label: t('footer_become_teacher'), to: '/become-a-teacher' },
+        { label: t('footer_apply_tutor'), to: '/become-a-live-tutor' },
       ],
     },
     {
