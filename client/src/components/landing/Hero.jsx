@@ -4,32 +4,32 @@ import { useNavigate } from "react-router-dom"
 const slides = [
   {
     id: 1,
-    image: "https://images.unsplash.com/photo-1738566495427-bb6427cfbab3?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D",
+    image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1920&q=80",
     category: "general",
     heading: "Welcome to Barakah Academy",
     subLines: [
-      "Begin your learning journey.",
-      "Explore courses and connect with available tutors.",
+      "Your learning journey starts here.",
+      "Expert tutors. Every subject. Your language.",
     ],
   },
   {
     id: 2,
-    image: "https://plus.unsplash.com/premium_photo-1683121879092-d26591501d9b?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D",
+    image: "https://images.unsplash.com/photo-1503676260728-1d2f3c4f8a77?w=1920&q=80",
     category: "technology",
     heading: "Build Your Tech Foundation",
     subLines: [
-      "Build skills that support your goals.",
-      "Browse the current catalog to find available learning options.",
+      "Learn coding. Create apps. Grow as a developer.",
+      "From HTML to full stack — start your journey today.",
     ],
   },
   {
     id: 3,
-    image: "https://images.unsplash.com/photo-1603714228681-b399854b8f80?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=NHwxMjA3fDA%3D",
+    image: "https://images.unsplash.com/photo-1543269865-cbf427effbad?w=1920&q=80",
     category: "languages",
     heading: "Speak With Confidence",
     subLines: [
-      "Explore language learning opportunities.",
-      "Check course and tutor profiles for currently offered languages.",
+      "Master English, Arabic, Amharic and more.",
+      "Succeed in interviews. Connect with the world.",
     ],
   },
   {
@@ -38,8 +38,8 @@ const slides = [
     category: "sciences",
     heading: "Welcome, Future Scientists",
     subLines: [
-      "Explore academic subjects and learning resources.",
-      "Browse current offerings to find a topic that fits your goals.",
+      "From mathematics to biology — learn from experts.",
+      "Build the scientific mind the world needs.",
     ],
   },
   {
@@ -48,8 +48,8 @@ const slides = [
     category: "business",
     heading: "Build Your Business Mindset",
     subLines: [
-      "Keep developing skills for your next step.",
-      "Review available courses and tutor profiles.",
+      "Finance, economics, entrepreneurship — start today.",
+      "Turn your ideas into real business success.",
     ],
   },
   {
@@ -58,8 +58,8 @@ const slides = [
     category: "leadership",
     heading: "Lead With Purpose",
     subLines: [
-      "Keep learning with purpose.",
-      "Explore current offerings from Barakah Academy.",
+      "Develop communication and leadership skills.",
+      "Inspire others. Create impact. Leave a legacy.",
     ],
   },
 ]
@@ -72,9 +72,10 @@ const Hero = () => {
   const [displayedSub, setDisplayedSub] = useState("")
   const [currentSubIndex, setCurrentSubIndex] = useState(0)
   const [phase, setPhase] = useState("typing-heading")
-  // Effects rerun only when a dependency changes. Setting an already-empty heading to "" is a no-op,
-  // so this incrementing reset key guarantees a real change and reliably restarts the typewriter.
-  // This is a common reset-key pattern for forcing dependent effects to run again.
+  // React only re-runs an effect when dependency values actually change.
+  // If displayedHeading was already empty and we set it back to empty, React sees no change,
+  // so the typewriter would never restart. The incrementing slideKey acts as a reset key,
+  // forcing a real change every time the slide changes.
   const [slideKey, setSlideKey] = useState(0)
 
   const navigate = useNavigate()
@@ -240,6 +241,7 @@ const Hero = () => {
               className="h-full w-full object-cover"
               loading={index === 0 ? "eager" : "lazy"}
             />
+            {/* Lighter overlay — enough for text readability but keeps image vibrant */}
             <div
               className="absolute inset-0"
               style={{

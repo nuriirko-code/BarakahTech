@@ -1,3 +1,4 @@
+import API_BASE_URL from '../config/api.js'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useAuth } from '../context/AuthContext'
@@ -14,7 +15,7 @@ const useUnreadMessageCount = () => {
     let isCurrent = true
     const fetchUnreadCount = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/messages/unread-count', {
+        const response = await axios.get(`${API_BASE_URL}/messages/unread-count`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (isCurrent) setUnreadCount(Number(response.data.count) || 0)

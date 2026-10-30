@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../../config/api.js'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useAuth } from '../../../context/AuthContext'
@@ -35,7 +36,7 @@ const TeacherProfile = () => {
 
 		const loadProfile = async () => {
 			try {
-				const response = await axios.get('http://localhost:5000/api/teacher-applications/my-application', {
+				const response = await axios.get(`${API_BASE_URL}/teacher-applications/my-application`, {
 					headers: token ? { Authorization: `Bearer ${token}` } : {},
 				})
 				const application = response.data.application
@@ -111,7 +112,7 @@ const TeacherProfile = () => {
 
 		try {
 			const response = await axios.put(
-				'http://localhost:5000/api/teacher-applications/update-profile',
+				`${API_BASE_URL}/teacher-applications/update-profile`,
 				{
 					bio: profile.bio,
 					hourlyRate: Number(profile.hourlyRate) || 0,

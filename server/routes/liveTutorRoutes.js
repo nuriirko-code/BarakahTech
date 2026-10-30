@@ -5,6 +5,8 @@ const authorize = require('../middleware/roleMiddleware')
 const {
   submitLiveTutorApplication,
   getMyLiveTutorApplication,
+  getMyLiveTutorProfile,
+  updateMyLiveTutorProfile,
   getApprovedTutors,
   getTutorPublicProfile,
   getAllLiveTutorApplications,
@@ -21,6 +23,8 @@ router.get('/profile/:profileId', getTutorPublicProfile)
 // apply because live tutoring is an additional capability, not a role swap.
 router.post('/apply', authMiddleware, authorize('student', 'pending_teacher', 'teacher'), submitLiveTutorApplication)
 router.get('/my-application', authMiddleware, getMyLiveTutorApplication)
+router.get('/my-profile', authMiddleware, authorize('live_tutor'), getMyLiveTutorProfile)
+router.put('/my-profile', authMiddleware, authorize('live_tutor'), updateMyLiveTutorProfile)
 
 // Review remains admin-only: approval also creates the public profile students
 // will browse, so this action must stay separate from teacherApplication routes.

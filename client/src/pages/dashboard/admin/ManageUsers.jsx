@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../../config/api.js'
 import { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
 import Avatar from '../../../components/common/Avatar'
@@ -44,7 +45,7 @@ const ManageUsers = () => {
     // authMiddleware can identify the request before roleMiddleware checks admin access.
     const loadUsers = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/admin/users', {
+        const response = await axios.get(`${API_BASE_URL}/admin/users`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (isCurrent) setUsers(response.data.users || [])
@@ -91,7 +92,7 @@ const ManageUsers = () => {
 
     try {
       const response = await axios.put(
-        `http://localhost:5000/api/admin/users/${userId}/deactivate`,
+        `${API_BASE_URL}/admin/users/${userId}/deactivate`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       )

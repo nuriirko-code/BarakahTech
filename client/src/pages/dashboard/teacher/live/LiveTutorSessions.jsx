@@ -1,13 +1,14 @@
+import API_BASE_URL from '../../../../config/api.js'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../../context/AuthContext'
 
-const API_BASE_URL = 'http://localhost:5000/api'
 
 // Converts the tutor's own stored timezone into the session instant used by
 // the live countdown, so a session remains accurate across timezones.
 const getSessionStart = (booking) => {
+  if (booking.startAt) return new Date(booking.startAt)
   const date = new Date(booking.sessionDate).toISOString().slice(0, 10)
   const [year, month, day] = date.split('-').map(Number)
   const [hour, minute] = String(booking.startTime).split(':').map(Number)
@@ -25,10 +26,12 @@ const formatCountdown = (booking, now) => {
   const remaining = getSessionStart(booking).getTime() - now
   if (remaining <= 0) return 'Session time has arrived'
 
-  const minutes = Math.floor(remaining / 60000)
-  const days = Math.floor(minutes / 1440)
-  const hours = Math.floor((minutes % 1440) / 60)
-  return days > 0 ? `${days}d ${hours}h remaining` : `${hours}h ${minutes % 60}m remaining`
+  const totalSeconds = Math.floor(remaining / 1000)
+  const days = Math.floor(totalSeconds / 86400)
+  const hours = Math.floor((totalSeconds % 86400) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  return `${days}d ${hours}h ${minutes}m ${seconds}s remaining`
 }
 
 const LiveTutorSessions = () => {
@@ -39,32 +42,49 @@ const LiveTutorSessions = () => {
   const [error, setError] = useState('')
   const [now, setNow] = useState(0)
   const [completingId, setCompletingId] = useState('')
+  const [isAnytimeTestMode, setIsAnytimeTestMode] = useState(false)
 
   useEffect(() => {
     const updateNow = () => setNow(Date.now())
     updateNow()
-    const intervalId = window.setInterval(updateNow, 60000)
+    const intervalId = window.setInterval(updateNow, 1000)
     return () => window.clearInterval(intervalId)
   }, [])
 
   useEffect(() => {
     let isCurrent = true
+    let requestPending = false
 
     const loadBookings = async () => {
+      if (requestPending || !token) return
+      requestPending = true
       try {
         const response = await axios.get(`${API_BASE_URL}/bookings/my-sessions/tutor`, {
           headers: { Authorization: `Bearer ${token}` },
         })
-        if (isCurrent) setBookings(response.data.bookings || [])
+        if (isCurrent) {
+          setBookings(response.data.bookings || [])
+          setIsAnytimeTestMode(Boolean(response.data.isAnytimeTestMode))
+          setError('')
+        }
       } catch (requestError) {
         if (isCurrent) setError(requestError.response?.data?.message || 'Could not load your live sessions.')
       } finally {
+        requestPending = false
         if (isCurrent) setLoading(false)
       }
     }
 
-    if (token) loadBookings()
-    return () => { isCurrent = false }
+    if (!token) return () => { isCurrent = false }
+
+    loadBookings()
+    const refreshInterval = window.setInterval(loadBookings, 15000)
+    window.addEventListener('focus', loadBookings)
+    return () => {
+      isCurrent = false
+      window.clearInterval(refreshInterval)
+      window.removeEventListener('focus', loadBookings)
+    }
   }, [token])
 
   const markComplete = async (bookingId) => {
@@ -93,7 +113,7 @@ const LiveTutorSessions = () => {
         <div>
           <p className="text-sm font-bold uppercase tracking-wide text-green-700">Live tutoring</p>
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Live Sessions</h1>
-          <p className="mt-1 text-sm text-slate-600">Confirmed sessions include a countdown until it is time to meet your student.</p>
+          <p className="mt-1 text-sm text-slate-600">{isAnytimeTestMode ? 'Local testing is enabled: all confirmed sessions can be joined anytime.' : 'Confirmed sessions include a countdown until it is time to meet your student.'}</p>
         </div>
       </header>
 
@@ -109,11 +129,13 @@ const LiveTutorSessions = () => {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="font-bold text-slate-900">Session with {booking.student?.name || 'your student'}</p>
-                  <p className="mt-1 text-sm text-slate-600">{new Date(booking.sessionDate).toLocaleDateString()} at {booking.startTime} ({booking.timezone})</p>
+                  {isAnytimeTestMode
+                    ? <p className="mt-1 text-sm text-green-700">Available to join anytime (local testing)</p>
+                    : <p className="mt-1 text-sm text-slate-600">{getSessionStart(booking).toLocaleString()} (your local time)</p>}
                   <p className="mt-1 text-sm text-slate-500">{booking.isTrialSession ? 'Free 30-minute introductory session' : `${booking.duration}-minute paid session`}</p>
                 </div>
                 <div className={`rounded-xl px-4 py-3 text-sm font-bold ${isConfirmed ? 'bg-green-50 text-green-800' : booking.status === 'pending_payment' ? 'bg-amber-50 text-amber-800' : 'bg-slate-100 text-slate-700'}`}>
-                  {isConfirmed ? formatCountdown(booking, now) : booking.status.replace('_', ' ')}
+                  {isConfirmed ? (isAnytimeTestMode ? 'Available now' : formatCountdown(booking, now)) : booking.status.replace('_', ' ')}
                 </div>
               </div>
               {isConfirmed && (

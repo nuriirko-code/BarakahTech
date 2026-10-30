@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../config/api.js'
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
@@ -54,7 +55,7 @@ const StudentRegister = () => {
     try {
       // Frontend validation gives immediate feedback; the backend still validates
       // independently because client-side checks cannot be trusted for security.
-      await axios.post('http://localhost:5000/api/auth/register', {
+      await axios.post(`${API_BASE_URL}/auth/register`, {
         name: formData.name,
         email: formData.email,
         password: formData.password,

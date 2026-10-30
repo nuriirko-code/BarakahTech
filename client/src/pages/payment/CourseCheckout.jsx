@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../config/api.js'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
@@ -59,7 +60,7 @@ const CourseCheckout = () => {
     // opening the page does not create an order before a student chooses a method.
     const loadCourse = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/courses/${courseId}`)
+        const response = await axios.get(`${API_BASE_URL}/courses/${courseId}`)
         if (isCurrent) setCourse(response.data.course || response.data)
       } catch (requestError) {
         if (isCurrent) {
@@ -85,7 +86,7 @@ const CourseCheckout = () => {
 
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/payments/courses/${courseId}/initiate`,
+        `${API_BASE_URL}/payments/courses/${courseId}/initiate`,
         { method },
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -114,7 +115,7 @@ const CourseCheckout = () => {
 
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/payments/${payment._id}/confirm`,
+        `${API_BASE_URL}/payments/${payment._id}/confirm`,
         {
           manualPaymentReference: referenceNumber.trim(),
           studentNote: studentNote.trim(),

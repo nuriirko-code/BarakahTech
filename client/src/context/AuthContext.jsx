@@ -1,3 +1,4 @@
+import API_BASE_URL from '../config/api.js'
 import { createContext, useState, useContext, useEffect } from 'react'
 import axios from 'axios'
 
@@ -57,7 +58,7 @@ export const AuthProvider = ({ children }) => {
     const verifyToken = async () => {
       try {
         // The backend must verify the token instead of the client trusting storage.
-        const response = await axios.get('http://localhost:5000/api/auth/me')
+        const response = await axios.get(`${API_BASE_URL}/auth/me`)
         setUser(response.data.user)
         setToken(storedToken)
       } catch (error) {

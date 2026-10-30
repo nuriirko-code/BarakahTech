@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../config/api.js'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
@@ -20,7 +21,7 @@ const TrialPaymentGate = () => {
 
     const loadCourse = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/courses/${courseId}/learn`, {
+        const response = await axios.get(`${API_BASE_URL}/courses/${courseId}/learn`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         })
         if (isCurrent) {

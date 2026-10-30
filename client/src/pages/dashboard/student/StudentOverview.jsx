@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../../config/api.js'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
@@ -25,7 +26,7 @@ const StudentOverview = () => {
 
 		const loadEnrollments = async () => {
 			try {
-				const response = await axios.get('http://localhost:5000/api/courses/student/my-enrollments', {
+				const response = await axios.get(`${API_BASE_URL}/courses/student/my-enrollments`, {
 					headers: token ? { Authorization: `Bearer ${token}` } : {},
 				})
 				const enrollments = response.data.enrollments || []

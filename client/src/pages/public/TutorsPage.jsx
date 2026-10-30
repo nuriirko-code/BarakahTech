@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../config/api.js'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -32,7 +33,7 @@ const TutorsPage = () => {
 
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/live-tutors/browse${query ? `?${query}` : ''}`,
+          `${API_BASE_URL}/live-tutors/browse${query ? `?${query}` : ''}`,
         )
         if (isCurrent) setTutors(response.data.tutors || [])
       } catch (requestError) {

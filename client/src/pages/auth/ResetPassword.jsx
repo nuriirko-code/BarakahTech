@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../config/api.js'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
@@ -30,7 +31,7 @@ const ResetPassword = () => {
 
     setLoading(true)
     try {
-      await axios.post(`http://localhost:5000/api/auth/reset-password/${encodeURIComponent(token)}`, {
+      await axios.post(`${API_BASE_URL}/auth/reset-password/${encodeURIComponent(token)}`, {
         newPassword: password,
       })
       setSuccess(true)

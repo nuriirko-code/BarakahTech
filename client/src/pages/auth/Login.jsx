@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../config/api.js'
 import { useState } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import axios from 'axios'
@@ -14,6 +15,12 @@ const Login = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { login, successMessage } = useAuth()
+  const getDashboardPath = (role, isLiveTutor) => {
+    if (role === 'admin') return '/dashboard/admin'
+    if (role === 'teacher') return '/dashboard/teacher'
+    if (isLiveTutor) return '/dashboard/teacher/live-schedule'
+    return '/dashboard/student'
+  }
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -41,7 +48,7 @@ const Login = () => {
     setLoading(true)
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', formData)
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, formData)
       const { user, token } = response.data
 
       if (user.role === 'pending_teacher') {
@@ -53,12 +60,18 @@ const Login = () => {
 
       login(user, token)
 
-      if (user.role === 'teacher') navigate('/dashboard/teacher')
-      // A live-only tutor remains a student role but has the live-tutoring
-      // capability. Send them to the shared dashboard shell at their tools.
-      if (user.role === 'student' && user.isLiveTutor) navigate('/dashboard/teacher/live-schedule')
-      if (user.role === 'student' && !user.isLiveTutor) navigate('/dashboard/student')
-      if (user.role === 'admin') navigate('/dashboard/admin')
+      const requestedLocation = location.state?.from
+      const requestedPath = typeof requestedLocation === 'string'
+        ? requestedLocation
+        : requestedLocation?.pathname
+          ? `${requestedLocation.pathname}${requestedLocation.search || ''}${requestedLocation.hash || ''}`
+          : ''
+      // Only accept an app-local path from router state; this prevents an unsafe
+      // external redirect while returning protected-page visitors to their request.
+      const redirectPath = requestedPath.startsWith('/') && !requestedPath.startsWith('//')
+        ? requestedPath
+        : getDashboardPath(user.role, user.isLiveTutor)
+      navigate(redirectPath, { replace: true })
     } catch (requestError) {
       setError(requestError.response?.data?.message || 'Login failed')
     } finally {

@@ -18,6 +18,8 @@ const Navbar = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [mobileCoursesOpen, setMobileCoursesOpen] = useState(false)
+  const [mobileLanguagesOpen, setMobileLanguagesOpen] = useState(false)
   const [coursesHovered, setCoursesHovered] = useState(false)
   const [languageHovered, setLanguageHovered] = useState(false)
   // Refs keep timer IDs between renders without scheduling additional renders.
@@ -53,13 +55,22 @@ const Navbar = () => {
   const handleLogout = () => {
     logout()
     setMobileMenuOpen(false)
+    setMobileCoursesOpen(false)
+    setMobileLanguagesOpen(false)
     navigate('/')
   }
 
   const handleLanguageChange = (code) => {
     i18n.changeLanguage(code)
     setLanguageHovered(false)
+    setMobileLanguagesOpen(false)
     setMobileMenuOpen(false)
+  }
+
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false)
+    setMobileCoursesOpen(false)
+    setMobileLanguagesOpen(false)
   }
 
   // Distinct roles use distinct dashboards; live-tutor students enter their tutor workspace.
@@ -306,9 +317,18 @@ const Navbar = () => {
           <button
             type="button"
             className="rounded-lg p-2 text-[#f59e0b] transition-colors hover:bg-amber-400/10 lg:hidden"
-            onClick={() => setMobileMenuOpen((open) => !open)}
+            onClick={() => {
+              setMobileMenuOpen((open) => {
+                if (open) {
+                  setMobileCoursesOpen(false)
+                  setMobileLanguagesOpen(false)
+                }
+                return !open
+              })
+            }}
             aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-navigation"
           >
             <i className={`fas ${mobileMenuOpen ? 'fa-times' : 'fa-bars'} text-xl`} aria-hidden="true" />
           </button>
@@ -316,83 +336,116 @@ const Navbar = () => {
       </div>
 
       {mobileMenuOpen && (
-        // The slightly lighter mobile panel adds depth while keeping the same dark-green palette.
-        <div style={{ backgroundColor: '#0d2e1a' }} className="border-t border-green-900 px-4 py-4 lg:hidden">
-          <div className="mb-4 space-y-1">
+        <div
+          id="mobile-navigation"
+          style={{ backgroundColor: '#0d2e1a' }}
+          className="max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain border-t border-green-900 px-4 py-3 lg:hidden"
+        >
+          <div className="space-y-1">
             <Link
               to="/"
               className={`flex items-center gap-3 rounded-lg border-b-2 px-3 py-2.5 text-sm font-medium ${
                 isActivePath('/') ? 'border-[#f59e0b] text-white' : 'border-transparent text-[#f59e0b]'
               }`}
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={closeMobileMenu}
             >
               <i className="fas fa-home w-4 text-xs" aria-hidden="true" />
               {t('nav_home')}
             </Link>
 
-            <p className="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-amber-400/60">
-              {t('nav_courses')}
-            </p>
-            {categories.map((category) => (
-              <Link
-                key={category.key}
-                to={`/courses?category=${category.key}`}
-                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#f59e0b] hover:bg-amber-400/10 hover:text-[#fbbf24]"
-                onClick={() => setMobileMenuOpen(false)}
+            <div>
+              <button
+                type="button"
+                aria-expanded={mobileCoursesOpen}
+                aria-controls="mobile-course-links"
+                onClick={() => setMobileCoursesOpen((open) => !open)}
+                className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors hover:bg-amber-400/10 ${
+                  isActivePath('/courses') ? 'text-white' : 'text-[#f59e0b]'
+                }`}
               >
-                <i className={`fas ${category.icon} w-4 text-xs opacity-70`} aria-hidden="true" />
-                {category.label}
-              </Link>
-            ))}
-            <Link
-              to="/courses"
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[#f59e0b] hover:bg-amber-400/10 hover:text-[#fbbf24]"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <i className="fas fa-th-large w-4 text-xs" aria-hidden="true" />
-              {t('nav_browse_all')}
-            </Link>
+                <span className="flex items-center gap-3">
+                  <i className="fas fa-graduation-cap w-4 text-xs" aria-hidden="true" />
+                  {t('nav_courses')}
+                </span>
+                <i className={`fas fa-chevron-down text-xs transition-transform ${mobileCoursesOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
+              </button>
+              {mobileCoursesOpen && (
+                <div id="mobile-course-links" className="ml-4 border-l border-amber-400/20 py-1 pl-3">
+                  {categories.map((category) => (
+                    <Link
+                      key={category.key}
+                      to={`/courses?category=${category.key}`}
+                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#f59e0b] hover:bg-amber-400/10 hover:text-[#fbbf24]"
+                      onClick={closeMobileMenu}
+                    >
+                      <i className={`fas ${category.icon} w-4 text-xs opacity-70`} aria-hidden="true" />
+                      {category.label}
+                    </Link>
+                  ))}
+                  <Link
+                    to="/courses"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-[#f59e0b] hover:bg-amber-400/10 hover:text-[#fbbf24]"
+                    onClick={closeMobileMenu}
+                  >
+                    <i className="fas fa-th-large w-4 text-xs" aria-hidden="true" />
+                    {t('nav_browse_all')}
+                  </Link>
+                </div>
+              )}
+            </div>
+
             <Link
               to="/tutors"
-              className="mx-3 my-2 flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white"
+              className="my-1 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-white"
               style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={closeMobileMenu}
             >
-              <i className="fas fa-video text-xs" aria-hidden="true" />
+              <i className="fas fa-video w-4 text-xs" aria-hidden="true" />
               Join Live Session
             </Link>
-          </div>
 
-          <div className="mb-4 border-t border-green-900 pt-4">
-            <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-wider text-amber-400/60">
-              {t('nav_language')}
-            </p>
-            {/* A two-column language grid makes the choices easy to scan on narrow screens. */}
-            <div className="grid grid-cols-2 gap-1">
-              {languages.map((language) => (
-                <button
-                  key={language.code}
-                  type="button"
-                  onClick={() => handleLanguageChange(language.code)}
-                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-[#f59e0b] transition-colors hover:bg-amber-400/10 ${
-                    currentLanguage === language.code ? 'bg-amber-400/10 font-semibold' : 'opacity-80'
-                  }`}
-                >
-                  <span aria-hidden="true">{language.flag}</span>
-                  <span>{language.label}</span>
-                </button>
-              ))}
+            <div>
+              <button
+                type="button"
+                aria-expanded={mobileLanguagesOpen}
+                aria-controls="mobile-language-links"
+                onClick={() => setMobileLanguagesOpen((open) => !open)}
+                className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium text-[#f59e0b] transition-colors hover:bg-amber-400/10"
+              >
+                <span className="flex items-center gap-3">
+                  <i className="fas fa-globe w-4 text-xs" aria-hidden="true" />
+                  {t('nav_language')} <span className="uppercase text-amber-200">{currentLanguage}</span>
+                </span>
+                <i className={`fas fa-chevron-down text-xs transition-transform ${mobileLanguagesOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
+              </button>
+              {mobileLanguagesOpen && (
+                <div id="mobile-language-links" className="ml-4 border-l border-amber-400/20 py-1 pl-3">
+                  {languages.map((language) => (
+                    <button
+                      key={language.code}
+                      type="button"
+                      onClick={() => handleLanguageChange(language.code)}
+                      className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors hover:bg-amber-400/10 ${
+                        currentLanguage === language.code ? 'font-semibold text-white' : 'text-[#f59e0b]'
+                      }`}
+                    >
+                      <span aria-hidden="true">{language.flag}</span>
+                      <span>{language.label}</span>
+                      {currentLanguage === language.code && <i className="fas fa-check ml-auto text-xs text-amber-400" aria-hidden="true" />}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
 
-          <div className="border-t border-green-900 pt-4">
+            <div className="mt-2 border-t border-green-900 pt-3">
             {user ? (
               <div className="space-y-2">
                 <p className="px-3 text-sm font-semibold text-[#f59e0b]">{user.name}</p>
                 <Link
                   to={getDashboardPath()}
                   className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-[#f59e0b] hover:bg-amber-400/10"
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={closeMobileMenu}
                 >
                   <i className="fas fa-th-large w-4 text-xs" aria-hidden="true" />
                   {t('nav_dashboard')}
@@ -400,7 +453,7 @@ const Navbar = () => {
                 <Link
                   to="/messages"
                   className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-[#f59e0b] hover:bg-amber-400/10"
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={closeMobileMenu}
                 >
                   <i className="fas fa-comments w-4 text-xs" aria-hidden="true" />
                   Messages{unreadCount > 0 ? ` (${unreadCount > 9 ? '9+' : unreadCount} unread)` : ''}
@@ -420,19 +473,20 @@ const Navbar = () => {
                   to="/login"
                   className="rounded-lg border px-4 py-2.5 text-center text-sm font-medium text-[#f59e0b]"
                   style={{ borderColor: 'rgba(245,158,11,0.4)' }}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={closeMobileMenu}
                 >
                   {t('nav_login')}
                 </Link>
                 <Link
                   to="/register"
                   className="rounded-lg bg-green-700 px-4 py-2.5 text-center text-sm font-semibold text-white"
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={closeMobileMenu}
                 >
                   {t('nav_sign_up')}
                 </Link>
               </div>
             )}
+            </div>
           </div>
         </div>
       )}

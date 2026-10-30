@@ -10,8 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@daily-co/daily-js": "^0.94.0",
-    "@daily-co/daily-react": "^0.26.1",
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.3",
     "@tiptap/extension-placeholder": "^3.31.4",

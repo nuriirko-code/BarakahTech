@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../config/api.js'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
@@ -20,7 +21,7 @@ const ForgotPassword = () => {
     setLoading(true)
 
     try {
-      await axios.post('http://localhost:5000/api/auth/forgot-password', { email: email.trim() })
+      await axios.post(`${API_BASE_URL}/auth/forgot-password`, { email: email.trim() })
       // The same success state is shown for known and unknown addresses so the form
       // cannot be used to discover which emails have Barakah Academy accounts.
       setSuccess(true)

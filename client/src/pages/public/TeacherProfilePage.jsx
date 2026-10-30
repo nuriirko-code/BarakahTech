@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../config/api.js'
 import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import axios from "axios"
@@ -20,7 +21,7 @@ const TeacherProfilePage = () => {
       setError("")
 
       try {
-        const response = await axios.get(`http://localhost:5000/api/landing/teachers/${teacherId}`)
+        const response = await axios.get(`${API_BASE_URL}/landing/teachers/${teacherId}`)
         if (isCurrent) {
           setTeacher(response.data.teacher)
           setCourses(response.data.courses || [])

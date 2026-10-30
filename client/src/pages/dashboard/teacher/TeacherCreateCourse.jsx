@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../../config/api.js'
 import { startTransition, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -111,8 +112,8 @@ const TeacherCreateCourse = () => {
 
 		let isCurrent = true
 		//axios is a promise-based HTTP client for the browser and Node.js. It makes it easy to send asynchronous HTTP requests to REST endpoints and perform CRUD operations. It returns a promise that resolves to the response object.
-		// if course id is  abc123, then  this url becomes http://localhost:5000/api/courses/abc123.
-		axios.get(`http://localhost:5000/api/courses/teacher/my-courses/${courseId}`, {
+		// if course id is  abc123, then  this url becomes ${API_BASE_URL}/courses/abc123.
+		axios.get(`${API_BASE_URL}/courses/teacher/my-courses/${courseId}`, {
 			headers: token ? { Authorization: `Bearer ${token}` } : {},
 		})
 			.then((response) => { //"When the server responds successfully, run this function."
@@ -183,7 +184,7 @@ const TeacherCreateCourse = () => {
 			draftSaveQueue.current = draftSaveQueue.current
 				.catch(() => {})
 				.then(() => axios.put(
-					`http://localhost:5000/api/courses/${courseId}/lesson-draft`,
+					`${API_BASE_URL}/courses/${courseId}/lesson-draft`,
 					{ lessonDraft },
 					{ headers: { Authorization: `Bearer ${token}` } }
 				))
@@ -410,7 +411,7 @@ const TeacherCreateCourse = () => {
 					// courseId to target; waiting until final publish would leave lesson
 					// uploads without a parent course document.
 					const response = await axios.post(
-						'http://localhost:5000/api/courses',
+						`${API_BASE_URL}/courses`,
 						{
 							...courseData,
 							price: courseData.isFree ? 0 : Number(courseData.price),
@@ -496,8 +497,8 @@ const TeacherCreateCourse = () => {
 			const response = await axios({
 				method: editingLessonId ? 'put' : 'post',
 				url: editingLessonId
-					? `http://localhost:5000/api/courses/${courseId}/lessons/${editingLessonId}`
-					: `http://localhost:5000/api/courses/${courseId}/lessons`,
+					? `${API_BASE_URL}/courses/${courseId}/lessons/${editingLessonId}`
+					: `${API_BASE_URL}/courses/${courseId}/lessons`,
 				data:
 				{
 					...lessonForm,
@@ -532,7 +533,7 @@ const TeacherCreateCourse = () => {
 
 		try {
 			await axios.put(
-				`http://localhost:5000/api/courses/${courseId}/publish`,
+				`${API_BASE_URL}/courses/${courseId}/publish`,
 				{},
 				{ headers: { Authorization: `Bearer ${token}` } }
 			)

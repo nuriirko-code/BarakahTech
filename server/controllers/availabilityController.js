@@ -32,7 +32,12 @@ const saveAvailability = async (req, res) => {
       bufferMinutes,
       maxDailySession,
       isAcceptingBookings,
+      isTestSchedule,
     } = req.body
+
+    if (isTestSchedule && process.env.NODE_ENV === 'production') {
+      return res.status(403).json({ message: 'Testing availability can only be enabled in a development environment.' })
+    }
 
     if (!timezone) {
       return res.status(400).json({ message: 'Choose the timezone where you teach.' })
@@ -58,6 +63,22 @@ const saveAvailability = async (req, res) => {
       return res.status(400).json({ message: 'Each day can appear only once in your weekly schedule.' })
     }
 
+    const isFullDayTestSchedule = weeklySlots.length === validDays.length &&
+      validDays.every((day) => weeklySlots.some((slot) => (
+        slot.day === day && slot.startTime === '00:00' && slot.endTime === '23:59'
+      )))
+    if (isFullDayTestSchedule && process.env.NODE_ENV === 'production') {
+      return res.status(403).json({ message: 'A 24/7 testing schedule cannot be published in production.' })
+    }
+
+    if (isTestSchedule && (
+      !isFullDayTestSchedule ||
+      Number(advanceBookingHours) !== 0 ||
+      Number(bufferMinutes) !== 0
+    )) {
+      return res.status(400).json({ message: 'The 24/7 testing schedule must include all seven days, no advance notice, and no buffer.' })
+    }
+
     const liveTutorProfile = await LiveTutorProfile.findOne({ user: tutorId })
     if (!liveTutorProfile) {
       return res.status(404).json({ message: 'Approved live tutor profile not found.' })
@@ -79,6 +100,7 @@ const saveAvailability = async (req, res) => {
         bufferMinutes: numberOrDefault(bufferMinutes, 15),
         maxDailySession: numberOrDefault(maxDailySession, 8, 1),
         isAcceptingBookings: isAcceptingBookings !== undefined ? isAcceptingBookings : true,
+        isTestSchedule: Boolean(isTestSchedule),
       },
       { upsert: true, new: true, runValidators: true }
     )
@@ -96,6 +118,9 @@ const getTutorAvailability = async (req, res) => {
 
     if (!availability) {
       return res.status(404).json({ message: 'This tutor has not set their availability yet' })
+    }
+    if (availability.isTestSchedule && process.env.NODE_ENV === 'production') {
+      return res.status(404).json({ message: 'This tutor has not published availability yet.' })
     }
 
     // This endpoint is public because students must be able to inspect a

@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../config/api.js'
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import axios from 'axios'
@@ -35,7 +36,7 @@ const MessagesPage = () => {
 
     const loadConversations = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/messages/conversations', {
+        const response = await axios.get(`${API_BASE_URL}/messages/conversations`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (!isCurrent) return
@@ -71,7 +72,7 @@ const MessagesPage = () => {
     let isCurrent = true
     const loadAnnouncementRecipients = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/admin/users', {
+        const response = await axios.get(`${API_BASE_URL}/admin/users`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (!isCurrent) return
@@ -106,7 +107,7 @@ const MessagesPage = () => {
     const loadMessages = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/messages/conversations/${activeConversation._id}/messages`,
+          `${API_BASE_URL}/messages/conversations/${activeConversation._id}/messages`,
           { headers: { Authorization: `Bearer ${token}` } }
         )
         if (isCurrent) {
@@ -161,7 +162,7 @@ const MessagesPage = () => {
     setMessageWarning('')
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/messages/conversations/${activeConversation._id}/messages`,
+        `${API_BASE_URL}/messages/conversations/${activeConversation._id}/messages`,
         { content: text },
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -203,7 +204,7 @@ const MessagesPage = () => {
     setError('')
     try {
       const response = await axios.post(
-        'http://localhost:5000/api/messages/support',
+        `${API_BASE_URL}/messages/support`,
         { subject, initialMessage },
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -238,7 +239,7 @@ const MessagesPage = () => {
     setError('')
     try {
       const response = await axios.post(
-        'http://localhost:5000/api/messages/announcements',
+        `${API_BASE_URL}/messages/announcements`,
         { ...announcementForm, subject, content },
         { headers: { Authorization: `Bearer ${token}` } }
       )

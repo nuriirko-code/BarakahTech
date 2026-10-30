@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../../config/api.js'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -31,7 +32,7 @@ const StudentBrowse = () => {
 			setLoading(true)
 			setError('')
 			try {
-				const response = await axios.get(`http://localhost:5000/api/courses${query ? `?${query}` : ''}`)
+				const response = await axios.get(`${API_BASE_URL}/courses${query ? `?${query}` : ''}`)
 				if (isCurrent) setCourses(response.data.courses || [])
 			} catch (requestError) {
 				if (isCurrent) setError(requestError.response?.data?.message || 'Unable to load courses right now.')
@@ -55,7 +56,7 @@ const StudentBrowse = () => {
 			if (!token) return
 
 			try {
-				const response = await axios.get('http://localhost:5000/api/courses/student/my-enrollments', {
+				const response = await axios.get(`${API_BASE_URL}/courses/student/my-enrollments`, {
 					headers: { Authorization: `Bearer ${token}` },
 				})
 				if (isCurrent) {
@@ -103,7 +104,7 @@ const StudentBrowse = () => {
 
 		try {
 			await axios.post(
-				`http://localhost:5000/api/courses/${course._id}/enroll`,
+				`${API_BASE_URL}/courses/${course._id}/enroll`,
 				{},
 				{ headers: { Authorization: `Bearer ${token}` } }
 			)
@@ -140,7 +141,7 @@ const StudentBrowse = () => {
 		try {
 			// Create the thread with course context first; the Messages page then opens that exact conversation.
 			const response = await axios.post(
-				'http://localhost:5000/api/messages/conversations',
+				`${API_BASE_URL}/messages/conversations`,
 				{
 					recipientId: teacherId,
 					courseId: course._id,

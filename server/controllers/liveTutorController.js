@@ -1,11 +1,67 @@
 const LiveTutorApplication = require('../models/LiveTutorApplication')
 const LiveTutorProfile = require('../models/LiveTutorProfile')
+const SessionFeedback = require('../models/SessionFeedback')
 const TutorAvailability = require('../models/TutorAvailability')
+const SessionBooking = require('../models/SessionBooking')
 const User = require('../models/User')
+const supportedCategories = ['technology', 'languages', 'sciences', 'business', 'leadership']
+const supportedLevels = ['beginner', 'intermediate', 'advanced', 'all']
+const supportedCurrencies = ['USD', 'EUR', 'GBP', 'ETB', 'CAD', 'AUD', 'SAR', 'AED']
 
 // The project's existing JWT payload uses userId. Keeping that convention here
 // makes these controllers compatible with authMiddleware and all other routes.
 const getAuthenticatedUserId = (req) => req.user.userId
+const toMinutes = (time) => {
+  const [hours, minutes] = String(time || '').split(':').map(Number)
+  return Number.isInteger(hours) && Number.isInteger(minutes) ? (hours * 60) + minutes : null
+}
+
+const getTutorAvailabilityStatus = async (profile, availability) => {
+  const unavailable = { state: 'unknown', presenceAvailable: false, tutorPresent: false }
+  if (!availability || !availability.isAcceptingBookings) {
+    return { state: 'offline', presenceAvailable: false, tutorPresent: false }
+  }
+  if (availability.isTestSchedule && process.env.NODE_ENV === 'production') {
+    return { state: 'offline', presenceAvailable: false, tutorPresent: false }
+  }
+
+  const now = new Date()
+  let localParts
+  try {
+    localParts = new Intl.DateTimeFormat('en-US', {
+      timeZone: availability.timezone,
+      weekday: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(now)
+  } catch (error) {
+    console.error('Tutor availability timezone error:', error)
+    return unavailable
+  }
+  const localValues = Object.fromEntries(localParts.filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]))
+  const localTime = (Number(localValues.hour) * 60) + Number(localValues.minute)
+  const scheduledNow = availability.weeklySlots.some((slot) => (
+    slot.day === localValues.weekday &&
+    slot.isActive !== false &&
+    localTime >= toMinutes(slot.startTime) &&
+    localTime < toMinutes(slot.endTime)
+  ))
+
+  const nextBooking = await SessionBooking.findOne({
+    tutor: profile.user?._id || profile.user,
+    status: 'confirmed',
+    startAt: { $gt: now },
+  }).sort({ startAt: 1 }).select('startAt')
+  const nextSessionAt = nextBooking?.startAt || null
+
+  return {
+    state: scheduledNow ? 'available_now' : 'offline',
+    presenceAvailable: false,
+    tutorPresent: false,
+    nextSessionAt,
+  }
+}
 
 const submitLiveTutorApplication = async (req, res) => {
   try {
@@ -178,6 +234,130 @@ const getMyLiveTutorApplication = async (req, res) => {
   }
 }
 
+const getMyLiveTutorProfile = async (req, res) => {
+  try {
+    const profile = await LiveTutorProfile.findOne({ user: getAuthenticatedUserId(req) })
+      .populate('user', 'name profilePhoto')
+      .lean()
+
+    if (!profile) {
+      return res.status(404).json({ message: 'Your approved live tutor profile was not found.' })
+    }
+
+    return res.status(200).json({ profile })
+  } catch (error) {
+    console.error('Get my live tutor profile error:', error)
+    return res.status(500).json({ message: 'Server error while loading your live tutor profile.' })
+  }
+}
+
+const updateMyLiveTutorProfile = async (req, res) => {
+  try {
+    const userId = getAuthenticatedUserId(req)
+    const {
+      bio,
+      teachingApproach,
+      subjects,
+      mainCategory,
+      teachingLevel,
+      teachingLanguages,
+      introVideoUrl,
+      profilePhoto,
+      sessionDuration,
+      sessionPrice,
+      currency,
+    } = req.body
+
+    const normalizedSubjects = Array.isArray(subjects)
+      ? [...new Set(subjects.map((subject) => String(subject).trim()).filter(Boolean))]
+      : []
+    const normalizedLanguages = Array.isArray(teachingLanguages)
+      ? [...new Set(teachingLanguages.map((language) => String(language).trim()).filter(Boolean))]
+      : []
+    const normalizedDuration = Number(sessionDuration)
+    const normalizedPrice = Number(sessionPrice)
+    const normalizedCurrency = String(currency || '').toUpperCase()
+    const normalizedVideoUrl = String(introVideoUrl || '').trim()
+    const normalizedPhoto = String(profilePhoto || '').trim()
+
+    if (typeof bio !== 'string' || bio.trim().length < 100) {
+      return res.status(400).json({ message: 'Your public bio must be at least 100 characters.' })
+    }
+    if (typeof teachingApproach !== 'string' || teachingApproach.trim().length < 50) {
+      return res.status(400).json({ message: 'Your teaching approach must be at least 50 characters.' })
+    }
+    if (!normalizedSubjects.length || normalizedSubjects.length > 20) {
+      return res.status(400).json({ message: 'Add between 1 and 20 subjects you teach.' })
+    }
+    if (!supportedCategories.includes(mainCategory)) {
+      return res.status(400).json({ message: 'Choose a valid teaching category.' })
+    }
+    if (!supportedLevels.includes(teachingLevel)) {
+      return res.status(400).json({ message: 'Choose a valid teaching level.' })
+    }
+    if (!normalizedLanguages.length || normalizedLanguages.length > 10 || normalizedLanguages.some((language) => language.length > 40)) {
+      return res.status(400).json({ message: 'Add between 1 and 10 valid teaching languages.' })
+    }
+    if (!Number.isInteger(normalizedDuration) || normalizedDuration < 1 || normalizedDuration > 240) {
+      return res.status(400).json({ message: 'Session duration must be from 1 to 240 minutes.' })
+    }
+    if (!Number.isFinite(normalizedPrice) || normalizedPrice <= 0) {
+      return res.status(400).json({ message: 'Enter a paid session price greater than zero. Free introductions are managed separately.' })
+    }
+    if (!supportedCurrencies.includes(normalizedCurrency)) {
+      return res.status(400).json({ message: 'Choose a supported session currency.' })
+    }
+    if (normalizedPhoto.length > 2_500_000) {
+      return res.status(400).json({ message: 'Profile photo must be smaller than 2 MB after compression.' })
+    }
+    if (normalizedPhoto && !normalizedPhoto.startsWith('data:image/')) {
+      return res.status(400).json({ message: 'Choose a valid profile image.' })
+    }
+    if (normalizedVideoUrl) {
+      try {
+        const parsedUrl = new URL(normalizedVideoUrl)
+        if (!['http:', 'https:'].includes(parsedUrl.protocol)) throw new Error('Invalid protocol')
+      } catch {
+        return res.status(400).json({ message: 'Enter a valid http or https introduction video URL.' })
+      }
+    }
+
+    const profile = await LiveTutorProfile.findOneAndUpdate(
+      { user: userId },
+      {
+        $set: {
+          bio: bio.trim(),
+          teachingApproach: teachingApproach.trim(),
+          subjects: normalizedSubjects,
+          mainCategory,
+          teachingLevel,
+          teachingLanguages: normalizedLanguages,
+          introVideoUrl: normalizedVideoUrl,
+          ...(normalizedPhoto ? { profilePhoto: normalizedPhoto } : {}),
+          sessionDuration: normalizedDuration,
+          sessionPrice: normalizedPrice,
+          currency: normalizedCurrency,
+        },
+      },
+      { new: true, runValidators: true }
+    ).populate('user', 'name profilePhoto')
+
+    if (!profile) {
+      return res.status(404).json({ message: 'Your approved live tutor profile was not found.' })
+    }
+
+    if (normalizedPhoto) {
+      await User.findByIdAndUpdate(userId, { profilePhoto: normalizedPhoto })
+      if (profile.user) profile.user.profilePhoto = normalizedPhoto
+    }
+
+    return res.status(200).json({ message: 'Your public tutor profile was updated.', profile })
+  } catch (error) {
+    console.error('Update my live tutor profile error:', error)
+    return res.status(500).json({ message: 'Server error while saving your live tutor profile.' })
+  }
+}
+
 // Tutor browsing is public so learners can discover teaching options before
 // creating an account. A tutor who teaches "all" levels matches any level
 // search, while rating and session history surface trusted experience first.
@@ -233,8 +413,12 @@ const getTutorPublicProfile = async (req, res) => {
 
     if (!profile) return res.status(404).json({ message: 'Tutor profile not found' })
 
-    const availability = await TutorAvailability.findOne({ tutor: profile.user?._id || profile.user }).lean()
-    return res.status(200).json({ profile, availability })
+    let availability = await TutorAvailability.findOne({ tutor: profile.user?._id || profile.user }).lean()
+    if (availability?.isTestSchedule && process.env.NODE_ENV === 'production') {
+      availability = null
+    }
+    const liveStatus = await getTutorAvailabilityStatus(profile, availability)
+    return res.status(200).json({ profile, availability, liveStatus })
   } catch (error) {
     console.error('Get public tutor profile error:', error)
     return res.status(500).json({ message: 'Server error while fetching tutor profile' })
@@ -338,6 +522,8 @@ const reviewLiveTutorApplication = async (req, res) => {
 module.exports = {
   submitLiveTutorApplication,
   getMyLiveTutorApplication,
+  getMyLiveTutorProfile,
+  updateMyLiveTutorProfile,
   getApprovedTutors,
   getTutorPublicProfile,
   getAllLiveTutorApplications,

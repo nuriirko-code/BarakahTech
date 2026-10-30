@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../../config/api.js'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useAuth } from '../../../context/AuthContext'
@@ -14,7 +15,7 @@ const TeacherSessions = () => {
 
 		const loadTeachingMethod = async () => {
 			try {
-				const response = await axios.get('http://localhost:5000/api/teacher-applications/my-application', {
+				const response = await axios.get(`${API_BASE_URL}/teacher-applications/my-application`, {
 					headers: token ? { Authorization: `Bearer ${token}` } : {},
 				})
 				if (isCurrent) setTeachingMethod(response.data.application?.teachingMethod || '')

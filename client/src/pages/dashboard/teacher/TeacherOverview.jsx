@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../../config/api.js'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -52,7 +53,7 @@ const TeacherOverview = () => {
 
 		const loadStats = async () => {
 			try {
-				const response = await axios.get('http://localhost:5000/api/teachers/stats', {
+				const response = await axios.get(`${API_BASE_URL}/teachers/stats`, {
 					headers: { Authorization: `Bearer ${token}` },
 				})
 				if (isCurrent) {
@@ -79,7 +80,7 @@ const TeacherOverview = () => {
 
 		const loadEarnings = async () => {
 			try {
-				const response = await axios.get('http://localhost:5000/api/payments/earnings', {
+				const response = await axios.get(`${API_BASE_URL}/payments/earnings`, {
 					headers: { Authorization: `Bearer ${token}` },
 				})
 				if (isCurrent) {

@@ -1,3 +1,4 @@
+import API_BASE_URL from '../config/api.js'
 import { useEffect, useState } from "react"
 import axios from "axios"
 import Navbar from "../components/common/Navbar"
@@ -26,7 +27,7 @@ const Landing = () => {
       requestPending = true
 
       try {
-        const response = await axios.get("http://localhost:5000/api/landing")
+        const response = await axios.get(`${API_BASE_URL}/landing`)
         if (isCurrent) {
           setLandingData(response.data)
           setDataError("")

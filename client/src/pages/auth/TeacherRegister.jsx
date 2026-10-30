@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../config/api.js'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -327,7 +328,7 @@ const TeacherRegister = () => {
       let accessToken = token || (accountCreated ? token : null)
        //If we don't have an access token, we need to register the user first. We send a POST request to the registration endpoint with the user's personal information. If the registration is successful, we extract the user and token from the response and log in the user. We also set accountCreated to true to indicate that the account has been created.
       if (!accessToken) {
-        const registrationResponse = await axios.post('http://localhost:5000/api/auth/register', {
+        const registrationResponse = await axios.post(`${API_BASE_URL}/auth/register`, {
           name: formData.name,
           email: formData.email,
           password: formData.password,
@@ -358,7 +359,7 @@ const TeacherRegister = () => {
         })
       )
       // this is the final step where we submit the teacher application. We send a POST request to the teacher applications endpoint with the prepared application data. We also convert certain fields to numbers as required by the backend. If the submission is successful, we navigate to the application submitted page. If there is an error, we display an appropriate error message.
-      await axios.post('http://localhost:5000/api/teacher-applications', {
+      await axios.post(`${API_BASE_URL}/teacher-applications`, {
         ...applicationData,
         availableHoursPerWeek: Number(formData.availableHoursPerWeek),
         yearsOfExperience: Number(formData.yearsOfExperience),

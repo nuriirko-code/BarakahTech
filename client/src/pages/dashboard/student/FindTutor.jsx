@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../../config/api.js'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -42,7 +43,7 @@ const FindTutor = () => {
       ).toString()
 
       try {
-        const response = await axios.get(`http://localhost:5000/api/live-tutors/browse${query ? `?${query}` : ''}`)
+        const response = await axios.get(`${API_BASE_URL}/live-tutors/browse${query ? `?${query}` : ''}`)
         if (isCurrent) setTutors(response.data.tutors || [])
       } catch (requestError) {
         if (isCurrent) setError(requestError.response?.data?.message || 'Could not load live tutors. Please try again.')

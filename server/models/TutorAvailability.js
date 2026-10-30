@@ -80,6 +80,10 @@ const tutorAvailabilitySchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    isTestSchedule: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 )

@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../config/api.js'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -56,7 +57,7 @@ const AdminDashboard = () => {
     const fetchApplications = async () => {
       try {
         const response = await axios.get(
-          'http://localhost:5000/api/teacher-applications/all',
+          `${API_BASE_URL}/teacher-applications/all`,
           { headers: { Authorization: `Bearer ${token}` } }
         )
         if (isCurrent) setApplications(response.data.applications || [])
@@ -86,7 +87,7 @@ const AdminDashboard = () => {
     const fetchPendingPayments = async () => {
       try {
         const response = await axios.get(
-          'http://localhost:5000/api/payments/pending',
+          `${API_BASE_URL}/payments/pending`,
           { headers: { Authorization: `Bearer ${token}` } }
         )
         if (isCurrent) setPendingPayments(response.data.payments || [])
@@ -116,7 +117,7 @@ const AdminDashboard = () => {
 
       try {
         const response = await axios.get(
-          'http://localhost:5000/api/live-tutors/admin/applications',
+          `${API_BASE_URL}/live-tutors/admin/applications`,
           { headers: { Authorization: `Bearer ${token}` } }
         )
         if (isCurrent) setLiveTutorApplications(response.data.applications || [])
@@ -188,7 +189,7 @@ const AdminDashboard = () => {
 
     try {
       const response = await axios.put(
-        `http://localhost:5000/api/teacher-applications/${selectedApplication._id}/review`,
+        `${API_BASE_URL}/teacher-applications/${selectedApplication._id}/review`,
         { status, adminNote: adminNote.trim() },
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -226,7 +227,7 @@ const AdminDashboard = () => {
 
     try {
       const response = await axios.put(
-        `http://localhost:5000/api/payments/${paymentId}/verify`,
+        `${API_BASE_URL}/payments/${paymentId}/verify`,
         { action },
         { headers: { Authorization: `Bearer ${token}` } }
       )
@@ -267,7 +268,7 @@ const AdminDashboard = () => {
 
     try {
       const response = await axios.put(
-        `http://localhost:5000/api/live-tutors/admin/applications/${applicationId}/review`,
+        `${API_BASE_URL}/live-tutors/admin/applications/${applicationId}/review`,
         { status: action, adminNote: liveTutorReviewNote.trim() },
         { headers: { Authorization: `Bearer ${token}` } }
       )

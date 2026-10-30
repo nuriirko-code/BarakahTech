@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../../config/api.js'
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import Avatar from '../../../components/common/Avatar'
@@ -33,7 +34,7 @@ const StudentProfile = () => {
 
     const loadPayments = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/payments/my-payments', {
+        const response = await axios.get(`${API_BASE_URL}/payments/my-payments`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         setPayments(response.data.payments || [])

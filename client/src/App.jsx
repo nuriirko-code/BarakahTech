@@ -1,61 +1,78 @@
+import { lazy, Suspense } from 'react'
 // The router maps public authentication pages and role-specific dashboards,
 // while AuthProvider makes authentication state available throughout the app.
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/common/ProtectedRoute'
-import Landing from './pages/Landing'
-import RoleSelection from './pages/auth/RoleSelection'
-import StudentRegister from './pages/auth/StudentRegister'
-import TeacherRegister from './pages/auth/TeacherRegister'
-import TeacherWelcome from './pages/auth/TeacherWelcome'
-import TeachingPathSelection from './pages/auth/TeachingPathSelection'
-import LiveTutorWelcome from './pages/auth/LiveTutorWelcome'
-import LiveTutorRegister from './pages/auth/LiveTutorRegister'
-import StudentWelcome from './pages/auth/StudentWelcome'
-import ApplicationSubmitted from './pages/auth/ApplicationSubmitted'
-import Login from './pages/auth/Login'
-import ForgotPassword from './pages/auth/ForgotPassword'
-import ResetPassword from './pages/auth/ResetPassword'
-import StudentDashboard from './pages/dashboard/StudentDashboard'
-import StudentOverview from './pages/dashboard/student/StudentOverview'
-import StudentCourses from './pages/dashboard/student/StudentCourses'
-import StudentBrowse from './pages/dashboard/student/StudentBrowse'
-import StudentProfile from './pages/dashboard/student/StudentProfile'
-import FindTutor from './pages/dashboard/student/FindTutor'
-import StudentSessions from './pages/dashboard/student/StudentSessions'
-import CourseViewer from './pages/learn/CourseViewer'
-import LessonViewer from './pages/learn/LessonViewer'
-import CourseCheckout from './pages/payment/CourseCheckout'
-import TrialPaymentGate from './pages/payment/TrialPaymentGate'
-import MessagesPage from './pages/messaging/MessagesPage'
-import TeacherDashboard from './pages/dashboard/TeacherDashboard'
-import TeacherOverview from './pages/dashboard/teacher/TeacherOverview'
-import TeacherCourses from './pages/dashboard/teacher/TeacherCourses'
-import TeacherCreateCourse from './pages/dashboard/teacher/TeacherCreateCourse'
-import TeacherSessions from './pages/dashboard/teacher/TeacherSessions'
-import TeacherProfile from './pages/dashboard/teacher/TeacherProfile'
-import LiveTutorSchedule from './pages/dashboard/teacher/live/LiveTutorSchedule'
-import LiveTutorSessions from './pages/dashboard/teacher/live/LiveTutorSessions'
-import LiveTutorEarnings from './pages/dashboard/teacher/live/LiveTutorEarnings'
-import LiveTutorProfile from './pages/dashboard/teacher/live/LiveTutorProfile'
-import AdminDashboard from './pages/dashboard/AdminDashboard'
-import LiveTutorApplication from './pages/live-tutor/LiveTutorApplication'
-import TutorProfilePage from './pages/tutors/TutorProfilePage'
-import BookingPage from './pages/tutors/BookingPage'
-import SessionRoom from './pages/session/SessionRoom'
-import SessionFeedback from './pages/session/SessionFeedback'
-import CoursesPage from './pages/public/CoursesPage'
-import TutorsPage from './pages/public/TutorsPage'
-import TeacherProfilePage from './pages/public/TeacherProfilePage'
-import CourseDetailPage from './pages/public/CourseDetailPage'
-import AboutPage from './pages/public/AboutPage'
-import ContactPage from './pages/public/ContactPage'
+
+const NotFound = lazy(() => import('./pages/NotFound'))
+const Landing = lazy(() => import('./pages/Landing'))
+const RoleSelection = lazy(() => import('./pages/auth/RoleSelection'))
+const StudentRegister = lazy(() => import('./pages/auth/StudentRegister'))
+const TeacherRegister = lazy(() => import('./pages/auth/TeacherRegister'))
+const TeacherWelcome = lazy(() => import('./pages/auth/TeacherWelcome'))
+const TeachingPathSelection = lazy(() => import('./pages/auth/TeachingPathSelection'))
+const LiveTutorWelcome = lazy(() => import('./pages/auth/LiveTutorWelcome'))
+const LiveTutorRegister = lazy(() => import('./pages/auth/LiveTutorRegister'))
+const StudentWelcome = lazy(() => import('./pages/auth/StudentWelcome'))
+const ApplicationSubmitted = lazy(() => import('./pages/auth/ApplicationSubmitted'))
+const Login = lazy(() => import('./pages/auth/Login'))
+const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'))
+const StudentDashboard = lazy(() => import('./pages/dashboard/StudentDashboard'))
+const StudentOverview = lazy(() => import('./pages/dashboard/student/StudentOverview'))
+const StudentCourses = lazy(() => import('./pages/dashboard/student/StudentCourses'))
+const StudentBrowse = lazy(() => import('./pages/dashboard/student/StudentBrowse'))
+const StudentProfile = lazy(() => import('./pages/dashboard/student/StudentProfile'))
+const FindTutor = lazy(() => import('./pages/dashboard/student/FindTutor'))
+const StudentSessions = lazy(() => import('./pages/dashboard/student/StudentSessions'))
+const CourseViewer = lazy(() => import('./pages/learn/CourseViewer'))
+const LessonViewer = lazy(() => import('./pages/learn/LessonViewer'))
+const CourseCheckout = lazy(() => import('./pages/payment/CourseCheckout'))
+const TrialPaymentGate = lazy(() => import('./pages/payment/TrialPaymentGate'))
+const MessagesPage = lazy(() => import('./pages/messaging/MessagesPage'))
+const TeacherDashboard = lazy(() => import('./pages/dashboard/TeacherDashboard'))
+const TeacherOverview = lazy(() => import('./pages/dashboard/teacher/TeacherOverview'))
+const TeacherCourses = lazy(() => import('./pages/dashboard/teacher/TeacherCourses'))
+const TeacherCreateCourse = lazy(() => import('./pages/dashboard/teacher/TeacherCreateCourse'))
+const TeacherSessions = lazy(() => import('./pages/dashboard/teacher/TeacherSessions'))
+const TeacherProfile = lazy(() => import('./pages/dashboard/teacher/TeacherProfile'))
+const LiveTutorSchedule = lazy(() => import('./pages/dashboard/teacher/live/LiveTutorSchedule'))
+const LiveTutorSessions = lazy(() => import('./pages/dashboard/teacher/live/LiveTutorSessions'))
+const LiveTutorEarnings = lazy(() => import('./pages/dashboard/teacher/live/LiveTutorEarnings'))
+const LiveTutorProfile = lazy(() => import('./pages/dashboard/teacher/live/LiveTutorProfile'))
+const AdminDashboard = lazy(() => import('./pages/dashboard/AdminDashboard'))
+const LiveTutorApplication = lazy(() => import('./pages/live-tutor/LiveTutorApplication'))
+const TutorProfilePage = lazy(() => import('./pages/tutors/TutorProfilePage'))
+const BookingPage = lazy(() => import('./pages/tutors/BookingPage'))
+const SessionRoom = lazy(() => import('./pages/session/SessionRoom'))
+const SessionFeedback = lazy(() => import('./pages/session/SessionFeedback'))
+const CoursesPage = lazy(() => import('./pages/public/CoursesPage'))
+const TutorsPage = lazy(() => import('./pages/public/TutorsPage'))
+const TeacherProfilePage = lazy(() => import('./pages/public/TeacherProfilePage'))
+const CourseDetailPage = lazy(() => import('./pages/public/CourseDetailPage'))
+const AboutPage = lazy(() => import('./pages/public/AboutPage'))
+const ContactPage = lazy(() => import('./pages/public/ContactPage'))
+
+const PageLoader = () => (
+  <div className="flex min-h-screen items-center justify-center bg-gray-50">
+    <div className="text-center">
+      <div
+        className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-amber-500 border-t-transparent"
+        role="status"
+        aria-label="Loading page"
+      />
+      <p className="text-sm font-medium text-gray-500">Loading...</p>
+    </div>
+  </div>
+)
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
           {/* Landing page for visitors arriving at the application root. */}
           <Route path="/" element={<Landing />} />
 
@@ -94,8 +111,16 @@ function App() {
 
           {/* Learning uses standalone routes, outside dashboard layouts, to provide a focused full-page course experience. */}
           {/* :courseId and :lessonId are dynamic URL parameters identifying the requested course and lesson. */}
-          <Route path="/learn/:courseId" element={<CourseViewer />} />
-          <Route path="/learn/:courseId/:lessonId" element={<LessonViewer />} />
+          <Route path="/learn/:courseId" element={(
+            <ProtectedRoute allowedRoles={['student']}>
+              <CourseViewer />
+            </ProtectedRoute>
+          )} />
+          <Route path="/learn/:courseId/:lessonId" element={(
+            <ProtectedRoute allowedRoles={['student']}>
+              <LessonViewer />
+            </ProtectedRoute>
+          )} />
           <Route
             path="/courses/:courseId/enroll"
             element={(
@@ -152,7 +177,11 @@ function App() {
           )} />
 
           {/* Student and teacher portals share a nested layout pattern, while each owns different dashboard content. */}
-          <Route path="/dashboard/student" element={<StudentDashboard />}>
+          <Route path="/dashboard/student" element={(
+            <ProtectedRoute allowedRoles={['student']}>
+              <StudentDashboard />
+            </ProtectedRoute>
+          )}>
             <Route index element={<StudentOverview />} />
             <Route path="browse" element={<StudentBrowse />} />
             <Route path="courses" element={<StudentCourses />} />
@@ -164,7 +193,11 @@ function App() {
           </Route>
 
           {/* Nested routes keep the teacher portal shell while changing its page content. */}
-          <Route path="/dashboard/teacher" element={<TeacherDashboard />}>
+          <Route path="/dashboard/teacher" element={(
+            <ProtectedRoute allowedRoles={['teacher', 'live_tutor']}>
+              <TeacherDashboard />
+            </ProtectedRoute>
+          )}>
             {/* The index route renders the overview at /dashboard/teacher itself. */}
             <Route index element={<TeacherOverview />} />
             {/* This child renders at /dashboard/teacher/courses. */}
@@ -193,7 +226,10 @@ function App() {
               </ProtectedRoute>
             )}
           />
-        </Routes>
+          {/* Keep the catch-all last so defined routes take precedence. */}
+          <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </AuthProvider>
     </BrowserRouter>
   )

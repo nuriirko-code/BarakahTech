@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../config/api.js'
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -8,7 +9,6 @@ import Avatar from '../../components/common/Avatar'
 import Navbar from '../../components/common/Navbar'
 import Footer from '../../components/common/Footer'
 
-const API_BASE_URL = 'http://localhost:5000/api'
 const categories = ['technology', 'languages', 'sciences', 'business', 'leadership']
 
 const CoursesPage = () => {

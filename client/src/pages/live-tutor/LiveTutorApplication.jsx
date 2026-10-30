@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../config/api.js'
 import { Fragment, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -318,7 +319,7 @@ const LiveTutorApplication = () => {
       }
 
       await axios.post(
-        'http://localhost:5000/api/live-tutors/apply',
+        `${API_BASE_URL}/live-tutors/apply`,
         applicationData,
         { headers: { Authorization: `Bearer ${token}` } }
       )

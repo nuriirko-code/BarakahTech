@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../config/api.js'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
@@ -15,6 +16,15 @@ const formatTime = (time) => {
   const date = new Date(2000, 0, 1, hours, minutes)
   return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 }
+const formatCountdown = (milliseconds) => {
+  if (milliseconds <= 0) return 'Starting now'
+  const totalSeconds = Math.floor(milliseconds / 1000)
+  const days = Math.floor(totalSeconds / 86400)
+  const hours = Math.floor((totalSeconds % 86400) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  return `${days}d ${hours}h ${minutes}m ${seconds}s`
+}
 
 const getVideoEmbedUrl = (url) => {
   const youtubeUrl = getYouTubeEmbedUrl(url)
@@ -26,6 +36,8 @@ const getVideoEmbedUrl = (url) => {
 const TutorProfilePage = () => {
   const [profile, setProfile] = useState(null)
   const [availability, setAvailability] = useState(null)
+  const [liveStatus, setLiveStatus] = useState(null)
+  const [now, setNow] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const { profileId } = useParams()
@@ -39,10 +51,12 @@ const TutorProfilePage = () => {
       setLoading(true)
       setError('')
       try {
-        const response = await axios.get(`http://localhost:5000/api/live-tutors/profile/${profileId}`)
+        const response = await axios.get(`${API_BASE_URL}/live-tutors/profile/${profileId}`)
         if (isCurrent) {
           setProfile(response.data.profile)
           setAvailability(response.data.availability)
+          setLiveStatus(response.data.liveStatus || null)
+          setNow(Date.now())
         }
       } catch (requestError) {
         if (isCurrent) setError(requestError.response?.data?.message || 'Could not load this tutor profile.')
@@ -53,6 +67,22 @@ const TutorProfilePage = () => {
 
     loadProfile()
     return () => { isCurrent = false }
+  }, [profileId])
+
+  useEffect(() => {
+    const timerId = window.setInterval(() => setNow(Date.now()), 1000)
+    const refreshId = window.setInterval(async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/live-tutors/profile/${profileId}`)
+        setLiveStatus(response.data.liveStatus || null)
+      } catch (requestError) {
+        console.error('Refresh tutor availability status error:', requestError)
+      }
+    }, 30000)
+    return () => {
+      window.clearInterval(timerId)
+      window.clearInterval(refreshId)
+    }
   }, [profileId])
 
   // The booking page decides whether this student receives the free trial or
@@ -81,6 +111,13 @@ const TutorProfilePage = () => {
     : Number(((Number(profile.hourlyRate || 0) / 60) * paidDuration).toFixed(2))
   const activeSlots = (availability?.weeklySlots || []).filter((slot) => slot.isActive !== false)
   const isAcceptingBookings = availability?.isAcceptingBookings === true
+  const statusLabels = {
+    in_session: 'Tutor is in a live session',
+    session_scheduled: 'A session is scheduled now; tutor is not detected in the room',
+    available_now: 'Within the tutor’s usual available hours',
+    offline: 'Outside the tutor’s usual available hours',
+    unknown: 'Live presence is currently unavailable',
+  }
   const videoEmbedUrl = profile.introVideoUrl ? getVideoEmbedUrl(profile.introVideoUrl) : ''
   const roundedRating = Math.round(Number(profile.rating) || 0)
 
@@ -109,7 +146,7 @@ const TutorProfilePage = () => {
             </button>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="flex items-center gap-2 text-lg font-extrabold"><i className="fas fa-calendar-days text-[#16A34A]" aria-hidden="true" />Availability</h2>{availability ? <><p className="mt-3 text-sm font-semibold text-slate-700">{availability.timezone}</p><div className="mt-4 space-y-2">{activeSlots.length ? activeSlots.map((slot) => <div key={slot.day} className="flex justify-between gap-4 rounded-lg bg-slate-50 px-3 py-2.5 text-sm"><span className="font-semibold text-slate-800">{slot.day}</span><span className="text-slate-600">{formatTime(slot.startTime)} — {formatTime(slot.endTime)}</span></div>) : <p className="text-sm text-slate-500">No active times are currently listed.</p>}</div><p className="mt-4 text-xs leading-5 text-slate-500">All times shown in {availability.timezone}.</p></> : <p className="mt-3 text-sm text-slate-500">This tutor has not published availability yet.</p>}</section>
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><h2 className="flex items-center gap-2 text-lg font-extrabold"><i className="fas fa-calendar-days text-[#16A34A]" aria-hidden="true" />Availability</h2>{availability ? <><p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700" role="status">{statusLabels[liveStatus?.state] || 'Checking tutor availability…'}</p>{liveStatus?.state === 'in_session' && <p className="mt-2 text-xs text-green-700">Live presence is verified from the session room.</p>}{liveStatus?.state === 'unknown' && <p className="mt-2 text-xs text-amber-700">The weekly schedule is shown below; current room presence could not be verified.</p>}{liveStatus?.nextSessionAt && <p className="mt-3 text-sm font-semibold text-slate-700">Next confirmed session in {formatCountdown(new Date(liveStatus.nextSessionAt).getTime() - now)}</p>}<p className="mt-3 text-sm font-semibold text-slate-700">{availability.timezone}</p><div className="mt-4 space-y-2">{activeSlots.length ? activeSlots.map((slot) => <div key={slot.day} className="flex justify-between gap-4 rounded-lg bg-slate-50 px-3 py-2.5 text-sm"><span className="font-semibold text-slate-800">{slot.day}</span><span className="text-slate-600">{formatTime(slot.startTime)} — {formatTime(slot.endTime)}</span></div>) : <p className="text-sm text-slate-500">No active times are currently listed.</p>}</div><p className="mt-4 text-xs leading-5 text-slate-500">Times shown in the tutor’s timezone; exact bookable appointments are converted to your local time on the booking page.</p></> : <p className="mt-3 text-sm text-slate-500">This tutor has not published availability yet.</p>}</section>
         </aside>
 
         <div className="space-y-6"><section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"><h2 className="text-2xl font-extrabold tracking-tight">About {tutorName}</h2><p className="mt-4 whitespace-pre-wrap text-base leading-8 text-slate-700">{profile.bio}</p></section><section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"><h2 className="flex items-center gap-3 text-2xl font-extrabold tracking-tight"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F0FDF4] text-[#15803D]"><i className="fas fa-chalkboard-user" aria-hidden="true" /></span>Teaching Approach</h2><p className="mt-4 whitespace-pre-wrap text-base leading-8 text-slate-700">{profile.teachingApproach}</p></section><section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"><h2 className="text-2xl font-extrabold tracking-tight">Subjects I Teach</h2><div className="mt-5 flex flex-wrap gap-3">{(profile.subjects || []).map((subject) => <span key={subject} className="rounded-xl bg-[#F0FDF4] px-4 py-2 text-sm font-bold text-[#15803D] ring-1 ring-[#22C55E]/20">{subject}</span>)}</div></section>{profile.introVideoUrl && <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"><h2 className="text-2xl font-extrabold tracking-tight">Introduction Video</h2><div className="mt-5 aspect-video overflow-hidden rounded-xl bg-slate-950"><iframe title={`${tutorName} introduction video`} src={videoEmbedUrl} className="h-full w-full" allowFullScreen /></div></section>}<section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"><h2 className="text-2xl font-extrabold tracking-tight">Student Reviews</h2>{profile.totalRatings > 0 ? <p className="mt-4 text-slate-600">Reviews will be loaded here in Phase 10.</p> : <p className="mt-4 text-slate-600">No reviews yet. Be the first to book a session!</p>}</section></div>

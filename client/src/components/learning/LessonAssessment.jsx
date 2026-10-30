@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../config/api.js'
 import { useMemo, useState } from 'react'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
@@ -57,7 +58,7 @@ const LessonAssessment = ({ lesson, courseId, onPass, onRetry }) => {
     try {
       const payload = answers.map((answer, index) => ({ questionIndex: index, answer }))
       const response = await axios.post(
-        `http://localhost:5000/api/courses/${courseId}/lessons/${lesson._id}/assessment`,
+        `${API_BASE_URL}/courses/${courseId}/lessons/${lesson._id}/assessment`,
         { answers: payload },
         { headers: { Authorization: `Bearer ${token}` } }
       )

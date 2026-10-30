@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../config/api.js'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
@@ -23,7 +24,7 @@ const CourseDetailPage = () => {
       setLoading(true)
       setError('')
       try {
-        const response = await axios.get(`http://localhost:5000/api/courses/${courseId}`)
+        const response = await axios.get(`${API_BASE_URL}/courses/${courseId}`)
         if (isCurrent) setCourse(response.data.course)
       } catch (requestError) {
         if (isCurrent) setError(requestError.response?.data?.message || 'Could not load this course right now.')

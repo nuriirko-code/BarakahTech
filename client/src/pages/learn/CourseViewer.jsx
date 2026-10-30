@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../config/api.js'
 ﻿import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
@@ -38,7 +39,7 @@ const CourseViewer = () => {
 
     const loadEnrolledCourse = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/courses/${courseId}/learn`, {
+        const response = await axios.get(`${API_BASE_URL}/courses/${courseId}/learn`, {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         })
 
@@ -109,7 +110,7 @@ const CourseViewer = () => {
     setMarkingComplete(true)
     try {
       const response = await axios.post(
-        `http://localhost:5000/api/courses/${courseId}/lessons/${activeLesson._id}/complete`,
+        `${API_BASE_URL}/courses/${courseId}/lessons/${activeLesson._id}/complete`,
         {},
         { headers: token ? { Authorization: `Bearer ${token}` } : {} }
       )
@@ -168,7 +169,7 @@ const CourseViewer = () => {
     setMessageError('')
     try {
       const response = await axios.post(
-        'http://localhost:5000/api/messages/conversations',
+        `${API_BASE_URL}/messages/conversations`,
         {
           recipientId: teacherId,
           courseId: course._id,

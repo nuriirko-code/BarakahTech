@@ -1,10 +1,10 @@
+import API_BASE_URL from '../../config/api.js'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import Avatar from '../../components/common/Avatar'
 
-const API_BASE_URL = 'http://localhost:5000/api'
 const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent']
 
 const SessionFeedback = () => {

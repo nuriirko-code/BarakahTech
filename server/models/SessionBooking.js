@@ -13,6 +13,7 @@ const sessionBookingSchema = new mongoose.Schema(
     // automatically from the tutor profile instead of asking the learner twice.
     subject: { type: String, required: true, trim: true },
     sessionDate: { type: Date, required: true },
+    startAt: { type: Date, default: null, index: true },
     // Wall-clock values stay as strings because calculating from a Date alone
     // becomes ambiguous across tutor/student timezones and daylight savings.
     startTime: { type: String, required: true },
@@ -33,6 +34,7 @@ const sessionBookingSchema = new mongoose.Schema(
     // One free, fixed-length introductory session is allowed for each
     // student-tutor pair before their paid learning relationship begins.
     isTrialSession: { type: Boolean, default: false, index: true },
+    isAnytimeTest: { type: Boolean, default: false },
 
     // pending_payment means the time is held temporarily but is not a confirmed
     // session until the platform verifies the student's manual transfer.

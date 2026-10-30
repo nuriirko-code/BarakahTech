@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../../config/api.js'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -28,7 +29,7 @@ const TeacherCourses = () => {
 
 		 const loadCourses = async () => {
 			try {
-				const response = await axios.get('http://localhost:5000/api/courses/teacher/my-courses', {
+				const response = await axios.get(`${API_BASE_URL}/courses/teacher/my-courses`, {
 					headers: token ? { Authorization: `Bearer ${token}` } : {},
 				})
 				if (isCurrent) setCourses(response.data.courses || [])
@@ -56,7 +57,7 @@ const TeacherCourses = () => {
 
 		try {
 			const response = await axios.put(
-				`http://localhost:5000/api/courses/${courseId}/unpublish`,
+				`${API_BASE_URL}/courses/${courseId}/unpublish`,
 				{},
 				{ headers: { Authorization: `Bearer ${token}` } }
 			)
@@ -79,7 +80,7 @@ const TeacherCourses = () => {
 		setError('')
 
 		try {
-			await axios.delete(`http://localhost:5000/api/courses/${courseId}`, {
+			await axios.delete(`${API_BASE_URL}/courses/${courseId}`, {
 				headers: { Authorization: `Bearer ${token}` },
 			})
 			setCourses((currentCourses) => currentCourses.filter((course) => course._id !== courseId))

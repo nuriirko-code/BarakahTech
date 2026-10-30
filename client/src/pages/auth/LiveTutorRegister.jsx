@@ -1,3 +1,4 @@
+import API_BASE_URL from '../../config/api.js'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -22,7 +23,7 @@ const LiveTutorRegister = () => {
     try {
       // Registering as student is intentional: live tutoring is a capability,
       // not a second account role, and the apply API accepts student accounts.
-      const response = await axios.post('http://localhost:5000/api/auth/register', { name: formData.name, email: formData.email, password: formData.password, role: 'student' })
+      const response = await axios.post(`${API_BASE_URL}/auth/register`, { name: formData.name, email: formData.email, password: formData.password, role: 'student' })
       login(response.data.user, response.data.token)
       navigate('/apply/live-tutor')
     } catch (requestError) {
