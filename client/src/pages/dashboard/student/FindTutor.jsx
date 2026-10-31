@@ -9,7 +9,7 @@ import Avatar from '../../../components/common/Avatar'
 const emptyFilters = { category: '', language: '', minRate: '', maxRate: '', level: '' }
 
 const categoryOptions = ['technology', 'languages', 'sciences', 'business', 'leadership']
-const languageOptions = ['English', 'Amharic', 'Arabic', 'Afaan Oromo', 'French']
+const languageOptions = ['English', 'Amharic', 'Afaan Oromo']
 const levelOptions = ['beginner', 'intermediate', 'advanced']
 
 // Existing tutor records may still have the former hourly-rate fields. This

@@ -53,6 +53,8 @@ const TeacherProfilePage = lazy(() => import('./pages/public/TeacherProfilePage'
 const CourseDetailPage = lazy(() => import('./pages/public/CourseDetailPage'))
 const AboutPage = lazy(() => import('./pages/public/AboutPage'))
 const ContactPage = lazy(() => import('./pages/public/ContactPage'))
+const CommunityPage = lazy(() => import('./pages/public/CommunityPage'))
+const CommunitySessionPage = lazy(() => import('./pages/public/CommunitySessionPage'))
 
 const PageLoader = () => (
   <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -82,6 +84,8 @@ function App() {
           <Route path="/courses/:courseId" element={<CourseDetailPage />} />
           <Route path="/tutors" element={<TutorsPage />} />
           <Route path="/teachers/:teacherId" element={<TeacherProfilePage />} />
+          <Route path="/community" element={<CommunityPage />} />
+          <Route path="/community/:id" element={<CommunitySessionPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
 

@@ -57,7 +57,7 @@ const LiveTutorWelcome = () => {
           <header className="relative mt-6 overflow-hidden rounded-[2rem] bg-indigo-950 text-white shadow-2xl">
             <div className="absolute inset-0">
               <img
-                src="https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=1200&q=85"
+                src="/images/welcoming-teacher.png"
                 alt=""
                 className="absolute right-0 h-full w-full object-cover object-center opacity-30 sm:w-3/5 sm:opacity-65"
                 fetchPriority="high"
@@ -110,13 +110,12 @@ const LiveTutorWelcome = () => {
           </section>
 
           <section className="mt-16 grid gap-8 lg:grid-cols-[0.8fr_1fr] lg:items-center">
-            <aside className="overflow-hidden rounded-[2rem] border-8 border-white shadow-xl">
-              <img
-                src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=1000&q=85"
-                alt="Male professional educator"
-                className="h-[420px] w-full object-cover object-center"
-                loading="lazy"
-              />
+            <aside className="relative h-[420px] overflow-hidden rounded-[2rem] border-8 border-white shadow-xl">
+              <img src="/images/student-welcoming.png" alt="Student learning with live tutoring support" className="h-full w-full object-cover" loading="lazy" />
+              <div className="absolute inset-0 bg-gradient-to-t from-indigo-950/85 via-transparent to-transparent" />
+              <div className="absolute bottom-0 p-8 text-white">
+                <p className="text-lg font-bold">Live tutoring</p>
+              </div>
             </aside>
             <div>
               <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-emerald-800">Good tutoring starts with clarity</p>

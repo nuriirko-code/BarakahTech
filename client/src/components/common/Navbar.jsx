@@ -8,7 +8,6 @@ const languages = [
   { code: 'en', label: 'English', flag: '🇬🇧' },
   { code: 'am', label: 'አማርኛ', flag: '🇪🇹' },
   { code: 'om', label: 'Afaan Oromo', flag: '🇪🇹' },
-  { code: 'ar', label: 'العربية', flag: '🇸🇦' },
 ]
 
 const Navbar = () => {
@@ -27,11 +26,11 @@ const Navbar = () => {
   const languageTimeout = useRef(null)
 
   const categories = [
-    { key: 'technology', icon: 'fa-laptop-code', label: t('cat_technology') },
-    { key: 'languages', icon: 'fa-language', label: t('cat_languages') },
-    { key: 'sciences', icon: 'fa-flask', label: t('cat_sciences') },
-    { key: 'business', icon: 'fa-chart-line', label: t('cat_business') },
-    { key: 'leadership', icon: 'fa-star', label: t('cat_leadership') },
+    { key: 'technology', icon: 'fa-laptop-code', label: t('categories.technology') },
+    { key: 'languages', icon: 'fa-language', label: t('categories.languages') },
+    { key: 'sciences', icon: 'fa-flask', label: t('categories.sciences') },
+    { key: 'business', icon: 'fa-chart-line', label: t('categories.business') },
+    { key: 'leadership', icon: 'fa-star', label: t('categories.leadership') },
   ]
 
   const handleCoursesEnter = () => {
@@ -139,7 +138,19 @@ const Navbar = () => {
               onMouseLeave={(event) => handleNavLeave(event, isActivePath('/'))}
             >
               <i className="fas fa-home text-xs" aria-hidden="true" />
-              {t('nav_home')}
+              {t('nav.home')}
+            </Link>
+
+            <Link
+              to="/community"
+              className="flex items-center gap-1.5 rounded-lg border-b-2 px-3 py-2 text-sm font-medium transition-all duration-200 hover:text-[#fbbf24]"
+              style={navLinkStyle(isActivePath('/community'))}
+              aria-current={isActivePath('/community') ? 'page' : undefined}
+              onMouseEnter={(event) => handleNavHover(event, isActivePath('/community'))}
+              onMouseLeave={(event) => handleNavLeave(event, isActivePath('/community'))}
+            >
+              <i className="fas fa-lightbulb text-xs" aria-hidden="true" />
+              {t('nav.community')}
             </Link>
 
             <div
@@ -158,7 +169,7 @@ const Navbar = () => {
                 onMouseLeave={(event) => handleNavLeave(event, isActivePath('/courses'))}
               >
                 <i className="fas fa-graduation-cap text-xs" aria-hidden="true" />
-                {t('nav_courses')}
+                {t('nav.courses')}
                 <i className={`fas fa-chevron-down text-xs transition-transform duration-200 ${coursesHovered ? 'rotate-180' : ''}`} aria-hidden="true" />
               </button>
 
@@ -186,7 +197,7 @@ const Navbar = () => {
                       onClick={() => setCoursesHovered(false)}
                     >
                       <i className="fas fa-th-large w-4 text-xs" aria-hidden="true" />
-                      {t('nav_browse_all')}
+                      {t('nav.browseAll')}
                     </Link>
                   </div>
                 </div>
@@ -202,7 +213,7 @@ const Navbar = () => {
               onMouseLeave={handleLiveSessionLeave}
             >
               <i className="fas fa-video text-xs" aria-hidden="true" />
-              Join Live Session
+              {t('nav.joinLive')}
             </Link>
           </div>
 
@@ -214,7 +225,7 @@ const Navbar = () => {
             >
               <button
                 type="button"
-                aria-label={t('nav_language')}
+                aria-label={t('nav.language')}
                 aria-expanded={languageHovered}
                 aria-haspopup="true"
                 onClick={() => setLanguageHovered((open) => !open)}
@@ -283,7 +294,7 @@ const Navbar = () => {
                   style={{ borderColor: 'rgba(255,209,102,0.65)' }}
                 >
                   <i className="fas fa-th-large mr-1.5 text-xs" aria-hidden="true" />
-                  {t('nav_dashboard')}
+                  {t('nav.dashboard')}
                 </Link>
                 <button
                   type="button"
@@ -291,7 +302,7 @@ const Navbar = () => {
                   className="hidden rounded-lg px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:text-red-300 sm:inline-flex"
                 >
                   <i className="fas fa-sign-out-alt mr-1 text-xs" aria-hidden="true" />
-                  {t('nav_logout')}
+                  {t('nav.logout')}
                 </button>
               </div>
             ) : (
@@ -302,13 +313,13 @@ const Navbar = () => {
                   className="whitespace-nowrap px-2 py-2 text-sm font-bold text-[#fbbf24] transition-colors hover:text-white sm:px-3"
                   style={{ color: '#fbbf24' }}
                 >
-                  {t('nav_login')}
+                  {t('nav.login')}
                 </Link>
                 <Link
                   to="/register"
                   className="hidden rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-green-600 sm:inline-flex"
                 >
-                  {t('nav_sign_up')}
+                  {t('nav.signUp')}
                 </Link>
               </div>
             )}
@@ -350,7 +361,18 @@ const Navbar = () => {
               onClick={closeMobileMenu}
             >
               <i className="fas fa-home w-4 text-xs" aria-hidden="true" />
-              {t('nav_home')}
+              {t('nav.home')}
+            </Link>
+
+            <Link
+              to="/community"
+              className={`flex items-center gap-3 rounded-lg border-b-2 px-3 py-2.5 text-sm font-medium ${
+                isActivePath('/community') ? 'border-[#f59e0b] text-white' : 'border-transparent text-[#f59e0b]'
+              }`}
+              onClick={closeMobileMenu}
+            >
+              <i className="fas fa-lightbulb w-4 text-xs" aria-hidden="true" />
+              {t('nav.community')}
             </Link>
 
             <div>
@@ -365,7 +387,7 @@ const Navbar = () => {
               >
                 <span className="flex items-center gap-3">
                   <i className="fas fa-graduation-cap w-4 text-xs" aria-hidden="true" />
-                  {t('nav_courses')}
+                  {t('nav.courses')}
                 </span>
                 <i className={`fas fa-chevron-down text-xs transition-transform ${mobileCoursesOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
               </button>
@@ -388,7 +410,7 @@ const Navbar = () => {
                     onClick={closeMobileMenu}
                   >
                     <i className="fas fa-th-large w-4 text-xs" aria-hidden="true" />
-                    {t('nav_browse_all')}
+                    {t('nav.browseAll')}
                   </Link>
                 </div>
               )}
@@ -401,7 +423,7 @@ const Navbar = () => {
               onClick={closeMobileMenu}
             >
               <i className="fas fa-video w-4 text-xs" aria-hidden="true" />
-              Join Live Session
+              {t('nav.joinLive')}
             </Link>
 
             <div>
@@ -414,7 +436,7 @@ const Navbar = () => {
               >
                 <span className="flex items-center gap-3">
                   <i className="fas fa-globe w-4 text-xs" aria-hidden="true" />
-                  {t('nav_language')} <span className="uppercase text-amber-200">{currentLanguage}</span>
+                  {t('nav.language')} <span className="uppercase text-amber-200">{currentLanguage}</span>
                 </span>
                 <i className={`fas fa-chevron-down text-xs transition-transform ${mobileLanguagesOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
               </button>
@@ -448,7 +470,7 @@ const Navbar = () => {
                   onClick={closeMobileMenu}
                 >
                   <i className="fas fa-th-large w-4 text-xs" aria-hidden="true" />
-                  {t('nav_dashboard')}
+                  {t('nav.dashboard')}
                 </Link>
                 <Link
                   to="/messages"
@@ -464,7 +486,7 @@ const Navbar = () => {
                   className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-red-400 hover:bg-red-400/10"
                 >
                   <i className="fas fa-sign-out-alt w-4 text-xs" aria-hidden="true" />
-                  {t('nav_logout')}
+                  {t('nav.logout')}
                 </button>
               </div>
             ) : (
@@ -475,14 +497,14 @@ const Navbar = () => {
                   style={{ borderColor: 'rgba(245,158,11,0.4)' }}
                   onClick={closeMobileMenu}
                 >
-                  {t('nav_login')}
+                  {t('nav.login')}
                 </Link>
                 <Link
                   to="/register"
                   className="rounded-lg bg-green-700 px-4 py-2.5 text-center text-sm font-semibold text-white"
                   onClick={closeMobileMenu}
                 >
-                  {t('nav_sign_up')}
+                  {t('nav.signUp')}
                 </Link>
               </div>
             )}

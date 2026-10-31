@@ -3,13 +3,15 @@ import { useEffect, useState } from "react"
 import axios from "axios"
 import Navbar from "../components/common/Navbar"
 import Hero from "../components/landing/Hero"
+import JourneySection from "../components/landing/JourneySection"
+import UpcomingSessions from "../components/landing/UpcomingSessions"
 import StatsBar from "../components/landing/StatsBar"
 import FeaturesCarousel from "../components/landing/FeaturesCarousel"
+import LearningCategories from "../components/landing/LearningCategories"
 import HowItWorks from "../components/landing/HowItWorks"
 import TeachersCarousel from "../components/landing/TeachersCarousel"
 import TutorsCarousel from "../components/landing/TutorsCarousel"
 import Testimonials from "../components/landing/Testimonials"
-import LearningCategories from "../components/landing/LearningCategories"
 import ForStudentsTeachers from "../components/landing/ForStudentsTeachers"
 import FinalCTA from "../components/landing/FinalCTA"
 import Footer from "../components/common/Footer"
@@ -56,7 +58,9 @@ const Landing = () => {
     <div className="min-h-screen">
       <Navbar />
       <Hero />
-      {/* Alternating light and dark section backgrounds creates visual rhythm and encourages visitors to keep scrolling. */}
+      {/* The journey follows the hero immediately to explain how the platform turns a problem into practical next steps. */}
+      <JourneySection />
+      <UpcomingSessions />
       {dataError && (
         <p role="alert" className="bg-red-50 px-6 py-3 text-center text-sm text-red-800">
           {dataError}
@@ -64,6 +68,7 @@ const Landing = () => {
       )}
       <StatsBar stats={landingData?.stats || null} />
       <FeaturesCarousel />
+      <LearningCategories courses={landingData?.courses || []} />
       <HowItWorks />
       {/* The two carousels move in opposite directions to add visual interest and distinguish course teachers from live tutors. */}
       <TeachersCarousel teachers={landingData?.teachers || []} />
@@ -74,7 +79,6 @@ const Landing = () => {
         loading={!landingData && !dataError}
         error={!landingData ? dataError : ""}
       />
-      <LearningCategories courses={landingData?.courses || []} />
       <ForStudentsTeachers />
       {/* The photo behind the final CTA reinforces the human connection at the moment visitors are asked to join. */}
       <FinalCTA />

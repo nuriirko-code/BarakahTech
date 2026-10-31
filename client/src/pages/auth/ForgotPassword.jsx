@@ -1,9 +1,11 @@
 import API_BASE_URL from '../../config/api.js'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 
 const ForgotPassword = () => {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -15,7 +17,7 @@ const ForgotPassword = () => {
     setError('')
     setEmailError('')
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      setEmailError('Enter a valid email address.')
+      setEmailError(t('auth.validEmail'))
       return
     }
     setLoading(true)
@@ -26,7 +28,8 @@ const ForgotPassword = () => {
       // cannot be used to discover which emails have Barakah Academy accounts.
       setSuccess(true)
     } catch (requestError) {
-      setError(requestError.response?.data?.message || 'Unable to request a password reset. Try again.')
+      // API-provided error messages remain in English until server-side localization is implemented.
+      setError(requestError.response?.data?.message || t('auth.resetRequestError'))
     } finally {
       setLoading(false)
     }
@@ -40,24 +43,24 @@ const ForgotPassword = () => {
         </div>
         {success ? (
           <div className="text-center">
-            <h1 className="mt-5 text-2xl font-extrabold">Check your inbox</h1>
+            <h1 className="mt-5 text-2xl font-extrabold">{t('auth.checkInbox')}</h1>
             <p role="status" className="mt-3 text-sm leading-6 text-slate-600">
-              If an account exists with this email, a reset link has been sent. Check your inbox.
+              {t('auth.resetSent')}
             </p>
-            <p className="mt-2 text-xs text-slate-500">Didn’t receive it? Check spam or try again.</p>
+            <p className="mt-2 text-xs text-slate-500">{t('auth.resetNotReceived')}</p>
             <button type="button" onClick={() => { setSuccess(false); setError('') }} className="mt-6 w-full rounded-lg bg-green-700 px-4 py-3 text-sm font-bold text-white hover:bg-green-800">
-              Try another email
+              {t('auth.tryAnotherEmail')}
             </button>
-            <Link to="/login" className="mt-4 inline-block text-sm font-semibold text-green-800 hover:underline">Back to Login</Link>
+            <Link to="/login" className="mt-4 inline-block text-sm font-semibold text-green-800 hover:underline">{t('auth.backToLogin')}</Link>
           </div>
         ) : (
           <>
-            <h1 className="mt-5 text-center text-2xl font-extrabold">Forgot your password?</h1>
-            <p className="mt-2 text-center text-sm text-slate-600">Enter your email and we’ll send you a reset link.</p>
+            <h1 className="mt-5 text-center text-2xl font-extrabold">{t('auth.forgotPasswordTitle')}</h1>
+            <p className="mt-2 text-center text-sm text-slate-600">{t('auth.forgotPasswordDescription')}</p>
             {error && <div role="alert" className="mt-5 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>}
             <form noValidate onSubmit={handleSubmit} className="mt-6 space-y-4">
               <label className="block text-sm font-semibold text-slate-700">
-                Email address
+                {t('auth.email')}
                 <input
                   required
                   type="email"
@@ -69,10 +72,10 @@ const ForgotPassword = () => {
                 {emailError && <span role="alert" className="mt-1 block text-sm font-medium text-red-700">{emailError}</span>}
               </label>
               <button type="submit" disabled={loading || !email.trim()} className="w-full rounded-lg bg-green-700 px-4 py-3 text-sm font-bold text-white hover:bg-green-800 disabled:cursor-wait disabled:opacity-60">
-                {loading ? 'Sending…' : 'Send Reset Link'}
+                {loading ? t('auth.sending') : t('auth.sendResetLink')}
               </button>
             </form>
-            <Link to="/login" className="mt-5 block text-center text-sm font-semibold text-green-800 hover:underline">Back to Login</Link>
+            <Link to="/login" className="mt-5 block text-center text-sm font-semibold text-green-800 hover:underline">{t('auth.backToLogin')}</Link>
           </>
         )}
       </section>

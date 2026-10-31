@@ -1,6 +1,7 @@
 import API_BASE_URL from '../../config/api.js'
 import { useState } from 'react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import Navbar from '../../components/common/Navbar'
@@ -12,6 +13,7 @@ const Login = () => {
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
   const [loading, setLoading] = useState(false)
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const { login, successMessage } = useAuth()
@@ -35,13 +37,13 @@ const Login = () => {
     setFieldErrors({})
 //the following validation checks ensure that both email and password fields are filled before proceeding with the login request. If either field is empty, an appropriate error message is set, and the function returns early to prevent the login attempt.
     if (!formData.email.trim()) {
-      setError('Please provide email and password')
-      setFieldErrors({ email: 'Enter your email address.' })
+      setError(t('auth.missingEmailPassword'))
+      setFieldErrors({ email: t('auth.enterEmail') })
       return
     }
     if (!formData.password) {
-      setError('Please provide email and password')
-      setFieldErrors({ password: 'Enter your password.' })
+      setError(t('auth.missingEmailPassword'))
+      setFieldErrors({ password: t('auth.enterPassword') })
       return
     }
 
@@ -53,7 +55,7 @@ const Login = () => {
 
       if (user.role === 'pending_teacher') {
         // Pending teachers must wait for review and cannot enter a dashboard yet.
-        setError('Your teacher application is still under review. We will notify you when approved.')
+        setError(t('auth.pendingTeacher'))
         navigate('/login')
         return
       }
@@ -73,7 +75,8 @@ const Login = () => {
         : getDashboardPath(user.role, user.isLiveTutor)
       navigate(redirectPath, { replace: true })
     } catch (requestError) {
-      setError(requestError.response?.data?.message || 'Login failed')
+      // API-provided error messages remain in English until server-side localization is implemented.
+      setError(requestError.response?.data?.message || t('auth.loginFailed'))
     } finally {
       setLoading(false)
     }
@@ -92,24 +95,24 @@ const Login = () => {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#22C55E] text-sm text-white"><i className="fas fa-graduation-cap" aria-hidden="true" /></span>
           Barakah Academy
         </p>
-        <h1 className="mt-6 text-center text-3xl font-extrabold tracking-tight text-slate-900">Welcome back</h1>
+        <h1 className="mt-6 text-center text-3xl font-extrabold tracking-tight text-slate-900">{t('auth.welcomeBack')}</h1>
 
         {(successMessage || location.state?.message) && <div role="status" className="mt-6 rounded-xl border border-[#22C55E]/20 bg-[#F0FDF4] p-3 text-[#15803D]">{successMessage || location.state.message}</div>}
         {error && !Object.values(fieldErrors).some(Boolean) && <div role="alert" className="mt-6 rounded-xl border border-red-200 bg-red-50 p-3 text-red-700">{error}</div>}
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-          <label className="block space-y-1"><span className="sr-only">Email address</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address" type="email" autoComplete="email" />{renderFieldError('email')}</label>
-          <label className="block space-y-1"><span className="sr-only">Password</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="password" value={formData.password} onChange={handleChange} placeholder="Password" type="password" autoComplete="current-password" />{renderFieldError('password')}</label>
+          <label className="block space-y-1"><span className="sr-only">{t('auth.email')}</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="email" value={formData.email} onChange={handleChange} placeholder={t('auth.email')} type="email" autoComplete="email" />{renderFieldError('email')}</label>
+          <label className="block space-y-1"><span className="sr-only">{t('auth.password')}</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="password" value={formData.password} onChange={handleChange} placeholder={t('auth.password')} type="password" autoComplete="current-password" />{renderFieldError('password')}</label>
           <div className="-mt-2 text-right">
-            <Link to="/forgot-password" className="text-sm font-semibold text-green-800 hover:underline">Forgot password?</Link>
+            <Link to="/forgot-password" className="text-sm font-semibold text-green-800 hover:underline">{t('auth.forgotPassword')}</Link>
           </div>
           <button className="w-full rounded-xl bg-[#22C55E] p-3 font-bold text-white shadow-md shadow-[#22C55E]/25 transition hover:bg-[#16A34A] disabled:opacity-60" type="submit" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
+            {loading ? t('auth.loggingIn') : t('auth.login')}
           </button>
         </form>
 
         <p className="mt-6 text-center text-gray-600">
-          Don&apos;t have an account? <Link to="/register" className="font-bold text-[#15803D] hover:underline">Register</Link>
+          {t('auth.noAccount')} <Link to="/register" className="font-bold text-[#15803D] hover:underline">{t('auth.registerLink')}</Link>
         </p>
       </div>
     </main>

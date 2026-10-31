@@ -55,7 +55,7 @@ const TeacherWelcome = () => {
           <header className="relative mt-6 overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-2xl">
             <div className="absolute inset-0">
               <img
-                src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=1200&q=85"
+                src="/images/welcoming-teacher.png"
                 alt=""
                 className="absolute right-0 h-full w-full object-cover object-center opacity-35 sm:w-3/5 sm:opacity-70"
                 fetchPriority="high"
@@ -124,13 +124,12 @@ const TeacherWelcome = () => {
               </div>
               <JourneyCTA to={applicationPath} label="Apply as a course teacher" tone="amber" />
             </div>
-            <aside className="overflow-hidden rounded-[2rem] border-8 border-white shadow-xl">
-              <img
-                src="https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=1000&q=85"
-                alt="Male educator ready to share his knowledge"
-                className="h-[420px] w-full object-cover object-center"
-                loading="lazy"
-              />
+            <aside className="relative h-[420px] overflow-hidden rounded-[2rem] border-8 border-white shadow-xl">
+              <img src="/images/welcoming-teacher.png" alt="Teacher helping a learner study" className="h-full w-full object-cover" loading="lazy" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+              <div className="absolute bottom-0 p-8 text-white">
+                <p className="text-lg font-bold">Teach with purpose</p>
+              </div>
             </aside>
           </section>
 

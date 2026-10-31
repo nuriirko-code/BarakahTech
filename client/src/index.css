@@ -1,6 +1,11 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+html {
+	/* Ethiopic coverage prevents missing or inconsistent Ge'ez script glyphs. */
+	font-family: system-ui, 'Noto Sans Ethiopic', sans-serif;
+}
+
  :root {
 	--color-green-50: #f8fafc;
 	--color-green-100: #f0fdf4;
@@ -38,6 +43,11 @@
 	100% { transform: translateX(-100%); }
 }
 
+@keyframes scroll-once-left-to-right {
+	0% { transform: translateX(-100%); }
+	100% { transform: translateX(100vw); }
+}
+
 .animate-scroll-left {
 	animation: scroll-left 30s linear infinite;
 }
@@ -50,16 +60,22 @@
 	animation: scroll-single 22s linear infinite;
 }
 
+.animate-scroll-once-left-to-right {
+	animation: scroll-once-left-to-right 35s linear infinite;
+}
+
 .animate-scroll-left:hover,
 .animate-scroll-right:hover,
-.animate-scroll-single:hover {
+.animate-scroll-single:hover,
+.animate-scroll-once-left-to-right:hover {
 	animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {
 	.animate-scroll-left,
 	.animate-scroll-right,
-	.animate-scroll-single {
+	.animate-scroll-single,
+	.animate-scroll-once-left-to-right {
 		animation: none;
 	}
 }

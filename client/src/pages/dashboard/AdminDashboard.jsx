@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext'
 import Avatar from '../../components/common/Avatar'
 import { formatCurrency } from '../../utils/currencyUtils'
 import ManageUsers from './admin/ManageUsers'
+import CommunityAdminTab from './admin/CommunityAdminTab'
 
 const statusStyles = {
   pending: 'bg-amber-50 text-amber-800 ring-1 ring-amber-200',
@@ -359,6 +360,9 @@ const AdminDashboard = () => {
           <button type="button" onClick={() => setActiveTab('live-tutor-applications')} className={`flex shrink-0 items-center gap-2 border-b-2 px-1 pb-3 text-sm transition ${activeTab === 'live-tutor-applications' ? 'border-green-700 font-semibold text-green-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
             <i className="fas fa-video" aria-hidden="true" /> Live Tutor Applications
           </button>
+          <button type="button" onClick={() => setActiveTab('community')} className={`flex shrink-0 items-center gap-2 border-b-2 px-1 pb-3 text-sm transition ${activeTab === 'community' ? 'border-green-700 font-semibold text-green-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+            <i className="fas fa-lightbulb" aria-hidden="true" /> Community
+          </button>
         </nav>
 
         {activeTab === 'payments' ? (
@@ -535,6 +539,8 @@ const AdminDashboard = () => {
               </div>
             )}
           </section>
+        ) : activeTab === 'community' ? (
+          <CommunityAdminTab />
         ) : activeTab === 'applications' ? (
           <>
         {error && <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800">{error}</div>}

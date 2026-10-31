@@ -1,6 +1,7 @@
 import API_BASE_URL from '../../config/api.js'
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 
@@ -17,6 +18,7 @@ const StudentRegister = () => {
   const [fieldErrors, setFieldErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { setSuccess } = useAuth()
 
   const handleChange = (event) => {
@@ -33,20 +35,20 @@ const StudentRegister = () => {
 
     const missingField = Object.keys(formData).find((field) => !formData[field].trim())
     if (missingField) {
-      setError('Please fill in all fields')
-      setFieldErrors({ [missingField]: 'This field is required.' })
+      setError(t('auth.fillAllFields'))
+      setFieldErrors({ [missingField]: t('auth.required') })
       return
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match')
-      setFieldErrors({ confirmPassword: 'Passwords do not match.' })
+      setError(t('auth.passwordMismatch'))
+      setFieldErrors({ confirmPassword: t('auth.passwordMismatch') })
       return
     }
 
     if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters')
-      setFieldErrors({ password: 'Use at least 6 characters.' })
+      setError(t('auth.passwordTooShort'))
+      setFieldErrors({ password: t('auth.passwordTooShort') })
       return
     }
 
@@ -62,10 +64,11 @@ const StudentRegister = () => {
         // The page defines the role so users cannot choose another flow's role.
         role: 'student',
       })
-      setSuccess('Account created successfully. Please login')
+      setSuccess(t('auth.accountCreated'))
       navigate('/login')
     } catch (requestError) {
-      setError(requestError.response?.data?.message || 'Registration failed')
+      // API-provided error messages remain in English until server-side localization is implemented.
+      setError(requestError.response?.data?.message || t('auth.registrationFailed'))
     } finally {
       // finally runs after success or failure, so the button cannot remain stuck.
       setLoading(false)
@@ -83,25 +86,25 @@ const StudentRegister = () => {
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#22C55E] text-sm text-white"><i className="fas fa-graduation-cap" aria-hidden="true" /></span>
           Barakah Academy
         </p>
-        <h1 className="mt-6 text-center text-3xl font-extrabold tracking-tight text-slate-900">Create your student account</h1>
+        <h1 className="mt-6 text-center text-3xl font-extrabold tracking-tight text-slate-900">{t('auth.createStudentAccount')}</h1>
 
         {error && !Object.values(fieldErrors).some(Boolean) && <div role="alert" className="mt-6 rounded-xl border border-red-200 bg-red-50 p-3 text-red-700">{error}</div>}
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-          <label className="block space-y-1"><span className="sr-only">Full name</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="name" value={formData.name} onChange={handleChange} placeholder="Full Name" autoComplete="name" />{renderFieldError('name')}</label>
-          <label className="block space-y-1"><span className="sr-only">Email address</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="email" value={formData.email} onChange={handleChange} placeholder="Email Address" type="email" autoComplete="email" />{renderFieldError('email')}</label>
-          <label className="block space-y-1"><span className="sr-only">Password</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="password" value={formData.password} onChange={handleChange} placeholder="Password" type="password" autoComplete="new-password" />{renderFieldError('password')}</label>
-          <label className="block space-y-1"><span className="sr-only">Confirm password</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder="Confirm Password" type="password" autoComplete="new-password" />{renderFieldError('confirmPassword')}</label>
+          <label className="block space-y-1"><span className="sr-only">{t('auth.name')}</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="name" value={formData.name} onChange={handleChange} placeholder={t('auth.name')} autoComplete="name" />{renderFieldError('name')}</label>
+          <label className="block space-y-1"><span className="sr-only">{t('auth.email')}</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="email" value={formData.email} onChange={handleChange} placeholder={t('auth.email')} type="email" autoComplete="email" />{renderFieldError('email')}</label>
+          <label className="block space-y-1"><span className="sr-only">{t('auth.password')}</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="password" value={formData.password} onChange={handleChange} placeholder={t('auth.password')} type="password" autoComplete="new-password" />{renderFieldError('password')}</label>
+          <label className="block space-y-1"><span className="sr-only">{t('auth.confirmPassword')}</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder={t('auth.confirmPassword')} type="password" autoComplete="new-password" />{renderFieldError('confirmPassword')}</label>
           <button className="w-full rounded-xl bg-[#22C55E] p-3 font-bold text-white shadow-md shadow-[#22C55E]/25 transition hover:bg-[#16A34A] disabled:opacity-60" type="submit" disabled={loading}>
-            {loading ? 'Creating account...' : 'Create account'}
+            {loading ? t('auth.creatingAccount') : t('auth.createAccount')}
           </button>
         </form>
 
         <p className="mt-6 text-center text-gray-600">
-          Already have an account? <Link to="/login" className="font-bold text-[#15803D] hover:underline">Login</Link>
+          {t('auth.hasAccount')} <Link to="/login" className="font-bold text-[#15803D] hover:underline">{t('auth.login')}</Link>
         </p>
         <p className="mt-2 text-center text-gray-600">
-          Want to teach instead? <Link to="/register/teacher" className="font-bold text-[#15803D] hover:underline">Apply as a teacher</Link>
+          {t('auth.wantToTeach')} <Link to="/register/teacher" className="font-bold text-[#15803D] hover:underline">{t('auth.applyTeacher')}</Link>
         </p>
       </div>
     </main>

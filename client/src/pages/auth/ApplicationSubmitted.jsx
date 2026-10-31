@@ -1,9 +1,11 @@
 import { Link, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 
 // A dedicated confirmation page gives applicants a stable destination and
 // explains the review process after the application has been saved.
 const ApplicationSubmitted = () => {
+  const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const { user } = useAuth()
   // One confirmation page serves two application types. The URL query
@@ -16,44 +18,44 @@ const ApplicationSubmitted = () => {
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-12 text-slate-900">
       <section className="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm sm:p-10">
-        <span className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F0FDF4] text-3xl text-[#16A34A]" role="img" aria-label="Success">
+        <span className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F0FDF4] text-3xl text-[#16A34A]" role="img" aria-label={t('common.success')}>
           <i className="fas fa-circle-check" aria-hidden="true" />
         </span>
         <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-slate-900">
-          {isLiveTutorApplication ? 'Live Tutor Application Submitted!' : 'Application Submitted Successfully'}
+          {isLiveTutorApplication ? t('auth.liveApplicationSubmitted') : t('auth.applicationSubmitted')}
         </h1>
         <p className="mt-3 text-lg text-gray-700">
           {isLiveTutorApplication
-            ? 'Thank you for applying to teach live sessions on Barakah Academy. Our team will review your application and scenario answers within 3–5 business days.'
-            : 'Thank you for applying to teach on Barakah Academy'}
+            ? t('auth.liveApplicationThanks')
+            : t('auth.applicationThanks')}
         </p>
 
         {isLiveTutorApplication ? (
           <section className="mt-6 rounded-xl border border-green-200 bg-[#F0FDF4] p-5 text-left">
-            <h2 className="font-bold text-[#15803D]">What happens next</h2>
+            <h2 className="font-bold text-[#15803D]">{t('auth.whatNext')}</h2>
             <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
-              <li>We review your teaching approach and scenario answers.</li>
-              <li>If approved, you will gain access to your live tutor tools.</li>
-              <li>You can then set your availability and start accepting bookings.</li>
+              <li>{t('auth.reviewApproach')}</li>
+              <li>{t('auth.accessTutorTools')}</li>
+              <li>{t('auth.setAvailability')}</li>
             </ul>
           </section>
         ) : (
           <>
-            <p className="mt-6 text-left leading-7 text-gray-600">Our team will carefully review your application and qualifications. This process typically takes 3 to 5 business days.</p>
-            <p className="mt-4 text-left leading-7 text-gray-600">We will contact you at the email address you provided with our decision. If approved, you will gain immediate access to your teacher dashboard.</p>
+            <p className="mt-6 text-left leading-7 text-gray-600">{t('auth.applicationReview')}</p>
+            <p className="mt-4 text-left leading-7 text-gray-600">{t('auth.applicationContact')}</p>
           </>
         )}
 
         <div className="mt-7 rounded-xl border border-amber-200 bg-amber-50 p-5 text-amber-900">
-          <span className="font-semibold">Application Status:</span> Under Review
+          <span className="font-semibold">{t('auth.applicationStatus')}:</span> {t('auth.underReview')}
         </div>
 
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Link to={isLiveTutorApplication ? dashboardPath : '/login'} className="rounded-xl bg-[#22C55E] px-5 py-3 font-bold text-white shadow-md shadow-[#22C55E]/25 transition hover:bg-[#16A34A]">
-            {isLiveTutorApplication ? 'Return to Dashboard' : 'Return to Login'}
+            {isLiveTutorApplication ? t('auth.returnDashboard') : t('auth.backToLogin')}
           </Link>
           <Link to="/" className="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-50">
-            Return to Home
+            {t('common.goHome')}
           </Link>
         </div>
       </section>

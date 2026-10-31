@@ -38,26 +38,26 @@ const Footer = () => {
   const { t } = useTranslation()
   const footerColumns = [
     {
-      title: t('footer_learn'),
+      title: t('footer.learn'),
       links: [
-        { label: t('footer_browse_courses'), to: '/courses' },
-        { label: t('footer_find_tutor'), to: '/tutors' },
-        { label: t('footer_how_it_works'), to: '/#how-it-works' },
+        { label: t('footer.browseCourses'), to: '/courses' },
+        { label: t('footer.findTutor'), to: '/tutors' },
+        { label: t('footer.howItWorks'), to: '/#how-it-works' },
       ],
     },
     {
-      title: t('footer_teach'),
+      title: t('footer.teach'),
       links: [
-        { label: t('footer_become_teacher'), to: '/become-a-teacher' },
-        { label: t('footer_apply_tutor'), to: '/become-a-live-tutor' },
+        { label: t('footer.becomeTeacher'), to: '/become-a-teacher' },
+        { label: t('footer.applyTutor'), to: '/become-a-live-tutor' },
       ],
     },
     {
-      title: t('footer_platform'),
+      title: t('footer.platform'),
       links: [
-        { label: t('footer_about'), to: '/about' },
-        { label: t('footer_contact'), to: '/contact' },
-        { label: t('nav_sign_up'), to: '/register' },
+        { label: t('footer.about'), to: '/about' },
+        { label: t('footer.contact'), to: '/contact' },
+        { label: t('nav.signUp'), to: '/register' },
       ],
     },
   ]
@@ -70,7 +70,7 @@ const Footer = () => {
             <span className="text-2xl font-bold text-green-400">Barakah</span>
             <span className="text-2xl font-bold text-white">Academy</span>
           </Link>
-          <p className="max-w-xs text-sm leading-relaxed text-gray-400">{t('footer_description')}</p>
+          <p className="max-w-xs text-sm leading-relaxed text-gray-400">{t('footer.description')}</p>
           <div className="flex flex-wrap items-center gap-3">
             {/* noopener prevents the destination tab from controlling this page; noreferrer withholds referrer details. */}
             {socialLinks.map((social) => (
@@ -95,10 +95,10 @@ const Footer = () => {
 
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 border-t border-gray-800 px-6 py-6 sm:flex-row">
         <p className="text-center text-sm text-gray-500">
-          © 2026 Barakah Academy. {t('footer_rights')}
+          © 2026 Barakah Academy. {t('footer.rights')}
         </p>
         <p className="flex items-center gap-1 text-sm text-gray-600">
-          Made with <i className="fas fa-heart text-xs text-red-500" aria-hidden="true" /> for learners everywhere
+          Made with <i className="fas fa-heart text-xs text-red-500" aria-hidden="true" /> {t('footer.madeWith')}
         </p>
       </div>
     </footer>

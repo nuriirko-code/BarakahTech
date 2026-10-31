@@ -33,7 +33,7 @@ const teachingLevels = [
   { value: 'all', label: 'All Levels' },
 ]
 
-const teachingLanguages = ['Amharic', 'English', 'Afaan Oromo', 'Arabic', 'Other']
+const teachingLanguages = ['Amharic', 'English', 'Afaan Oromo']
 
 const timezones = [
   'Africa/Addis_Ababa',

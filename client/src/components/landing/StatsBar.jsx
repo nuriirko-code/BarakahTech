@@ -1,12 +1,14 @@
+import { useTranslation } from "react-i18next"
+
 const statItems = [
-  { key: "courses", label: "Published Courses", icon: "fa-book-open", color: "#f59e0b" },
-  { key: "teachers", label: "Approved Teachers", icon: "fa-chalkboard-teacher", color: "#10b981" },
-  { key: "tutors", label: "Available Tutors", icon: "fa-user-graduate", color: "#3b82f6" },
-  { key: "students", label: "Students", icon: "fa-users", color: "#8b5cf6" },
-  { key: "subjects", label: "Subjects", icon: "fa-th-large", color: "#ef4444" },
+  { key: "courses", label: "statsCourses", icon: "fa-book-open", color: "#f59e0b" },
+  { key: "teachers", label: "statsTeachers", icon: "fa-chalkboard-teacher", color: "#10b981" },
+  { key: "tutors", label: "statsTutors", icon: "fa-user-graduate", color: "#3b82f6" },
+  { key: "students", label: "statsStudents", icon: "fa-users", color: "#8b5cf6" },
+  { key: "subjects", label: "statsSubjects", icon: "fa-th-large", color: "#ef4444" },
 ]
 
-const StatCounter = ({ item, value }) => {
+const StatCounter = ({ item, value, t, language }) => {
   return (
     <div className="group text-center">
       <div
@@ -16,14 +18,15 @@ const StatCounter = ({ item, value }) => {
         <i className={`fas ${item.icon} text-xl`} style={{ color: item.color }} aria-hidden="true" />
       </div>
       <div className="mb-1 text-3xl font-bold" style={{ color: "#f59e0b" }}>
-        {value === null ? "—" : value.toLocaleString()}
+        {value === null ? "—" : new Intl.NumberFormat(language).format(value)}
       </div>
-      <div className="text-sm font-medium text-gray-300">{item.label}</div>
+      <div className="text-sm font-medium text-gray-300">{t(`landing.${item.label}`)}</div>
     </div>
   )
 }
 
 const StatsBar = ({ stats }) => {
+  const { t, i18n } = useTranslation()
   return (
     <section className="px-6 py-16" style={{ backgroundColor: "#0a2416" }}>
       <div className="mx-auto max-w-6xl">
@@ -33,6 +36,8 @@ const StatsBar = ({ stats }) => {
               key={item.key}
               item={item}
               value={stats ? Number(stats[item.key]) : null}
+              t={t}
+              language={i18n.language}
             />
           ))}
         </div>

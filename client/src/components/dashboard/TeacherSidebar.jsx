@@ -1,17 +1,19 @@
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Avatar from '../common/Avatar'
 import { useAuth } from '../../context/AuthContext'
 import useUnreadMessageCount from '../../hooks/useUnreadMessageCount'
 
 const navigationItems = [
   // `end` ensures Overview is active only at the exact dashboard root URL.
-  { to: '/dashboard/teacher', label: 'Overview', icon: 'fas fa-chart-pie', end: true },
-  { to: '/dashboard/teacher/courses', label: 'My Courses', icon: 'fas fa-book-open' },
-  { to: '/messages', label: 'Messages', icon: 'fas fa-comments' },
-  { to: '/dashboard/teacher/profile', label: 'My Profile', icon: 'fas fa-user' },
+  { to: '/dashboard/teacher', label: 'overview', icon: 'fas fa-chart-pie', end: true },
+  { to: '/dashboard/teacher/courses', label: 'myCourses', icon: 'fas fa-book-open' },
+  { to: '/messages', label: 'messages', icon: 'fas fa-comments' },
+  { to: '/dashboard/teacher/profile', label: 'myProfile', icon: 'fas fa-user' },
 ]
 
 const TeacherSidebar = ({ onClose = () => {} }) => {
+  const { t } = useTranslation()
   const { user, logout } = useAuth()
   const unreadCount = useUnreadMessageCount()
   const navigate = useNavigate()
@@ -35,7 +37,7 @@ const TeacherSidebar = ({ onClose = () => {} }) => {
               Barakah Academy
             </p>
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#16A34A]">
-              {user?.role === 'teacher' ? 'Teacher Portal' : 'Live Tutor Portal'}
+              {user?.role === 'teacher' ? t('sidebar.teacherPortal') : t('sidebar.liveTutorPortal')}
             </p>
           </div>
       </div>
@@ -45,11 +47,11 @@ const TeacherSidebar = ({ onClose = () => {} }) => {
       <div className="min-h-0 flex-1 overflow-y-auto py-2">
         {/* Section label for hierarchy */}
         <p className="px-5 pt-6 pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-          Menu
+          {t('sidebar.menu')}
         </p>
 
         {/* Primary navigation */}
-        <nav aria-label="Teacher dashboard" className="space-y-1 px-3">
+        <nav aria-label={t('sidebar.teacherDashboard')} className="space-y-1 px-3">
           {navigationItems.filter((item) => user?.role === 'teacher' || item.to === '/messages').map((item) => (
             <NavLink
               key={item.to}
@@ -76,7 +78,7 @@ const TeacherSidebar = ({ onClose = () => {} }) => {
                   >
                     <i className={item.icon} />
                   </span>
-                  <span className="truncate">{item.label}</span>
+                  <span className="truncate">{t(`sidebar.${item.label}`)}</span>
                   {item.to === '/messages' && unreadCount > 0 && (
                     // A capped count remains legible without pushing sidebar content around.
                     <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-green-700 px-1.5 text-[10px] font-bold text-white">
@@ -98,7 +100,7 @@ const TeacherSidebar = ({ onClose = () => {} }) => {
               The boolean arrives on user from the safe login / get-me response. */}
           <div className="mx-1 my-4 border-t border-slate-200" />
           <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-            Live Tutoring
+            {t('sidebar.liveTutoring')}
           </p>
 
           {user?.isLiveTutor ? (
@@ -119,7 +121,7 @@ const TeacherSidebar = ({ onClose = () => {} }) => {
                     <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm ${isActive ? 'bg-[#22C55E] text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'}`} aria-hidden="true">
                       <i className="fas fa-calendar-days" />
                     </span>
-                    <span className="truncate">My Schedule</span>
+                    <span className="truncate">{t('sidebar.mySchedule')}</span>
                     {isActive && <i className="fas fa-chevron-right ml-auto text-[10px] text-[#22C55E]" aria-hidden="true" />}
                   </>
                 )}
@@ -140,7 +142,7 @@ const TeacherSidebar = ({ onClose = () => {} }) => {
                     <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm ${isActive ? 'bg-[#22C55E] text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'}`} aria-hidden="true">
                       <i className="fas fa-video" />
                     </span>
-                    <span className="truncate">Live Sessions</span>
+                    <span className="truncate">{t('sidebar.liveSessions')}</span>
                     {isActive && <i className="fas fa-chevron-right ml-auto text-[10px] text-[#22C55E]" aria-hidden="true" />}
                   </>
                 )}
@@ -161,7 +163,7 @@ const TeacherSidebar = ({ onClose = () => {} }) => {
                     <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm ${isActive ? 'bg-[#22C55E] text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'}`} aria-hidden="true">
                       <i className="fas fa-coins" />
                     </span>
-                    <span className="truncate">Live Earnings</span>
+                    <span className="truncate">{t('sidebar.liveEarnings')}</span>
                     {isActive && <i className="fas fa-chevron-right ml-auto text-[10px] text-[#22C55E]" aria-hidden="true" />}
                   </>
                 )}
@@ -182,7 +184,7 @@ const TeacherSidebar = ({ onClose = () => {} }) => {
                     <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm ${isActive ? 'bg-[#22C55E] text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'}`} aria-hidden="true">
                       <i className="fas fa-id-card" />
                     </span>
-                    <span className="truncate">Tutor Profile</span>
+                    <span className="truncate">{t('sidebar.tutorProfile')}</span>
                     {isActive && <i className="fas fa-chevron-right ml-auto text-[10px] text-[#22C55E]" aria-hidden="true" />}
                   </>
                 )}
@@ -200,7 +202,7 @@ const TeacherSidebar = ({ onClose = () => {} }) => {
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#22C55E] text-white" aria-hidden="true">
                 <i className="fas fa-plus" />
               </span>
-              Apply as Live Tutor
+              {t('sidebar.applyLiveTutor')}
             </button>
           )}
         </nav>
@@ -215,10 +217,10 @@ const TeacherSidebar = ({ onClose = () => {} }) => {
             <Avatar name={user?.name || 'Teacher'} imageUrl={user?.profilePhoto} size="md" />
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-900">
-                {user?.name || 'Teacher'}
+                {user?.name || t('auth.teacher')}
               </p>
               <p className="mt-0.5 inline-block rounded-full bg-[#F0FDF4] px-2 py-0.5 text-[11px] font-semibold capitalize text-[#16A34A] ring-1 ring-[#22C55E]/20">
-                {user?.isLiveTutor && user?.role !== 'teacher' ? 'Live Tutor' : (user?.role || 'teacher')}
+                {user?.isLiveTutor && user?.role !== 'teacher' ? t('sidebar.liveTutor') : (user?.role === 'teacher' ? t('auth.teacher') : user?.role || t('auth.teacher'))}
               </p>
             </div>
           </div>
@@ -229,7 +231,7 @@ const TeacherSidebar = ({ onClose = () => {} }) => {
             className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
           >
             <i className="fas fa-right-from-bracket text-xs" aria-hidden="true" />
-            Log out
+            {t('nav.logout')}
           </button>
         </div>
       </div>

@@ -1,24 +1,26 @@
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import Avatar from '../common/Avatar'
 import { useAuth } from '../../context/AuthContext'
 import useUnreadMessageCount from '../../hooks/useUnreadMessageCount'
 
 const navigationItems = [
-  { to: '/dashboard/student', label: 'Overview', icon: 'fas fa-chart-pie', end: true },
-  { to: '/dashboard/student/browse', label: 'Browse Courses', icon: 'fas fa-magnifying-glass' },
-  { to: '/dashboard/student/courses', label: 'My Learning', icon: 'fas fa-book-open' },
-  { to: '/messages', label: 'Messages', icon: 'fas fa-comments' },
-  { to: '/dashboard/student/profile', label: 'My Profile', icon: 'fas fa-user' },
+  { to: '/dashboard/student', label: 'overview', icon: 'fas fa-chart-pie', end: true },
+  { to: '/dashboard/student/browse', label: 'browseCourses', icon: 'fas fa-magnifying-glass' },
+  { to: '/dashboard/student/courses', label: 'myLearning', icon: 'fas fa-book-open' },
+  { to: '/messages', label: 'messages', icon: 'fas fa-comments' },
+  { to: '/dashboard/student/profile', label: 'myProfile', icon: 'fas fa-user' },
 ]
 
 // Keeping live-tutoring links separate makes the sidebar's two platform areas
 // clear: self-paced course learning above and future live learning below.
 const liveTutoringItems = [
-  { to: '/dashboard/student/find-tutor', label: 'Find a Tutor', icon: 'fas fa-magnifying-glass' },
-  { to: '/dashboard/student/my-sessions', label: 'My Sessions', icon: 'fas fa-video' },
+  { to: '/dashboard/student/find-tutor', label: 'findTutor', icon: 'fas fa-magnifying-glass' },
+  { to: '/dashboard/student/my-sessions', label: 'mySessions', icon: 'fas fa-video' },
 ]
 
 const StudentSidebar = ({ onClose = () => {} }) => {
+  const { t } = useTranslation()
   const { user, logout } = useAuth()
   const unreadCount = useUnreadMessageCount()
   const navigate = useNavigate()
@@ -37,15 +39,15 @@ const StudentSidebar = ({ onClose = () => {} }) => {
           </span>
           <div className="min-w-0">
             <p className="truncate text-lg font-bold tracking-tight text-slate-900">Barakah Academy</p>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#16A34A]">Student Portal</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#16A34A]">{t('sidebar.studentPortal')}</p>
           </div>
       </div>
 
       {/* Only this middle area scrolls when navigation grows. The header and
           profile/logout area stay reachable at every desktop screen height. */}
       <div className="min-h-0 flex-1 overflow-y-auto py-2">
-        <p className="px-5 pb-2 pt-6 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Menu</p>
-        <nav aria-label="Student dashboard" className="space-y-1 px-3">
+        <p className="px-5 pb-2 pt-6 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">{t('sidebar.menu')}</p>
+        <nav aria-label={t('sidebar.studentDashboard')} className="space-y-1 px-3">
           {navigationItems.map((item) => (
             <NavLink
               key={item.to}
@@ -59,7 +61,7 @@ const StudentSidebar = ({ onClose = () => {} }) => {
                   <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm ${isActive ? 'bg-[#22C55E] text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'}`} aria-hidden="true">
                     <i className={item.icon} />
                   </span>
-                  <span className="truncate">{item.label}</span>
+                  <span className="truncate">{t(`sidebar.${item.label}`)}</span>
                   {item.to === '/messages' && unreadCount > 0 && (
                     // Keep badge width bounded so large unread totals do not distort navigation.
                     <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-green-700 px-1.5 text-[10px] font-bold text-white">
@@ -76,7 +78,7 @@ const StudentSidebar = ({ onClose = () => {} }) => {
               own visual group without changing the established course menu. */}
           <div className="mx-1 my-4 border-t border-slate-200" />
           <p className="px-2 pb-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
-            Live Tutoring
+            {t('sidebar.liveTutoring')}
           </p>
 
           {liveTutoringItems.map((item) => (
@@ -91,7 +93,7 @@ const StudentSidebar = ({ onClose = () => {} }) => {
                   <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm ${isActive ? 'bg-[#22C55E] text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'}`} aria-hidden="true">
                     <i className={item.icon} />
                   </span>
-                  <span className="truncate">{item.label}</span>
+                  <span className="truncate">{t(`sidebar.${item.label}`)}</span>
                   {isActive && <i className="fas fa-chevron-right ml-auto text-[10px] text-[#22C55E]" aria-hidden="true" />}
                 </>
               )}
@@ -106,7 +108,7 @@ const StudentSidebar = ({ onClose = () => {} }) => {
               onClick={onClose}
               className="mt-2 flex items-center justify-between rounded-xl border border-[#22C55E]/25 bg-[#F0FDF4] px-4 py-3 text-sm font-semibold text-[#15803D] transition hover:border-[#22C55E]/45 hover:bg-[#DCFCE7] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#22C55E]"
             >
-              <span className="flex items-center gap-3"><i className="fas fa-chalkboard-user" aria-hidden="true" /> My Tutor Tools</span>
+              <span className="flex items-center gap-3"><i className="fas fa-chalkboard-user" aria-hidden="true" /> {t('sidebar.tutorTools')}</span>
               <i className="fas fa-arrow-right text-xs" aria-hidden="true" />
             </NavLink>
           )}
@@ -120,7 +122,7 @@ const StudentSidebar = ({ onClose = () => {} }) => {
           >
             <span className="flex items-center gap-3">
               <i className="fas fa-chalkboard-user" aria-hidden="true" />
-              Apply as a Live Tutor
+              {t('sidebar.applyLiveTutor')}
             </span>
             <i className="fas fa-arrow-right text-xs" aria-hidden="true" />
           </NavLink>
@@ -140,7 +142,7 @@ const StudentSidebar = ({ onClose = () => {} }) => {
           </div>
           <button type="button" onClick={handleLogout} className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400">
             <i className="fas fa-right-from-bracket text-xs" aria-hidden="true" />
-            Log out
+            {t('nav.logout')}
           </button>
         </div>
       </div>

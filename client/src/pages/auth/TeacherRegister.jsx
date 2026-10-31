@@ -1,51 +1,35 @@
 import API_BASE_URL from '../../config/api.js'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import teachingCategories from '../../utils/teachingCategories'
 import subjectQuestions from '../../utils/subjectQuestions'
 import Avatar from '../../components/common/Avatar'
 import { resizeImageFile } from '../../utils/imageUtils'
-
-const genericQuestions = [
-  'How do you identify the prior knowledge learners need before beginning a new topic?',
-  'Describe how you would adapt one lesson for learners with different levels of experience.',
-  'How do you check during a lesson whether learners understand, rather than only remember, the material?',
-  'How would you give constructive feedback when a learner has made a persistent misconception?',
-  'Describe how you would evaluate whether your teaching approach helped learners meet a stated objective.',
-]
-
-const steps = [
-  'Personal Information',
-  'Your Teaching Category',
-  'Your Teaching Method',
-  'Your Qualifications',
-  'Subject Assessment',
-  'Commitment and Agreement',
-]
+import { getCategoryLabel } from '../../utils/courseUtils'
 
 const teachingLanguages = [
-  { value: 'amharic', label: 'Amharic' },
-  { value: 'english', label: 'English' },
-  { value: 'afan oromo', label: 'Afaan Oromo' },
-  { value: 'arabic', label: 'Arabic' },
-  { value: 'both', label: 'Both' },
+  { value: 'amharic', key: 'amharic' },
+  { value: 'english', key: 'english' },
+  { value: 'afan oromo', key: 'afaanOromo' },
+  { value: 'both', key: 'both' },
 ]
 
 const teachingMethods = [
-  { value: 'live', label: 'Live Sessions Only' },
-  { value: 'courses', label: 'Course Uploads Only' },
-  { value: 'both', label: 'Both' },
+  { value: 'live', key: 'liveOnly' },
+  { value: 'courses', key: 'coursesOnly' },
+  { value: 'both', key: 'both' },
 ]
 
 const educationLevels = [
-  { value: 'high_school', label: 'High School' },
-  { value: 'diploma', label: 'Diploma' },
-  { value: 'bachelors', label: "Bachelor's" },
-  { value: 'masters', label: "Master's" },
-  { value: 'phd', label: 'PhD' },
-  { value: 'other', label: 'Other' },
+  { value: 'high_school', key: 'highSchool' },
+  { value: 'diploma', key: 'diploma' },
+  { value: 'bachelors', key: 'bachelors' },
+  { value: 'masters', key: 'masters' },
+  { value: 'phd', key: 'phd' },
+  { value: 'other', key: 'other' },
 ]
 
 const availableDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
@@ -59,6 +43,7 @@ const categoryIcons = {
 }
 
 const TeacherRegister = () => {
+  const { t } = useTranslation()
   // Keeping all step values together makes it straightforward to preserve data
   // while moving between steps and submit one complete application at the end.
   //react keeps one big object called formdata. Every input on the form will write into this object.
@@ -155,7 +140,21 @@ const TeacherRegister = () => {
     }))
   }
 
-  const questions = subjectQuestions[formData.specificSubject] || genericQuestions
+  const questions = subjectQuestions[formData.specificSubject] || [
+    t('auth.teacher.genericQuestion1'),
+    t('auth.teacher.genericQuestion2'),
+    t('auth.teacher.genericQuestion3'),
+    t('auth.teacher.genericQuestion4'),
+    t('auth.teacher.genericQuestion5'),
+  ]
+  const steps = [
+    t('auth.teacher.steps.personal'),
+    t('auth.teacher.steps.category'),
+    t('auth.teacher.steps.method'),
+    t('auth.teacher.steps.qualifications'),
+    t('auth.teacher.steps.assessment'),
+    t('auth.teacher.steps.commitment'),
+  ]
 
   // Each response stores both the displayed question and its answer because
   // the backend saves question-answer pairs for later application review.
@@ -180,31 +179,31 @@ const TeacherRegister = () => {
         ? ['name', 'email', 'phone', 'city', 'region', 'dateOfBirth', 'nationalId']
         : ['name', 'email', 'password', 'confirmPassword', 'phone', 'city', 'region', 'dateOfBirth', 'nationalId']
       if (personalFields.some((field) => !String(formData[field]).trim())) {
-        message = 'Please complete all personal information fields.'
+        message = t('auth.teacher.validation.personalRequired')
         invalidField = personalFields.find((field) => !String(formData[field]).trim())
       } else if (formData.name.trim().length < 3) {
-        message = 'Please enter your full name using at least 3 characters.'
+        message = t('auth.teacher.validation.nameLength')
         invalidField = 'name'
       } else if (!/^\p{L}[\p{L}\p{M} ]*$/u.test(formData.name.trim())) {
-        message = 'Your name can contain letters and spaces only.'
+        message = t('auth.teacher.validation.nameCharacters')
         invalidField = 'name'
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-        message = 'Please enter a valid email address.'
+        message = t('auth.teacher.validation.email')
         invalidField = 'email'
       } else if (!user && formData.password !== formData.confirmPassword) {
-        message = 'Passwords do not match.'
+        message = t('auth.passwordMismatch')
         invalidField = 'confirmPassword'
       } else if (!user && (formData.password.length < 8 || !/\p{L}/u.test(formData.password) || !/\d/.test(formData.password))) {
-        message = 'Use a password with at least 8 characters, including a letter and a number.'
+        message = t('auth.teacher.validation.passwordStrength')
         invalidField = 'password'
       } else if (!/^\+251\d{9}$/.test(formData.phone.trim())) {
-        message = 'Enter an Ethiopian phone number starting with +251 followed by 9 digits.'
+        message = t('auth.teacher.validation.phone')
         invalidField = 'phone'
       } else if (formData.city.trim().length < 2 || !/^\p{L}[\p{L}\p{M} ]*$/u.test(formData.city.trim())) {
-        message = 'City must be at least 2 characters and contain letters and spaces only.'
+        message = t('auth.teacher.validation.city')
         invalidField = 'city'
       } else if (formData.region.trim().length < 2 || !/^\p{L}[\p{L}\p{M} ]*$/u.test(formData.region.trim())) {
-        message = 'Region must be at least 2 characters and contain letters and spaces only.'
+        message = t('auth.teacher.validation.region')
         invalidField = 'region'
       } else {
         const [year, month, day] = formData.dateOfBirth.split('-').map(Number)
@@ -214,14 +213,14 @@ const TeacherRegister = () => {
           && birthDate.getDate() === day
 
         if (!dateIsValid) {
-          message = 'Please enter a valid date of birth.'
+          message = t('auth.teacher.validation.birthDate')
           invalidField = 'dateOfBirth'
         } else {
           const today = new Date()
           today.setHours(0, 0, 0, 0)
 
           if (birthDate >= today) {
-            message = 'Date of birth must be in the past.'
+            message = t('auth.teacher.validation.birthDatePast')
             invalidField = 'dateOfBirth'
           } else {
             let age = today.getFullYear() - year
@@ -230,7 +229,7 @@ const TeacherRegister = () => {
             if (!birthdayHasPassed) age -= 1
 
             if (age < 18 || age > 70) {
-              message = 'Applicants must be between 18 and 70 years old.'
+              message = t('auth.teacher.validation.age')
               invalidField = 'dateOfBirth'
             }
           }
@@ -238,35 +237,35 @@ const TeacherRegister = () => {
       }
 
       if (!message && !/^\d{10,16}$/.test(formData.nationalId.trim())) {
-        message = 'Enter a valid Ethiopian national ID using 10 to 16 digits.'
+        message = t('auth.teacher.validation.nationalId')
         invalidField = 'nationalId'
       }
     }
 
     if (step === 2 && (!formData.mainCategory || !formData.specificSubject || !formData.teachingLanguage)) {
-      message = 'Please choose a category, subject, and teaching language.'
+      message = t('auth.teacher.validation.category')
       invalidField = !formData.mainCategory ? 'mainCategory' : !formData.specificSubject ? 'specificSubject' : 'teachingLanguage'
     }
 
     if (step === 3) {
       if (!formData.teachingMethod || formData.availableHoursPerWeek === '') {
-        message = 'Please choose a teaching method and enter your weekly hours.'
+        message = t('auth.teacher.validation.method')
         invalidField = !formData.teachingMethod ? 'teachingMethod' : 'availableHoursPerWeek'
       } else if (Number(formData.availableHoursPerWeek) <= 0 || formData.availableDays.length === 0) {
-        message = 'Enter available hours greater than zero and select at least one day.'
+        message = t('auth.teacher.validation.availability')
         invalidField = Number(formData.availableHoursPerWeek) <= 0 ? 'availableHoursPerWeek' : 'availableDays'
       }
     }
 
     if (step === 4) {
       if (!formData.educationLevel || !formData.institutionName.trim() || formData.yearsOfExperience === '') {
-        message = 'Please complete your qualification details.'
+        message = t('auth.teacher.validation.qualification')
         invalidField = !formData.educationLevel ? 'educationLevel' : !formData.institutionName.trim() ? 'institutionName' : 'yearsOfExperience'
       } else if (Number(formData.yearsOfExperience) < 0) {
-        message = 'Years of experience cannot be negative.'
+        message = t('auth.teacher.validation.experience')
         invalidField = 'yearsOfExperience'
       } else if (formData.bio.trim().length < 100) {
-        message = 'Your bio must be at least 100 characters.'
+        message = t('auth.teacher.validation.bio')
         invalidField = 'bio'
       }
     }
@@ -276,16 +275,16 @@ const TeacherRegister = () => {
         return (formData.assessmentAnswers[index]?.answer || '').trim().length >= 20
       })
       if (!allAnswersComplete || formData.yearsInSpecificSubject === '') {
-        message = 'Answer all five questions with at least 20 characters and enter your subject experience.'
+        message = t('auth.teacher.validation.assessment')
         invalidField = !allAnswersComplete ? 'assessmentAnswers' : 'yearsInSpecificSubject'
       } else if (Number(formData.yearsInSpecificSubject) < 0) {
-        message = 'Years in this subject cannot be negative.'
+        message = t('auth.teacher.validation.subjectExperience')
         invalidField = 'yearsInSpecificSubject'
       }
     }
 
     if (step === 6 && (!formData.confirmedAvailability || !formData.agreedToStandards || !formData.agreedToBackgroundCheck)) {
-      message = 'Please accept all three commitments before submitting.'
+      message = t('auth.teacher.validation.commitments')
       invalidField = !formData.confirmedAvailability ? 'confirmedAvailability' : !formData.agreedToStandards ? 'agreedToStandards' : 'agreedToBackgroundCheck'
     }
 
@@ -371,6 +370,7 @@ const TeacherRegister = () => {
      
       navigate('/application-submitted')
     } catch (requestError) {
+      // API-provided error messages remain in English until server-side localization is implemented.
       setError(requestError.response?.data?.message || requestError.message || 'Unable to submit the application.')
     } finally {
       setLoading(false)
@@ -392,7 +392,7 @@ const TeacherRegister = () => {
         </p>
         <div className="mt-8">
           <div className="flex items-center justify-between text-sm font-semibold text-gray-600">
-            <span>Step {currentStep} of 6</span>
+            <span>{t('auth.teacher.stepOf', { currentStep })}</span>
             <span>{Math.round((currentStep / 6) * 100)}%</span>
           </div>
           {/* Dividing the current step by six gives a percentage for the progress bar width. */}
@@ -407,23 +407,23 @@ const TeacherRegister = () => {
         <form onSubmit={currentStep === 6 ? handleSubmit : (event) => { event.preventDefault(); handleNext() }} className="mt-8">
           {currentStep === 1 && (
             <>
-            {user && <p className="mb-5 rounded-xl border border-green-200 bg-green-50 p-4 text-sm leading-6 text-green-900">You are applying with your existing Barakah Academy account. Your account details and profile photo are reused; complete the remaining information needed for course-teaching review.</p>}
+            {user && <p className="mb-5 rounded-xl border border-green-200 bg-green-50 p-4 text-sm leading-6 text-green-900">{t('auth.teacher.existingAccount')}</p>}
             <div className="grid gap-5 sm:grid-cols-2">
-              <label className="space-y-2 text-sm font-medium">Full name<input className={inputClass} value={formData.name} onChange={(event) => handleChange('name', event.target.value)} autoComplete="name" />{renderFieldError('name')}</label>
-              <label className="space-y-2 text-sm font-medium">Email address<input className={inputClass} type="email" value={formData.email} onChange={(event) => handleChange('email', event.target.value)} autoComplete="email" />{renderFieldError('email')}</label>
-              {!user && <><label className="space-y-2 text-sm font-medium">Password<input className={inputClass} type="password" value={formData.password} onChange={(event) => handleChange('password', event.target.value)} autoComplete="new-password" />{renderFieldError('password')}</label>
-              <label className="space-y-2 text-sm font-medium">Confirm password<input className={inputClass} type="password" value={formData.confirmPassword} onChange={(event) => handleChange('confirmPassword', event.target.value)} autoComplete="new-password" />{renderFieldError('confirmPassword')}</label></>}
-              <label className="space-y-2 text-sm font-medium">Phone<input className={inputClass} type="tel" value={formData.phone} onChange={(event) => handleChange('phone', event.target.value)} autoComplete="tel" placeholder="+2519xxxxxxxx" />{renderFieldError('phone')}</label>
-              <label className="space-y-2 text-sm font-medium">City<input className={inputClass} value={formData.city} onChange={(event) => handleChange('city', event.target.value)} autoComplete="address-level2" />{renderFieldError('city')}</label>
-              <label className="space-y-2 text-sm font-medium">Region<input className={inputClass} value={formData.region} onChange={(event) => handleChange('region', event.target.value)} autoComplete="address-level1" />{renderFieldError('region')}</label>
-              <label className="space-y-2 text-sm font-medium">Date of birth<input className={inputClass} type="date" value={formData.dateOfBirth} onChange={(event) => handleChange('dateOfBirth', event.target.value)} />{renderFieldError('dateOfBirth')}</label>
-              <label className="space-y-2 text-sm font-medium sm:col-span-2">National ID<input className={inputClass} value={formData.nationalId} onChange={(event) => handleChange('nationalId', event.target.value)} />{renderFieldError('nationalId')}</label>
+                <label className="space-y-2 text-sm font-medium">{t('auth.name')}<input className={inputClass} value={formData.name} onChange={(event) => handleChange('name', event.target.value)} autoComplete="name" />{renderFieldError('name')}</label>
+                <label className="space-y-2 text-sm font-medium">{t('auth.email')}<input className={inputClass} type="email" value={formData.email} onChange={(event) => handleChange('email', event.target.value)} autoComplete="email" />{renderFieldError('email')}</label>
+                {!user && <><label className="space-y-2 text-sm font-medium">{t('auth.password')}<input className={inputClass} type="password" value={formData.password} onChange={(event) => handleChange('password', event.target.value)} autoComplete="new-password" />{renderFieldError('password')}</label>
+                <label className="space-y-2 text-sm font-medium">{t('auth.confirmPassword')}<input className={inputClass} type="password" value={formData.confirmPassword} onChange={(event) => handleChange('confirmPassword', event.target.value)} autoComplete="new-password" />{renderFieldError('confirmPassword')}</label></>}
+                <label className="space-y-2 text-sm font-medium">{t('auth.teacher.phone')}<input className={inputClass} type="tel" value={formData.phone} onChange={(event) => handleChange('phone', event.target.value)} autoComplete="tel" placeholder="+2519xxxxxxxx" />{renderFieldError('phone')}</label>
+                <label className="space-y-2 text-sm font-medium">{t('auth.teacher.city')}<input className={inputClass} value={formData.city} onChange={(event) => handleChange('city', event.target.value)} autoComplete="address-level2" />{renderFieldError('city')}</label>
+                <label className="space-y-2 text-sm font-medium">{t('auth.teacher.region')}<input className={inputClass} value={formData.region} onChange={(event) => handleChange('region', event.target.value)} autoComplete="address-level1" />{renderFieldError('region')}</label>
+                <label className="space-y-2 text-sm font-medium">{t('auth.teacher.dateOfBirth')}<input className={inputClass} type="date" value={formData.dateOfBirth} onChange={(event) => handleChange('dateOfBirth', event.target.value)} />{renderFieldError('dateOfBirth')}</label>
+                <label className="space-y-2 text-sm font-medium sm:col-span-2">{t('auth.teacher.nationalId')}<input className={inputClass} value={formData.nationalId} onChange={(event) => handleChange('nationalId', event.target.value)} />{renderFieldError('nationalId')}</label>
               <div className="flex flex-wrap items-center gap-4 sm:col-span-2">
                 <Avatar name={formData.name || 'Teacher'} imageUrl={formData.profilePhoto || user?.profilePhoto} size="xl" />
                 <label className="space-y-2 text-sm font-medium">
-                  <span className="block">Profile photo {user?.profilePhoto ? '(already saved — optional replacement)' : '(optional)'}</span>
+                  <span className="block">{user?.profilePhoto ? t('auth.teacher.profilePhotoReplacement') : t('auth.teacher.profilePhoto')}</span>
                   <input className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-green-50 file:px-4 file:py-2 file:font-semibold file:text-green-800 hover:file:bg-green-100" type="file" accept="image/*" onChange={handleProfilePhotoChange} />
-                  <span className="block text-xs font-normal text-slate-500">Images are resized before upload. Maximum original size: 10 MB.</span>
+                  <span className="block text-xs font-normal text-slate-500">{t('auth.teacher.photoHelp')}</span>
                 </label>
               </div>
             </div>
@@ -433,9 +433,9 @@ const TeacherRegister = () => {
           {currentStep === 2 && (
             <div className="space-y-7">
               <div>
-                <h2 className="mb-3 font-semibold">Choose a category</h2>
+                <h2 className="mb-3 font-semibold">{t('auth.teacher.chooseCategory')}</h2>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {Object.entries(teachingCategories).map(([categoryId, category]) => (
+                  {Object.entries(teachingCategories).map(([categoryId]) => (
                     <button key={categoryId} type="button" aria-pressed={formData.mainCategory === categoryId} className={optionClass(formData.mainCategory === categoryId)} onClick={() => {
                       handleChange('mainCategory', categoryId)
                       handleChange('specificSubject', '')
@@ -444,7 +444,7 @@ const TeacherRegister = () => {
                       <span className={`mr-3 inline-flex h-9 w-9 items-center justify-center rounded-lg text-sm ${formData.mainCategory === categoryId ? 'bg-[#22C55E] text-white' : 'bg-slate-100 text-slate-500'}`} aria-hidden="true">
                         <i className={categoryIcons[categoryId] || 'fas fa-layer-group'} />
                       </span>
-                      {category.label}
+                      {getCategoryLabel(categoryId, t)}
                     </button>
                   ))}
                 </div>
@@ -454,7 +454,7 @@ const TeacherRegister = () => {
               {formData.mainCategory && (
                 <div className="space-y-5">
                   <label className="block space-y-2 text-sm font-medium">
-                    Specific subject
+                    {t('auth.teacher.specificSubject')}
                     <select className={inputClass} value={otherSubjectSelected ? 'other-custom' : formData.specificSubject} onChange={(event) => {
                       const value = event.target.value
                       if (value === 'other-custom') {
@@ -465,17 +465,17 @@ const TeacherRegister = () => {
                         handleChange('specificSubject', value)
                       }
                     }}>
-                      <option value="">Select a subject</option>
+                      <option value="">{t('auth.teacher.selectSubject')}</option>
                       {teachingCategories[formData.mainCategory].subjects.map((subject) => (
                         <option key={subject} value={subject}>{subject}</option>
                       ))}
-                      <option value="other-custom">Add another subject</option>
+                      <option value="other-custom">{t('auth.teacher.addSubject')}</option>
                     </select>
                     {renderFieldError('specificSubject')}
                   </label>
                   {otherSubjectSelected && (
-                    <label className="block space-y-2 text-sm font-medium">Enter your subject
-                      <input className={inputClass} value={formData.specificSubject} onChange={(event) => handleChange('specificSubject', event.target.value)} placeholder="Your subject or course" />
+                    <label className="block space-y-2 text-sm font-medium">{t('auth.teacher.enterSubject')}
+                      <input className={inputClass} value={formData.specificSubject} onChange={(event) => handleChange('specificSubject', event.target.value)} placeholder={t('auth.teacher.subjectPlaceholder')} />
                       {renderFieldError('specificSubject')}
                     </label>
                   )}
@@ -483,11 +483,11 @@ const TeacherRegister = () => {
               )}
 
               <fieldset>
-                <legend className="mb-3 font-semibold">Teaching language</legend>
+                <legend className="mb-3 font-semibold">{t('auth.teacher.teachingLanguage')}</legend>
                 <div className="flex flex-wrap gap-3">
                   {teachingLanguages.map((language) => (
                     <button key={language.value} type="button" aria-pressed={formData.teachingLanguage === language.value} className={`${optionClass(formData.teachingLanguage === language.value)} px-5`} onClick={() => handleChange('teachingLanguage', language.value)}>
-                      {language.label}
+                      {t(`auth.teacher.languages.${language.key}`)}
                     </button>
                   ))}
                 </div>
@@ -499,28 +499,28 @@ const TeacherRegister = () => {
           {currentStep === 3 && (
             <div className="space-y-7">
               <fieldset>
-                <legend className="mb-3 font-semibold">How will you teach?</legend>
+                <legend className="mb-3 font-semibold">{t('auth.teacher.teachingMethod')}</legend>
                 <div className="grid gap-3 sm:grid-cols-3">
                   {teachingMethods.map((method) => (
-                    <button key={method.value} type="button" aria-pressed={formData.teachingMethod === method.value} className={optionClass(formData.teachingMethod === method.value)} onClick={() => handleChange('teachingMethod', method.value)}>{method.label}</button>
+                    <button key={method.value} type="button" aria-pressed={formData.teachingMethod === method.value} className={optionClass(formData.teachingMethod === method.value)} onClick={() => handleChange('teachingMethod', method.value)}>{t(`auth.teacher.methods.${method.key}`)}</button>
                   ))}
                 </div>
                 {renderFieldError('teachingMethod')}
               </fieldset>
               {(formData.teachingMethod === 'live' || formData.teachingMethod === 'both') && (
-                <label className="block space-y-2 text-sm font-medium">Hourly rate
+                <label className="block space-y-2 text-sm font-medium">{t('auth.teacher.hourlyRate')}
                   <input className={inputClass} type="number" min="0" value={formData.hourlyRate} onChange={(event) => handleChange('hourlyRate', event.target.value)} />
                 </label>
               )}
-              <label className="block space-y-2 text-sm font-medium">Available hours per week
+              <label className="block space-y-2 text-sm font-medium">{t('auth.teacher.hoursPerWeek')}
                 <input className={inputClass} type="number" min="1" value={formData.availableHoursPerWeek} onChange={(event) => handleChange('availableHoursPerWeek', event.target.value)} />
                 {renderFieldError('availableHoursPerWeek')}
               </label>
               <fieldset>
-                <legend className="mb-3 font-semibold">Available days</legend>
+                <legend className="mb-3 font-semibold">{t('auth.teacher.availableDays')}</legend>
                 <div className="flex flex-wrap gap-2">
                   {availableDays.map((day) => (
-                    <button key={day} type="button" aria-pressed={formData.availableDays.includes(day)} className={`${optionClass(formData.availableDays.includes(day))} px-4 py-2`} onClick={() => handleDayToggle(day)}>{day}</button>
+                    <button key={day} type="button" aria-pressed={formData.availableDays.includes(day)} className={`${optionClass(formData.availableDays.includes(day))} px-4 py-2`} onClick={() => handleDayToggle(day)}>{t(`common.days.${day.toLowerCase()}`)}</button>
                   ))}
                 </div>
                 {renderFieldError('availableDays')}
@@ -531,25 +531,25 @@ const TeacherRegister = () => {
           {currentStep === 4 && (
             <div className="space-y-6">
               <fieldset>
-                <legend className="mb-3 font-semibold">Education level</legend>
+                <legend className="mb-3 font-semibold">{t('auth.teacher.educationLevel')}</legend>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {educationLevels.map((level) => (
-                    <button key={level.value} type="button" aria-pressed={formData.educationLevel === level.value} className={optionClass(formData.educationLevel === level.value)} onClick={() => handleChange('educationLevel', level.value)}>{level.label}</button>
+                    <button key={level.value} type="button" aria-pressed={formData.educationLevel === level.value} className={optionClass(formData.educationLevel === level.value)} onClick={() => handleChange('educationLevel', level.value)}>{t(`auth.teacher.education.${level.key}`)}</button>
                   ))}
                 </div>
                 {renderFieldError('educationLevel')}
               </fieldset>
-              <label className="block space-y-2 text-sm font-medium">Institution name
+              <label className="block space-y-2 text-sm font-medium">{t('auth.teacher.institutionName')}
                 <input className={inputClass} value={formData.institutionName} onChange={(event) => handleChange('institutionName', event.target.value)} />
                 {renderFieldError('institutionName')}
               </label>
-              <label className="block space-y-2 text-sm font-medium">Years of teaching experience
+              <label className="block space-y-2 text-sm font-medium">{t('auth.teacher.yearsExperience')}
                 <input className={inputClass} type="number" min="0" value={formData.yearsOfExperience} onChange={(event) => handleChange('yearsOfExperience', event.target.value)} />
                 {renderFieldError('yearsOfExperience')}
               </label>
-              <label className="block space-y-2 text-sm font-medium">Professional bio
+              <label className="block space-y-2 text-sm font-medium">{t('auth.teacher.bio')}
                 <textarea className={`${inputClass} min-h-36`} value={formData.bio} onChange={(event) => handleChange('bio', event.target.value)} />
-                <span className="block text-right text-sm text-gray-500">{formData.bio.length} / 100 minimum characters</span>
+                <span className="block text-right text-sm text-gray-500">{t('auth.teacher.minimumCharacters', { count: formData.bio.length, minimum: 100 })}</span>
                 {renderFieldError('bio')}
               </label>
             </div>
@@ -557,23 +557,23 @@ const TeacherRegister = () => {
 
           {currentStep === 5 && (
             <div className="space-y-6">
-              <p className="text-gray-600">Please answer these questions about your subject honestly without using AI assistance.</p>
+              <p className="text-gray-600">{t('auth.teacher.assessmentInstructions')}</p>
               {questions.map((question, index) => (
                 <label key={`${formData.specificSubject}-${index}`} className="block space-y-2 text-sm font-medium">
                   <span>{index + 1}. {question}</span>
                   <textarea className={`${inputClass} min-h-28`} value={formData.assessmentAnswers[index]?.answer || ''} onChange={(event) => handleAnswerChange(index, event.target.value)} />
                   {index === 0 && renderFieldError('assessmentAnswers')}
-                  <span className="block text-right text-xs text-gray-500">{(formData.assessmentAnswers[index]?.answer || '').trim().length} / 20 minimum characters</span>
+                  <span className="block text-right text-xs text-gray-500">{t('auth.teacher.minimumCharacters', { count: (formData.assessmentAnswers[index]?.answer || '').trim().length, minimum: 20 })}</span>
                 </label>
               ))}
-              <label className="block space-y-2 text-sm font-medium">Years teaching this subject
+              <label className="block space-y-2 text-sm font-medium">{t('auth.teacher.yearsSubject')}
                 <input className={inputClass} type="number" min="0" value={formData.yearsInSpecificSubject} onChange={(event) => handleChange('yearsInSpecificSubject', event.target.value)} />
                 {renderFieldError('yearsInSpecificSubject')}
               </label>
-              <label className="block space-y-2 text-sm font-medium">Portfolio link (optional)
+              <label className="block space-y-2 text-sm font-medium">{t('auth.teacher.portfolio')}
                 <input className={inputClass} type="url" value={formData.portfolioLink} onChange={(event) => handleChange('portfolioLink', event.target.value)} />
               </label>
-              <label className="block space-y-2 text-sm font-medium">Demo video link (optional)
+              <label className="block space-y-2 text-sm font-medium">{t('auth.teacher.demoVideo')}
                 <input className={inputClass} type="url" value={formData.demoVideoLink} onChange={(event) => handleChange('demoVideoLink', event.target.value)} />
               </label>
             </div>
@@ -582,38 +582,38 @@ const TeacherRegister = () => {
           {currentStep === 6 && (
             <div className="space-y-6">
               <section className="rounded-xl border border-[#22C55E]/20 bg-[#F0FDF4] p-5">
-                <h2 className="font-bold text-slate-900">Application summary</h2>
+                <h2 className="font-bold text-slate-900">{t('auth.teacher.applicationSummary')}</h2>
                 <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-                  <div><dt className="text-gray-500">Name</dt><dd className="font-medium">{formData.name}</dd></div>
-                  <div><dt className="text-gray-500">Category</dt><dd className="font-medium">{teachingCategories[formData.mainCategory]?.label}</dd></div>
-                  <div><dt className="text-gray-500">Subject</dt><dd className="font-medium">{formData.specificSubject}</dd></div>
-                  <div><dt className="text-gray-500">Teaching method</dt><dd className="font-medium">{teachingMethods.find((method) => method.value === formData.teachingMethod)?.label}</dd></div>
+                  <div><dt className="text-gray-500">{t('auth.name')}</dt><dd className="font-medium">{formData.name}</dd></div>
+                  <div><dt className="text-gray-500">{t('auth.teacher.chooseCategory')}</dt><dd className="font-medium">{getCategoryLabel(formData.mainCategory, t)}</dd></div>
+                  <div><dt className="text-gray-500">{t('auth.teacher.specificSubject')}</dt><dd className="font-medium">{formData.specificSubject}</dd></div>
+                  <div><dt className="text-gray-500">{t('auth.teacher.teachingMethod')}</dt><dd className="font-medium">{t(`auth.teacher.methods.${teachingMethods.find((method) => method.value === formData.teachingMethod)?.key}`)}</dd></div>
                 </dl>
               </section>
               <label className="flex items-start gap-3 rounded-lg border p-4">
                 <input className="mt-1 accent-[#22C55E]" type="checkbox" checked={formData.confirmedAvailability} onChange={(event) => handleChange('confirmedAvailability', event.target.checked)} />
-                <span>I confirm I am available for the hours I specified{renderFieldError('confirmedAvailability')}</span>
+                <span>{t('auth.teacher.confirmAvailability')}{renderFieldError('confirmedAvailability')}</span>
               </label>
               <label className="flex items-start gap-3 rounded-lg border p-4">
                 <input className="mt-1 accent-[#22C55E]" type="checkbox" checked={formData.agreedToStandards} onChange={(event) => handleChange('agreedToStandards', event.target.checked)} />
-                <span>I agree to Barakah Academy teaching standards and code of conduct{renderFieldError('agreedToStandards')}</span>
+                <span>{t('auth.teacher.agreeStandards')}{renderFieldError('agreedToStandards')}</span>
               </label>
               <label className="flex items-start gap-3 rounded-lg border p-4">
                 <input className="mt-1 accent-[#22C55E]" type="checkbox" checked={formData.agreedToBackgroundCheck} onChange={(event) => handleChange('agreedToBackgroundCheck', event.target.checked)} />
-                <span>I consent to a background verification check{renderFieldError('agreedToBackgroundCheck')}</span>
+                <span>{t('auth.teacher.agreeBackgroundCheck')}{renderFieldError('agreedToBackgroundCheck')}</span>
               </label>
             </div>
           )}
 
           <div className="mt-9 flex items-center justify-between border-t pt-6">
             <button type="button" onClick={handleBack} disabled={currentStep === 1 || loading} className="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40">
-              Back
+              {t('auth.back')}
             </button>
             {currentStep < 6 ? (
-              <button type="submit" className="rounded-xl bg-[#22C55E] px-6 py-3 font-bold text-white shadow-md shadow-[#22C55E]/25 transition hover:bg-[#16A34A]">Next</button>
+              <button type="submit" className="rounded-xl bg-[#22C55E] px-6 py-3 font-bold text-white shadow-md shadow-[#22C55E]/25 transition hover:bg-[#16A34A]">{t('auth.continue')}</button>
             ) : (
               <button type="submit" disabled={loading} className="rounded-xl bg-[#22C55E] px-6 py-3 font-bold text-white shadow-md shadow-[#22C55E]/25 transition hover:bg-[#16A34A] disabled:cursor-wait disabled:opacity-60">
-                {loading ? 'Submitting Application...' : 'Submit Application'}
+                {loading ? t('auth.teacher.submitting') : t('auth.teacher.submitApplication')}
               </button>
             )}
           </div>

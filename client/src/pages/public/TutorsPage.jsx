@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 import { formatCurrency } from '../../utils/currencyUtils'
-import { getCategoryEmoji, getCategoryGradient, getCategoryIcon } from '../../utils/courseUtils'
+import { getCategoryEmoji, getCategoryGradient, getCategoryIcon, getCategoryLabel } from '../../utils/courseUtils'
 import Avatar from '../../components/common/Avatar'
 import Navbar from '../../components/common/Navbar'
 import Footer from '../../components/common/Footer'
@@ -59,9 +59,9 @@ const TutorsPage = () => {
       <main>
         <section className="bg-gradient-to-br from-[#14532D] via-[#166534] to-[#0f3d2a] px-5 py-14 text-center text-white sm:px-8 sm:py-16">
           <div className="mx-auto max-w-3xl">
-            <p className="text-sm font-bold uppercase tracking-[0.18em] text-green-200">Live learning</p>
-            <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-5xl">{t('public_tutors_title')}</h1>
-            <p className="mt-4 text-base leading-7 text-green-50 sm:text-lg">{t('public_tutors_subtitle')}</p>
+            <p className="text-sm font-bold uppercase tracking-[0.18em] text-green-200">{t('tutors.eyebrow')}</p>
+            <h1 className="mt-4 text-3xl font-extrabold tracking-tight sm:text-5xl">{t('tutors.title')}</h1>
+            <p className="mt-4 text-base leading-7 text-green-50 sm:text-lg">{t('tutors.subtitle')}</p>
           </div>
         </section>
 
@@ -80,50 +80,50 @@ const TutorsPage = () => {
                   }`}
                 >
                   <i className={`${category ? getCategoryIcon(category) : 'fas fa-border-all'} mr-2`} aria-hidden="true" />
-                  {category ? t(`cat_${category}`) : 'All'}
+                  {category ? getCategoryLabel(category, t) : t('tutors.all')}
                 </button>
               ))}
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               <label className="text-sm font-semibold text-slate-700">
-                Language
+                {t('tutors.language')}
                 <select
                   value={filters.language}
                   onChange={(event) => updateFilter('language', event.target.value)}
                   className="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-green-600"
                 >
-                  <option value="">All Languages</option>
-                  {['English', 'Amharic', 'Afaan Oromo', 'Arabic'].map((language) => (
+                  <option value="">{t('tutors.allLanguages')}</option>
+                  {['English', 'Amharic', 'Afaan Oromo'].map((language) => (
                     <option key={language} value={language}>{language}</option>
                   ))}
                 </select>
               </label>
               <label className="text-sm font-semibold text-slate-700">
-                Minimum session price
+                {t('tutors.minimumPrice')}
                 <input
                   type="number"
                   min="0"
                   value={filters.minRate}
                   onChange={(event) => updateFilter('minRate', event.target.value)}
-                  placeholder="Any"
+                  placeholder={t('tutors.any')}
                   className="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-green-600"
                 />
               </label>
               <label className="text-sm font-semibold text-slate-700">
-                Maximum session price
+                {t('tutors.maximumPrice')}
                 <input
                   type="number"
                   min="0"
                   value={filters.maxRate}
                   onChange={(event) => updateFilter('maxRate', event.target.value)}
-                  placeholder="Any"
+                  placeholder={t('tutors.any')}
                   className="mt-1.5 w-full rounded-xl border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-green-600"
                 />
               </label>
             </div>
             {!loading && !error && (
-              <p className="mt-4 text-sm font-semibold text-slate-500">Showing {tutors.length} tutors</p>
+              <p className="mt-4 text-sm font-semibold text-slate-500">{t('tutors.results', { count: tutors.length })}</p>
             )}
           </div>
 
@@ -142,8 +142,7 @@ const TutorsPage = () => {
           ) : tutors.length === 0 ? (
             <div className="mt-8 rounded-2xl border border-slate-200 bg-white px-5 py-16 text-center shadow-sm">
               <i className="fas fa-magnifying-glass text-4xl text-slate-300" aria-hidden="true" />
-              <h2 className="mt-4 text-lg font-bold">No tutors found</h2>
-              <p className="mt-2 text-sm text-slate-500">Try adjusting your filters.</p>
+              <h2 className="mt-4 text-lg font-bold">{t('tutors.empty')}</h2>
             </div>
           ) : (
             <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -164,7 +163,7 @@ const TutorsPage = () => {
                           {tutor.isVerified && (
                             <p className="mt-1 text-xs font-bold text-green-700">
                               <i className="fas fa-shield-halved mr-1" aria-hidden="true" />
-                              Verified tutor
+                              {t('tutors.verified')}
                             </p>
                           )}
                         </div>
@@ -188,13 +187,13 @@ const TutorsPage = () => {
                           ))}
                         </span>
                         <span className="text-slate-500">
-                          {Number(tutor.rating || 0).toFixed(1)} ({tutor.totalSessionsTaught || 0} sessions)
+                          {Number(tutor.rating || 0).toFixed(1)} ({t('tutors.sessionCount', { count: tutor.totalSessionsTaught || 0 })})
                         </span>
                       </div>
 
                       <p className={`mt-4 flex items-center gap-2 text-sm font-semibold ${tutor.isAcceptingBookings ? 'text-green-700' : 'text-slate-500'}`}>
                         <span className={`h-2.5 w-2.5 rounded-full ${tutor.isAcceptingBookings ? 'bg-green-500' : 'bg-slate-400'}`} />
-                        {tutor.isAcceptingBookings ? 'Available' : 'Unavailable'}
+                        {tutor.isAcceptingBookings ? t('tutors.available') : t('tutors.unavailable')}
                       </p>
 
                       <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
@@ -202,14 +201,14 @@ const TutorsPage = () => {
                           <p className="font-extrabold text-green-700">
                             {formatCurrency(getTutorRate(tutor), tutor.currency)}
                           </p>
-                          <p className="text-xs font-medium text-slate-500">{getSessionDuration(tutor)}-minute session</p>
+                          <p className="text-xs font-medium text-slate-500">{t('tutors.session', { count: getSessionDuration(tutor) })}</p>
                         </div>
                         <button
                           type="button"
                           onClick={() => navigate(`/tutors/${tutor._id}`)}
                           className="rounded-xl bg-green-600 px-3 py-2 text-sm font-bold text-white hover:bg-green-700"
                         >
-                          View Profile
+                          {t('tutors.viewProfile')}
                         </button>
                       </div>
                     </div>

@@ -1,34 +1,27 @@
 import { Link } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 const studentBenefits = [
-  "Explore courses across a range of subjects",
-  "Find live tutors for one-to-one sessions",
-  "Choose learning options that fit your language",
-  "Preview course content before enrolling",
-  "Review course and session details before you choose",
-  "Follow your course progress as you learn",
+  "studentBenefit1", "studentBenefit2", "studentBenefit3", "studentBenefit4", "studentBenefit5", "studentBenefit6",
 ]
 
 const courseTeacherBenefits = [
-  "Create structured courses and lessons",
-  "Set course details and pricing",
-  "Track student enrollment and progress",
-  "Share your knowledge with learners",
+  "teacherBenefit1", "teacherBenefit2", "teacherBenefit3", "teacherBenefit4",
 ]
 
 const tutorBenefits = [
-  "Set your weekly availability and session price",
-  "Accept one-to-one session bookings",
-  "Manage sessions from your tutor dashboard",
-  "Build your profile and receive feedback",
+  "tutorBenefit1", "tutorBenefit2", "tutorBenefit3", "tutorBenefit4",
 ]
 
-const ForStudentsTeachers = () => (
+const ForStudentsTeachers = () => {
+  const { t } = useTranslation()
+
+  return (
   <section className="bg-gray-50 py-20">
     <div className="mx-auto max-w-7xl px-6">
       <div className="mb-16 text-center">
         <h2 className="mb-4 text-3xl font-bold text-gray-900 sm:text-4xl">
-          Whether You Learn or Teach — We Have You Covered
+          {t('landing.forEveryone')}
         </h2>
       </div>
 
@@ -49,18 +42,18 @@ const ForStudentsTeachers = () => (
               style={{ backgroundColor: "rgba(221,214,254,0.18)", color: "#ddd6fe" }}
             >
               <i className="fas fa-graduation-cap" aria-hidden="true" />
-              For Students
+              {t('landing.forStudents')}
             </div>
 
             <h3 className="mb-6 text-2xl font-bold text-white sm:text-3xl">
-              Learn Your Way, In Your Language
+              {t('landing.studentTitle')}
             </h3>
 
             <ul className="mb-8 space-y-4">
-              {studentBenefits.map((benefit) => (
-                <li key={benefit} className="flex items-start gap-3 text-sm text-violet-100">
+              {studentBenefits.map((benefitKey) => (
+                <li key={benefitKey} className="flex items-start gap-3 text-sm text-violet-100">
                   <i className="fas fa-check-circle mt-0.5 shrink-0" style={{ color: "#c4b5fd" }} aria-hidden="true" />
-                  {benefit}
+                  {t(`landing.${benefitKey}`)}
                 </li>
               ))}
             </ul>
@@ -71,7 +64,7 @@ const ForStudentsTeachers = () => (
               style={{ background: "linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%)" }}
             >
               <i className="fas fa-rocket" aria-hidden="true" />
-              Start Learning
+              {t('landing.startLearning')}
             </Link>
           </div>
         </article>
@@ -83,17 +76,17 @@ const ForStudentsTeachers = () => (
               style={{ backgroundColor: "#dcfce7", color: "#15803d" }}
             >
               <i className="fas fa-book-open" aria-hidden="true" />
-              Course Teachers
+              {t('landing.courseTeachers')}
             </div>
-            <h3 className="mb-3 text-xl font-bold text-gray-900">Create and Share Courses</h3>
+            <h3 className="mb-3 text-xl font-bold text-gray-900">{t('landing.createCourses')}</h3>
             <p className="mb-4 text-sm leading-relaxed text-gray-500">
-              Organize your teaching into courses and lessons, and help students learn at their own pace.
+              {t('landing.courseTeacherDescription')}
             </p>
             <ul className="mb-6 space-y-2">
-              {courseTeacherBenefits.map((benefit) => (
-                <li key={benefit} className="flex items-center gap-2 text-sm text-gray-600">
+              {courseTeacherBenefits.map((benefitKey) => (
+                <li key={benefitKey} className="flex items-center gap-2 text-sm text-gray-600">
                   <i className="fas fa-check text-xs text-green-500" aria-hidden="true" />
-                  {benefit}
+                  {t(`landing.${benefitKey}`)}
                 </li>
               ))}
             </ul>
@@ -102,7 +95,7 @@ const ForStudentsTeachers = () => (
               className="inline-flex items-center gap-2 text-sm font-semibold transition-colors"
               style={{ color: "#15803d" }}
             >
-              Apply as Course Teacher
+              {t('landing.applyCourseTeacher')}
               <i className="fas fa-arrow-right text-xs" aria-hidden="true" />
             </Link>
           </article>
@@ -116,17 +109,17 @@ const ForStudentsTeachers = () => (
               style={{ backgroundColor: "rgba(139,92,246,0.3)", color: "#c4b5fd" }}
             >
               <i className="fas fa-video" aria-hidden="true" />
-              Live Tutors
+              {t('landing.liveTutors')}
             </div>
-            <h3 className="mb-3 text-xl font-bold">Offer Live Sessions</h3>
+            <h3 className="mb-3 text-xl font-bold">{t('landing.offerSessions')}</h3>
             <p className="mb-4 text-sm leading-relaxed text-purple-200">
-              Share your expertise in one-to-one sessions and manage bookings through your tutor profile.
+              {t('landing.liveTutorDescription')}
             </p>
             <ul className="mb-6 space-y-2">
-              {tutorBenefits.map((benefit) => (
-                <li key={benefit} className="flex items-center gap-2 text-sm text-purple-200">
+              {tutorBenefits.map((benefitKey) => (
+                <li key={benefitKey} className="flex items-center gap-2 text-sm text-purple-200">
                   <i className="fas fa-check text-xs text-purple-400" aria-hidden="true" />
-                  {benefit}
+                  {t(`landing.${benefitKey}`)}
                 </li>
               ))}
             </ul>
@@ -134,7 +127,7 @@ const ForStudentsTeachers = () => (
               to="/apply/live-tutor"
               className="inline-flex items-center gap-2 text-sm font-semibold text-white transition-colors hover:text-purple-200"
             >
-              Apply as Live Tutor
+              {t('landing.applyLiveTutor')}
               <i className="fas fa-arrow-right text-xs" aria-hidden="true" />
             </Link>
           </article>
@@ -148,10 +141,10 @@ const ForStudentsTeachers = () => (
               <i className="fas fa-lightbulb" aria-hidden="true" />
             </span>
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-amber-800">A future learner opportunity</p>
-              <h3 className="mt-2 text-xl font-extrabold text-slate-900">Free entrepreneurship training is planned</h3>
+              <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-amber-800">{t('landing.futureLearnerOpportunity')}</p>
+              <h3 className="mt-2 text-xl font-extrabold text-slate-900">{t('landing.freeEntrepreneurship')}</h3>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-                We plan to offer free entrepreneurship training to enrolled students once course revenue can fund trainers. This is a future goal, not a currently available service.
+                {t('landing.futureEntrepreneurshipDescription')}
               </p>
             </div>
           </div>
@@ -159,12 +152,13 @@ const ForStudentsTeachers = () => (
             to="/welcome-student"
             className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-amber-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-amber-800"
           >
-            Explore student learning <i className="fas fa-arrow-right text-xs" aria-hidden="true" />
+            {t('landing.exploreStudentLearning')} <i className="fas fa-arrow-right text-xs" aria-hidden="true" />
           </Link>
         </div>
       </article>
     </div>
   </section>
-)
+  )
+}
 
 export default ForStudentsTeachers

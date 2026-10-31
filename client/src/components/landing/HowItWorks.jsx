@@ -1,30 +1,32 @@
 import { Link } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 const steps = [
   {
     number: "01",
     icon: "fa-user-plus",
-    title: "Create Your Account",
-    description: "Create an account and choose the learning or teaching path that fits you.",
+    titleKey: "howAccountTitle",
+    descriptionKey: "howAccountDescription",
     color: "#f59e0b",
   },
   {
     number: "02",
     icon: "fa-search",
-    title: "Find Your Match",
-    description: "Browse published courses or view live tutor profiles and current booking availability.",
+    titleKey: "howMatchTitle",
+    descriptionKey: "howMatchDescription",
     color: "#10b981",
   },
   {
     number: "03",
     icon: "fa-graduation-cap",
-    title: "Start Learning Today",
-    description: "Choose a published course or book an available live tutoring session.",
+    titleKey: "howLearnTitle",
+    descriptionKey: "howLearnDescription",
     color: "#3b82f6",
   },
 ]
 
 const HowItWorks = () => {
+  const { t } = useTranslation()
   return (
     <section id="how-it-works" className="bg-white py-20">
       <div className="mx-auto max-w-7xl px-6">
@@ -33,13 +35,13 @@ const HowItWorks = () => {
             className="mb-4 inline-block rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-widest"
             style={{ backgroundColor: "#dcfce7", color: "#15803d" }}
           >
-            Simple Process
+            {t('landing.howEyebrow')}
           </span>
           <h2 className="mb-4 text-3xl font-bold text-gray-900 sm:text-4xl">
-            How Barakah Academy Works
+            {t('landing.howHeading')}
           </h2>
           <p className="mx-auto max-w-xl text-lg text-gray-500">
-            Explore current courses and available tutoring options in three steps.
+            {t('landing.howDescription')}
           </p>
         </div>
 
@@ -62,9 +64,9 @@ const HowItWorks = () => {
                 <div className="pt-2">
                   <div className="mb-2 flex items-center gap-2">
                     <i className={`fas ${step.icon}`} style={{ color: step.color }} aria-hidden="true" />
-                    <h3 className="text-xl font-bold text-gray-900">{step.title}</h3>
+                    <h3 className="text-xl font-bold text-gray-900">{t(`landing.${step.titleKey}`)}</h3>
                   </div>
-                  <p className="leading-relaxed text-gray-500">{step.description}</p>
+                  <p className="leading-relaxed text-gray-500">{t(`landing.${step.descriptionKey}`)}</p>
                 </div>
               </div>
             ))}
@@ -75,30 +77,19 @@ const HowItWorks = () => {
               style={{ backgroundColor: "#0a2416" }}
             >
               <i className="fas fa-rocket" aria-hidden="true" />
-              Get Started Free
+              {t('landing.getStartedFree')}
             </Link>
           </div>
 
           <div className="relative">
-            <div className="overflow-hidden rounded-2xl shadow-2xl">
-              <img
-                src="https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7e/One_Laptop_Per_Child_-_Menelik_II_teacher_training_%28by%29.jpg/960px-One_Laptop_Per_Child_-_Menelik_II_teacher_training_%28by%29.jpg"
-                alt="Teacher supporting students using laptops at Menelik II School in Ethiopia"
-                className="h-96 w-full object-cover"
-                loading="lazy"
-              />
+            <div className="relative h-96 overflow-hidden rounded-2xl shadow-2xl">
+              <img src="/images/community-learning.png" alt="Learners working together in a community learning session" className="h-full w-full object-cover" loading="lazy" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0a2416]/80 via-transparent to-transparent" />
+              <div className="absolute bottom-0 p-7 text-white">
+                <i className="fas fa-people-group text-3xl text-amber-300" aria-hidden="true" />
+                <p className="mt-3 text-lg font-bold">{t('landing.communityLearningLabel')}</p>
+              </div>
             </div>
-            <p className="mt-2 text-right text-xs text-gray-500">
-              Photo:{' '}
-              <a
-                href="https://commons.wikimedia.org/wiki/File:One_Laptop_Per_Child_-_Menelik_II_teacher_training_(by).jpg"
-                target="_blank"
-                rel="noreferrer"
-                className="underline decoration-gray-300 underline-offset-2 hover:text-gray-700"
-              >
-                ComputerHotline / Wikimedia Commons (CC BY 2.0)
-              </a>
-            </p>
 
             <div
               className="absolute -right-4 -top-4 -z-10 h-24 w-24 rounded-full opacity-20"

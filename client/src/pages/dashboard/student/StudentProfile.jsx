@@ -130,7 +130,6 @@ const StudentProfile = () => {
               >
                 <option value="english">English</option>
                 <option value="amharic">Amharic</option>
-                <option value="arabic">Arabic</option>
                 <option value="afaan-oromo">Afaan Oromo</option>
                 <option value="french">French</option>
               </select>

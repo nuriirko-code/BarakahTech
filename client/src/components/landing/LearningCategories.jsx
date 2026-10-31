@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import Avatar from "../common/Avatar"
-import { getCategoryGradient, getCategoryIcon } from "../../utils/courseUtils"
+import { getCategoryGradient, getCategoryIcon, getCategoryLabel } from "../../utils/courseUtils"
 import { formatCurrency, getCoursePricing } from "../../utils/currencyUtils"
 
-const CourseCard = ({ course }) => {
+const CourseCard = ({ course, t }) => {
   const pricing = getCoursePricing(course.price, course.discountPercentage)
 
   return (
@@ -19,7 +20,7 @@ const CourseCard = ({ course }) => {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 to-transparent" />
         <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-bold capitalize text-emerald-800 shadow-sm">
-          {course.category}
+          {getCategoryLabel(course.category, t)}
         </span>
         <span className="absolute right-4 top-4 rounded-full bg-slate-950/75 px-3 py-1 text-xs font-bold capitalize text-white">
           {course.level}
@@ -38,7 +39,7 @@ const CourseCard = ({ course }) => {
           {course.teacher?.name && (
             <div className="mt-4 flex items-center gap-2">
               <Avatar name={course.teacher.name} imageUrl={course.teacher.profilePhoto} size="sm" />
-              <span className="text-sm text-slate-500">by {course.teacher.name}</span>
+              <span className="text-sm text-slate-500">{t('courses.by', { name: course.teacher.name })}</span>
             </div>
           )}
         </div>
@@ -55,14 +56,14 @@ const CourseCard = ({ course }) => {
 
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs font-medium text-slate-500">
           {course.estimatedDuration !== undefined && (
-            <span><i className="fas fa-clock mr-1" aria-hidden="true" />{course.estimatedDuration} hours total</span>
+            <span><i className="fas fa-clock mr-1" aria-hidden="true" />{t('courses.hours', { count: course.estimatedDuration })}</span>
           )}
-          <span><i className="fas fa-users mr-1" aria-hidden="true" />{course.totalEnrollments || 0} students enrolled</span>
+          <span><i className="fas fa-users mr-1" aria-hidden="true" />{t('courses.enrolled', { count: course.totalEnrollments || 0 })}</span>
         </div>
 
         <div className="mt-auto flex items-end justify-between border-t border-slate-100 pt-5">
           {course.isFree ? (
-            <span className="text-lg font-extrabold text-emerald-700">Free</span>
+            <span className="text-lg font-extrabold text-emerald-700">{t('courses.free')}</span>
           ) : (
             <div>
               <span className="text-lg font-extrabold text-slate-900">
@@ -76,7 +77,7 @@ const CourseCard = ({ course }) => {
             </div>
           )}
           <span className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white transition-colors group-hover:bg-emerald-800">
-            View course <i className="fas fa-arrow-right text-xs" aria-hidden="true" />
+            {t('courses.viewCourse')} <i className="fas fa-arrow-right text-xs" aria-hidden="true" />
           </span>
         </div>
       </div>
@@ -85,6 +86,7 @@ const CourseCard = ({ course }) => {
 }
 
 const LearningCategories = ({ courses = [] }) => {
+  const { t } = useTranslation()
   if (!courses.length) return null
 
   return (
@@ -92,18 +94,30 @@ const LearningCategories = ({ courses = [] }) => {
       <div className="mx-auto max-w-7xl">
         <div className="mb-12 text-center">
           <p className="inline-flex rounded-full bg-emerald-100 px-4 py-2 text-sm font-bold uppercase tracking-widest text-emerald-800">
-            Published courses
+            {t('landing.publishedCourses')}
           </p>
           <h2 className="mt-5 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-            Explore courses by category
+            {t('landing.allPublishedCourses')}
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-lg text-slate-600">
-            Browse the same published course details and category visuals shown in the course marketplace.
+            {t('landing.allCoursesDescription')}
           </p>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {courses.map((course) => <CourseCard key={course._id} course={course} />)}
+        <div className="relative overflow-hidden">
+          <div className="pointer-events-none absolute bottom-0 left-0 top-0 z-10 w-10 bg-gradient-to-r from-slate-50 to-transparent" />
+          <div className="pointer-events-none absolute bottom-0 right-0 top-0 z-10 w-10 bg-gradient-to-l from-white to-transparent" />
+          <div
+            className="animate-scroll-once-left-to-right flex w-max"
+            style={{ animationDuration: `${Math.max(35, courses.length * 7)}s` }}
+          >
+            {courses.map((course) => <div key={course._id} className="mx-3 w-[min(88vw,380px)] flex-shrink-0"><CourseCard course={course} t={t} /></div>)}
+          </div>
+        </div>
+        <div className="mt-10 text-center">
+          <Link to="/courses" className="inline-flex items-center gap-2 rounded-xl bg-emerald-800 px-6 py-3 font-bold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-emerald-900">
+            {t('landing.showAllCourses')} <i className="fas fa-arrow-right text-sm" aria-hidden="true" />
+          </Link>
         </div>
       </div>
     </section>

@@ -16,7 +16,7 @@ const teachingCategories = {
   languages: {
     label: 'Languages',
     icon: '💬',
-    subjects: ['English', 'Arabic', 'Amharic', 'Afaan Oromo', 'French', 'Other Language'],
+    subjects: ['English', 'Amharic', 'Afaan Oromo', 'French', 'Other Language'],
   },
   sciences: {
     label: 'Sciences and Mathematics',

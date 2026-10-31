@@ -72,7 +72,7 @@ const StudentWelcome = () => {
           <header className="relative mt-6 overflow-hidden rounded-[2rem] bg-gradient-to-br from-indigo-950 via-violet-900 to-purple-700 text-white shadow-2xl">
             <div className="absolute inset-0">
               <img
-                src="https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=1200&q=85"
+                src="/images/student-welcoming.png"
                 alt=""
                 className="absolute right-0 h-full w-full object-cover object-center opacity-25 sm:w-3/5 sm:opacity-55"
                 fetchPriority="high"
@@ -126,14 +126,9 @@ const StudentWelcome = () => {
               <JourneyCTA to={startPath} label={actionLabel} tone="emerald" />
             </div>
             <aside className="relative min-h-[420px] overflow-hidden rounded-[2rem] bg-indigo-950 shadow-xl">
-              <img
-                src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=1000&q=85"
-                alt="Male educator ready to support learners"
-                className="absolute inset-0 h-full w-full object-cover object-center"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-indigo-950/90 via-indigo-950/15 to-transparent" />
-              <div className="absolute bottom-0 left-0 p-7 text-white sm:p-9">
+              <img src="/images/welcoming-teacher.png" alt="Teacher ready to support learners" className="absolute inset-0 h-full w-full object-cover" loading="lazy" />
+              <div className="absolute inset-0 bg-gradient-to-t from-indigo-950/90 via-indigo-950/20 to-transparent" />
+              <div className="absolute bottom-0 p-7 text-white sm:p-9">
                 <p className="text-sm font-bold uppercase tracking-widest text-violet-200">Learn at your pace</p>
                 <p className="mt-2 max-w-sm text-2xl font-extrabold">Choose courses and educators from the current catalog.</p>
               </div>

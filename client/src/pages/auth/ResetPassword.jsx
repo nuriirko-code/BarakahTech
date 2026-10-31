@@ -1,11 +1,13 @@
 import API_BASE_URL from '../../config/api.js'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 
 const ResetPassword = () => {
   const { token } = useParams()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -19,13 +21,13 @@ const ResetPassword = () => {
     setFieldErrors({})
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters.')
-      setFieldErrors({ password: 'Use at least 6 characters.' })
+      setError(t('auth.passwordTooShort'))
+      setFieldErrors({ password: t('auth.passwordTooShort') })
       return
     }
     if (password !== confirmPassword) {
-      setError('Passwords do not match.')
-      setFieldErrors({ confirmPassword: 'Passwords do not match.' })
+      setError(t('auth.passwordMismatch'))
+      setFieldErrors({ confirmPassword: t('auth.passwordMismatch') })
       return
     }
 
@@ -38,7 +40,8 @@ const ResetPassword = () => {
       // A short delay lets the user read confirmation before returning to sign-in.
       window.setTimeout(() => navigate('/login', { replace: true }), 3000)
     } catch (requestError) {
-      setError(requestError.response?.data?.message || 'Reset link is invalid or has expired.')
+      // API-provided error messages remain in English until server-side localization is implemented.
+      setError(requestError.response?.data?.message || t('auth.resetLinkExpired'))
     } finally {
       setLoading(false)
     }
@@ -51,19 +54,19 @@ const ResetPassword = () => {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10 text-slate-900">
       <section className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-        <h1 className="text-center text-2xl font-extrabold">Set new password</h1>
+        <h1 className="text-center text-2xl font-extrabold">{t('auth.setNewPassword')}</h1>
         {success ? (
           <div role="status" className="mt-6 rounded-lg border border-green-200 bg-green-50 p-4 text-center text-sm leading-6 text-green-900">
             <i className="fas fa-circle-check mr-2 text-green-700" aria-hidden="true" />
-            Password reset successfully. Please login. Redirecting in 3 seconds…
+            {t('auth.resetSuccess')}
           </div>
         ) : (
           <>
-            <p className="mt-2 text-center text-sm text-slate-600">Choose a new password for your account.</p>
+            <p className="mt-2 text-center text-sm text-slate-600">{t('auth.chooseNewPassword')}</p>
             {error && !Object.values(fieldErrors).some(Boolean) && <div role="alert" className="mt-5 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</div>}
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
               <label className="block text-sm font-semibold text-slate-700">
-                New Password
+                {t('auth.newPassword')}
                 <input
                   required
                   minLength={6}
@@ -76,7 +79,7 @@ const ResetPassword = () => {
                 {renderFieldError('password')}
               </label>
               <label className="block text-sm font-semibold text-slate-700">
-                Confirm Password
+                {t('auth.confirmPassword')}
                 <input
                   required
                   minLength={6}
@@ -89,7 +92,7 @@ const ResetPassword = () => {
                 {renderFieldError('confirmPassword')}
               </label>
               <button type="submit" disabled={loading} className="w-full rounded-lg bg-green-700 px-4 py-3 text-sm font-bold text-white hover:bg-green-800 disabled:cursor-wait disabled:opacity-60">
-                {loading ? 'Resetting…' : 'Reset Password'}
+                {loading ? t('auth.resetting') : t('auth.resetPassword')}
               </button>
             </form>
           </>

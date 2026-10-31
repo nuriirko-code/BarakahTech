@@ -36,3 +36,7 @@ export const getCategoryEmoji = (category) => {
 
   return emojiMap[category] || '📚'
 }
+
+export const getCategoryLabel = (category, t) => (
+  t(`categories.${category}`, { defaultValue: category })
+)

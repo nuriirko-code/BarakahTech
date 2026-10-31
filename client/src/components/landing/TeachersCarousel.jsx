@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom"
 import Avatar from "../common/Avatar"
-import { getCategoryGradient, getCategoryIcon } from "../../utils/courseUtils"
+import { useTranslation } from "react-i18next"
+import { getCategoryGradient, getCategoryIcon, getCategoryLabel } from "../../utils/courseUtils"
 
-const TeacherCard = ({ teacher, duplicate = false }) => (
+const TeacherCard = ({ teacher, duplicate = false, t }) => (
   <Link
     to={`/teachers/${teacher.id}`}
     aria-hidden={duplicate || undefined}
@@ -13,7 +14,7 @@ const TeacherCard = ({ teacher, duplicate = false }) => (
       <i className={`${getCategoryIcon(teacher.category)} text-6xl text-white/30`} aria-hidden="true" />
       {teacher.category && (
         <span className="absolute right-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold capitalize text-slate-800 shadow-sm">
-          {teacher.category}
+          {getCategoryLabel(teacher.category, t)}
         </span>
       )}
       <div className="absolute -bottom-11 left-6 rounded-full border-4 border-white shadow-md">
@@ -45,11 +46,11 @@ const TeacherCard = ({ teacher, duplicate = false }) => (
 
       <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-4">
         <span className="text-sm font-medium text-slate-600">
-          {teacher.courseCount} published {teacher.courseCount === 1 ? "course" : "courses"}
-          {teacher.yearsOfExperience > 0 && ` · ${teacher.yearsOfExperience} years teaching`}
+          {t('landing.publishedCoursesCount', { count: teacher.courseCount })}
+          {teacher.yearsOfExperience > 0 && ` · ${t('landing.yearsTeaching', { count: teacher.yearsOfExperience })}`}
         </span>
         <span className="inline-flex items-center gap-2 text-sm font-bold text-emerald-800">
-          Profile <i className="fas fa-arrow-right text-xs transition-transform group-hover:translate-x-1" aria-hidden="true" />
+          {t('landing.profile')} <i className="fas fa-arrow-right text-xs transition-transform group-hover:translate-x-1" aria-hidden="true" />
         </span>
       </div>
     </div>
@@ -57,22 +58,23 @@ const TeacherCard = ({ teacher, duplicate = false }) => (
 )
 
 const TeachersCarousel = ({ teachers = [] }) => {
+  const { t } = useTranslation()
   if (!teachers.length) return null
 
   return (
     <section className="overflow-hidden bg-gradient-to-b from-slate-50 to-emerald-50/70 py-20">
       <div className="mx-auto mb-12 max-w-7xl px-6">
-        <p className="text-sm font-bold uppercase tracking-[0.2em] text-emerald-700">Meet the teachers</p>
-        <h2 className="mt-3 text-3xl font-extrabold text-slate-900 sm:text-4xl">Approved Course Teachers</h2>
-        <p className="mt-3 max-w-xl text-slate-600">Browse approved teachers and the subjects they offer.</p>
+        <p className="text-sm font-bold uppercase tracking-[0.2em] text-emerald-700">{t('landing.teacherEyebrow')}</p>
+        <h2 className="mt-3 text-3xl font-extrabold text-slate-900 sm:text-4xl">{t('landing.teacherHeading')}</h2>
+        <p className="mt-3 max-w-xl text-slate-600">{t('landing.teacherDescription')}</p>
       </div>
 
       <div className="relative">
         <div className="pointer-events-none absolute bottom-0 left-0 top-0 z-10 w-16 bg-gradient-to-r from-slate-50 to-transparent" />
         <div className="pointer-events-none absolute bottom-0 right-0 top-0 z-10 w-16 bg-gradient-to-l from-emerald-50/70 to-transparent" />
         <div className={teachers.length > 1 ? "animate-scroll-left flex w-max" : "animate-scroll-single flex w-max"}>
-          {teachers.map((teacher) => <TeacherCard key={teacher.id} teacher={teacher} />)}
-          {teachers.length > 1 && teachers.map((teacher) => <TeacherCard key={`${teacher.id}-duplicate`} teacher={teacher} duplicate />)}
+          {teachers.map((teacher) => <TeacherCard key={teacher.id} teacher={teacher} t={t} />)}
+          {teachers.length > 1 && teachers.map((teacher) => <TeacherCard key={`${teacher.id}-duplicate`} teacher={teacher} duplicate t={t} />)}
         </div>
       </div>
     </section>
