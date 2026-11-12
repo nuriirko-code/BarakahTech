@@ -7,6 +7,7 @@ import Footer from '../../components/common/Footer'
 import { useAuth } from '../../context/AuthContext'
 import API_BASE_URL from '../../config/api'
 import CommunitySessionActions from './CommunitySessionActions'
+import { getApiErrorMessage } from '../../utils/apiErrors'
 
 const sessionTypes = {
   idea_lab: { key: 'typeIdeaLab', icon: 'fa-lightbulb', colors: 'border-amber-200 bg-amber-50 text-amber-950', bar: 'bg-amber-400' },
@@ -44,10 +45,14 @@ const CommunityPage = () => {
         params: past ? { past: 'true' } : {},
         headers: sessionHeaders(token),
       })
-      setSessions(response.data.sessions || [])
+      setSessions(Array.isArray(response.data?.sessions) ? response.data.sessions : [])
       setError('')
     } catch (requestError) {
-      setError(requestError.response?.data?.message || t('community.fetchError'))
+      setError(getApiErrorMessage(
+        requestError,
+        t('community.fetchError'),
+        t('common.networkError'),
+      ))
     } finally {
       setLoading(false)
     }
@@ -70,8 +75,8 @@ const CommunityPage = () => {
           axios.get(`${API_BASE_URL}/community`, { headers: sessionHeaders(token) }),
           axios.get(`${API_BASE_URL}/community`, { params: { past: 'true' }, headers: sessionHeaders(token) }),
         ])
-        const upcoming = upcomingResponse.data.sessions || []
-        const completed = pastResponse.data.sessions || []
+        const upcoming = Array.isArray(upcomingResponse.data?.sessions) ? upcomingResponse.data.sessions : []
+        const completed = Array.isArray(pastResponse.data?.sessions) ? pastResponse.data.sessions : []
         if (active) {
           const next = upcoming.find((session) => session.status === 'scheduled') || null
           setNextSession({
@@ -90,8 +95,14 @@ const CommunityPage = () => {
           })
           setStatsError('')
         }
-      } catch {
-        if (active) setStatsError(t('common.error'))
+      } catch (requestError) {
+        if (active) {
+          setStatsError(getApiErrorMessage(
+            requestError,
+            t('community.fetchError'),
+            t('common.networkError'),
+          ))
+        }
       }
     }
     loadStats()
@@ -207,7 +218,7 @@ const CommunityPage = () => {
               <div className="mt-8 grid gap-5 md:grid-cols-2" role="status" aria-label={t('common.loading')}>
                 {[1, 2].map((item) => <div key={item} className="h-64 animate-pulse rounded-2xl bg-slate-200" />)}
               </div>
-            ) : sessions.length === 0 ? (
+            ) : error ? null : sessions.length === 0 ? (
               <div className="mt-8 rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center">
                 <i className="fas fa-people-group text-4xl text-slate-300" aria-hidden="true" />
                 <h3 className="mt-4 text-lg font-bold">{past ? t('community.noCompleted') : t('community.noUpcoming')}</h3>

@@ -129,6 +129,8 @@
   "landing": {
     "sessionsEyebrow": "Start with people",
     "upcomingSessions": "Upcoming community sessions",
+    "noUpcomingSessions": "No upcoming sessions yet. Check back soon!",
+    "dataError": "Live homepage data could not be loaded.",
     "seeAllSessions": "See all sessions",
     "newSessionsWeekly": "New sessions are announced weekly",
     "visitCommunity": "Visit the community page",
@@ -1056,6 +1058,7 @@
   "common": {
     "loading": "Loading...",
     "error": "Something went wrong. Please try again.",
+    "networkError": "We could not reach the server. Check your connection and try again.",
     "back": "Back",
     "close": "Close",
     "minutes": "{{count}} minutes",

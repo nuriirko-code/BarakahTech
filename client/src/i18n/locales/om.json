@@ -129,6 +129,8 @@
   "landing": {
     "sessionsEyebrow": "Namoota waliin jalqabi",
     "upcomingSessions": "Walgahii hawaasaa dhufu",
+    "noUpcomingSessions": "Walgahiin dhufu ammaaf hin jiru. Yeroo biraa deebi'ii ilaali!",
+    "dataError": "Odeeffannoo yeroo ammaa fuula jalqabaa fe'uun hin danda'amne.",
     "seeAllSessions": "Walgahii hunda ilaali",
     "newSessionsWeekly": "Walgahiin haaraan torban torbaniin beeksifama",
     "visitCommunity": "Fuula hawaasaa daawwadhu",
@@ -1056,6 +1058,7 @@
   "common": {
     "loading": "Fe'aa jira...",
     "error": "Rakkoon uumame. Maaloo irra deebi'ii yaali.",
+    "networkError": "Server waliin wal qunnamuun hin danda'amne. Qunnamtii kee mirkaneeffadhuutii irra deebi'ii yaali.",
     "back": "Duubatti deebi'i",
     "close": "Cufi",
     "minutes": "Daqiiqaa {{count}}",

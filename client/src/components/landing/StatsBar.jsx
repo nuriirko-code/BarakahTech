@@ -35,7 +35,7 @@ const StatCounter = ({ item, value, t, language }) => {
             <StatCounter
               key={item.key}
               item={item}
-              value={stats ? Number(stats[item.key]) : null}
+              value={stats && Number.isFinite(Number(stats[item.key])) ? Number(stats[item.key]) : null}
               t={t}
               language={i18n.language}
             />

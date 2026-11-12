@@ -3,6 +3,7 @@ import axios from 'axios'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import API_BASE_URL from '../../config/api'
+import { getApiErrorMessage } from '../../utils/apiErrors'
 
 const UpcomingSessions = () => {
   const { t, i18n } = useTranslation()
@@ -15,9 +16,19 @@ const UpcomingSessions = () => {
     const loadSessions = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/community`)
-        if (active) setSessions((response.data.sessions || []).slice(0, 3))
+        const results = Array.isArray(response.data?.sessions) ? response.data.sessions : []
+        if (active) {
+          setSessions(results.slice(0, 3))
+          setError('')
+        }
       } catch (requestError) {
-        if (active) setError(requestError.response?.data?.message || t('common.error'))
+        if (active) {
+          setError(getApiErrorMessage(
+            requestError,
+            t('community.fetchError'),
+            t('common.networkError'),
+          ))
+        }
       } finally {
         if (active) setLoading(false)
       }
@@ -45,9 +56,9 @@ const UpcomingSessions = () => {
           <div className="mt-7 grid gap-4 md:grid-cols-3" role="status" aria-label={t('common.loading')}>
             {[1, 2, 3].map((item) => <div key={item} className="h-36 animate-pulse rounded-2xl bg-slate-200" />)}
           </div>
-        ) : sessions.length === 0 ? (
+        ) : error ? null : sessions.length === 0 ? (
           <div className="mt-7 rounded-2xl border border-emerald-100 bg-white p-7 text-center">
-            <p className="font-bold text-slate-800">{t('landing.newSessionsWeekly')}</p>
+            <p className="font-bold text-slate-800">{t('landing.noUpcomingSessions')}</p>
             <Link to="/community" className="mt-3 inline-flex font-bold text-emerald-800 underline">{t('landing.visitCommunity')}</Link>
           </div>
         ) : (

@@ -15,8 +15,11 @@ import Testimonials from "../components/landing/Testimonials"
 import ForStudentsTeachers from "../components/landing/ForStudentsTeachers"
 import FinalCTA from "../components/landing/FinalCTA"
 import Footer from "../components/common/Footer"
+import { useTranslation } from "react-i18next"
+import { getApiErrorMessage } from "../utils/apiErrors"
 
 const Landing = () => {
+  const { t } = useTranslation()
   const [landingData, setLandingData] = useState(null)
   const [dataError, setDataError] = useState("")
 
@@ -31,12 +34,23 @@ const Landing = () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/landing`)
         if (isCurrent) {
-          setLandingData(response.data)
+          const data = response.data || {}
+          setLandingData({
+            stats: data.stats && typeof data.stats === 'object' ? data.stats : null,
+            courses: Array.isArray(data.courses) ? data.courses : [],
+            teachers: Array.isArray(data.teachers) ? data.teachers : [],
+            tutors: Array.isArray(data.tutors) ? data.tutors : [],
+            feedback: Array.isArray(data.feedback) ? data.feedback : [],
+          })
           setDataError("")
         }
       } catch (requestError) {
         if (isCurrent) {
-          setDataError(requestError.response?.data?.message || "Live homepage data could not be loaded.")
+          setDataError(getApiErrorMessage(
+            requestError,
+            t('landing.dataError'),
+            t('common.networkError'),
+          ))
         }
       } finally {
         requestPending = false
@@ -52,7 +66,7 @@ const Landing = () => {
       window.clearInterval(refreshInterval)
       window.removeEventListener("focus", loadLandingData)
     }
-  }, [])
+  }, [t])
 
   return (
     <div className="min-h-screen">

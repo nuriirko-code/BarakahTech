@@ -1,6 +1,11 @@
-// Centralize the API origin so development and production can switch through
-// VITE_API_URL instead of requiring endpoint changes throughout the app.
-const API_ORIGIN = import.meta.env.VITE_API_URL || 'http://localhost:5000'
-const API_BASE_URL = `${API_ORIGIN.replace(/\/$/, '')}/api`
+const configuredApiUrl = import.meta.env.VITE_API_URL?.trim()
+const apiUrl = configuredApiUrl || 'http://localhost:5000'
 
-export default API_BASE_URL   
+if (import.meta.env.PROD && !configuredApiUrl) {
+  console.error('VITE_API_URL is not configured. Set it to the deployed Render API URL in the Vercel project settings.')
+}
+
+// Accept either the server origin or an origin that already includes /api.
+const API_BASE_URL = `${apiUrl.replace(/\/+$/, '').replace(/\/api$/i, '')}/api`
+
+export default API_BASE_URL

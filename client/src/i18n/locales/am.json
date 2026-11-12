@@ -129,6 +129,8 @@
   "landing": {
     "sessionsEyebrow": "ከሰዎች ጋር ይጀምሩ",
     "upcomingSessions": "የሚመጡ የማህበረሰብ ክፍለ ጊዜዎች",
+    "noUpcomingSessions": "ገና የሚመጡ ክፍለ ጊዜዎች የሉም። በቅርቡ ይመለሱ!",
+    "dataError": "የመነሻ ገጹ ቀጥታ መረጃ መጫን አልተቻለም።",
     "seeAllSessions": "ሁሉንም ክፍለ ጊዜዎች ይመልከቱ",
     "newSessionsWeekly": "አዳዲስ ክፍለ ጊዜዎች በየሳምንቱ ይገለጻሉ",
     "visitCommunity": "የማህበረሰቡን ገጽ ይጎብኙ",
@@ -1056,6 +1058,7 @@
   "common": {
     "loading": "በመጫን ላይ...",
     "error": "ችግር ተፈጥሯል። እባክዎ እንደገና ይሞክሩ።",
+    "networkError": "ከአገልጋዩ ጋር መገናኘት አልተቻለም። ግንኙነትዎን ያረጋግጡና እንደገና ይሞክሩ።",
     "back": "ተመለስ",
     "close": "ዝጋ",
     "minutes": "{{count}} ደቂቃ",
