@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react'
 // The router maps public authentication pages and role-specific dashboards,
 // while AuthProvider makes authentication state available throughout the app.
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/common/ProtectedRoute'
 
@@ -45,7 +45,7 @@ const AdminDashboard = lazy(() => import('./pages/dashboard/AdminDashboard'))
 const LiveTutorApplication = lazy(() => import('./pages/live-tutor/LiveTutorApplication'))
 const TutorProfilePage = lazy(() => import('./pages/tutors/TutorProfilePage'))
 const BookingPage = lazy(() => import('./pages/tutors/BookingPage'))
-const SessionRoom = lazy(() => import('./pages/session/SessionRoom'))
+const LiveRoomPage = lazy(() => import('./pages/live/LiveRoomPage'))
 const SessionFeedback = lazy(() => import('./pages/session/SessionFeedback'))
 const CoursesPage = lazy(() => import('./pages/public/CoursesPage'))
 const TutorsPage = lazy(() => import('./pages/public/TutorsPage'))
@@ -55,6 +55,12 @@ const AboutPage = lazy(() => import('./pages/public/AboutPage'))
 const ContactPage = lazy(() => import('./pages/public/ContactPage'))
 const CommunityPage = lazy(() => import('./pages/public/CommunityPage'))
 const CommunitySessionPage = lazy(() => import('./pages/public/CommunitySessionPage'))
+const PolicyPage = lazy(() => import('./pages/public/PolicyPage'))
+
+const LegacySessionRedirect = () => {
+  const { bookingId } = useParams()
+  return <Navigate to={`/live/booking/${bookingId}`} replace />
+}
 
 const PageLoader = () => (
   <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -88,6 +94,7 @@ function App() {
           <Route path="/community/:id" element={<CommunitySessionPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/policies/:slug" element={<PolicyPage />} />
 
           {/* Role selection for visitors choosing a student or teacher registration path. */}
           <Route path="/register" element={<RoleSelection />} />
@@ -169,9 +176,14 @@ function App() {
           {/* A session room is outside dashboard shells so the video call can
               use the full screen, while backend checks still limit access to
               the student and tutor assigned to that booking. */}
+          <Route path="/live/:type/:id" element={(
+            <ProtectedRoute>
+              <LiveRoomPage />
+            </ProtectedRoute>
+          )} />
           <Route path="/session/:bookingId" element={(
-            <ProtectedRoute allowedRoles={['student', 'teacher', 'live_tutor']}>
-              <SessionRoom />
+            <ProtectedRoute>
+              <LegacySessionRedirect />
             </ProtectedRoute>
           )} />
           <Route path="/session/:bookingId/feedback" element={(

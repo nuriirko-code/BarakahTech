@@ -11,7 +11,7 @@ const LessonAssessment = ({ lesson, courseId, onPass, onRetry }) => {
   const [results, setResults] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
-
+           
   const totalQuestions = lesson?.assessmentQuestions?.length || 0
   const passingScore = lesson?.passingScore || 80
  
@@ -71,7 +71,7 @@ const LessonAssessment = ({ lesson, courseId, onPass, onRetry }) => {
       setSubmitting(false)
     }
   }
-
+  
   const resetAssessment = () => {
     setAnswers([])
     setCurrentQuestion(0)

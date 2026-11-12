@@ -60,11 +60,21 @@ const Footer = () => {
         { label: t('nav.signUp'), to: '/register' },
       ],
     },
+    {
+      title: t('footer.policies'),
+      links: [
+        { label: t('footer.terms'), to: '/policies/terms' },
+        { label: t('footer.privacy'), to: '/policies/privacy' },
+        { label: t('footer.communityCode'), to: '/policies/community-code' },
+        { label: t('footer.studentGuidelines'), to: '/policies/student-guidelines' },
+        { label: t('footer.teacherGuidelines'), to: '/policies/teacher-guidelines' },
+      ],
+    },
   ]
 
   return (
     <footer className="bg-gray-900 text-white">
-      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-6 py-16 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-6 py-16 sm:grid-cols-2 lg:grid-cols-5">
         <div className="space-y-4">
           <Link to="/" className="inline-flex items-center gap-0.5" aria-label="Barakah Academy home">
             <span className="text-2xl font-bold text-green-400">Barakah</span>

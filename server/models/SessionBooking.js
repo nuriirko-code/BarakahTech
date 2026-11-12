@@ -34,7 +34,6 @@ const sessionBookingSchema = new mongoose.Schema(
     // One free, fixed-length introductory session is allowed for each
     // student-tutor pair before their paid learning relationship begins.
     isTrialSession: { type: Boolean, default: false, index: true },
-    isAnytimeTest: { type: Boolean, default: false },
 
     // pending_payment means the time is held temporarily but is not a confirmed
     // session until the platform verifies the student's manual transfer.
@@ -45,10 +44,6 @@ const sessionBookingSchema = new mongoose.Schema(
     cancellationReason: { type: String, default: '', trim: true },
     cancelledAt: { type: Date, default: null },
 
-    // Room details remain empty until the booking is confirmed. Free trials are
-    // confirmed immediately; paid sessions are confirmed after payment review.
-    roomUrl: { type: String, default: '' },
-    roomName: { type: String, default: '' },
     recordingUrl: { type: String, default: '' },
 
     feedbackSubmitted: { type: Boolean, default: false },

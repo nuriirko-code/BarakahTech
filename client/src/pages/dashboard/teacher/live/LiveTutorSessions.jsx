@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../../context/AuthContext'
+import { liveRoomPath } from '../../../../config/live'
 
 
 // Converts the tutor's own stored timezone into the session instant used by
@@ -42,7 +43,6 @@ const LiveTutorSessions = () => {
   const [error, setError] = useState('')
   const [now, setNow] = useState(0)
   const [completingId, setCompletingId] = useState('')
-  const [isAnytimeTestMode, setIsAnytimeTestMode] = useState(false)
 
   useEffect(() => {
     const updateNow = () => setNow(Date.now())
@@ -64,7 +64,6 @@ const LiveTutorSessions = () => {
         })
         if (isCurrent) {
           setBookings(response.data.bookings || [])
-          setIsAnytimeTestMode(Boolean(response.data.isAnytimeTestMode))
           setError('')
         }
       } catch (requestError) {
@@ -113,7 +112,7 @@ const LiveTutorSessions = () => {
         <div>
           <p className="text-sm font-bold uppercase tracking-wide text-green-700">Live tutoring</p>
           <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Live Sessions</h1>
-          <p className="mt-1 text-sm text-slate-600">{isAnytimeTestMode ? 'Local testing is enabled: all confirmed sessions can be joined anytime.' : 'Confirmed sessions include a countdown until it is time to meet your student.'}</p>
+          <p className="mt-1 text-sm text-slate-600">Confirmed sessions can be joined starting 30 minutes before the scheduled time.</p>
         </div>
       </header>
 
@@ -124,23 +123,22 @@ const LiveTutorSessions = () => {
       <div className="space-y-4">
         {bookings.map((booking) => {
           const isConfirmed = booking.status === 'confirmed'
+          const sessionStart = getSessionStart(booking)
           return (
             <article key={booking._id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="font-bold text-slate-900">Session with {booking.student?.name || 'your student'}</p>
-                  {isAnytimeTestMode
-                    ? <p className="mt-1 text-sm text-green-700">Available to join anytime (local testing)</p>
-                    : <p className="mt-1 text-sm text-slate-600">{getSessionStart(booking).toLocaleString()} (your local time)</p>}
+                  <p className="mt-1 text-sm text-slate-600">{sessionStart.toLocaleString()} (your local time)</p>
                   <p className="mt-1 text-sm text-slate-500">{booking.isTrialSession ? 'Free 30-minute introductory session' : `${booking.duration}-minute paid session`}</p>
                 </div>
                 <div className={`rounded-xl px-4 py-3 text-sm font-bold ${isConfirmed ? 'bg-green-50 text-green-800' : booking.status === 'pending_payment' ? 'bg-amber-50 text-amber-800' : 'bg-slate-100 text-slate-700'}`}>
-                  {isConfirmed ? (isAnytimeTestMode ? 'Available now' : formatCountdown(booking, now)) : booking.status.replace('_', ' ')}
+                  {isConfirmed ? formatCountdown(booking, now) : booking.status.replace('_', ' ')}
                 </div>
               </div>
               {isConfirmed && (
                 <div className="mt-4 flex flex-wrap gap-3">
-                  <button type="button" onClick={() => navigate(`/session/${booking._id}`)} className="rounded-xl bg-green-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-green-700">
+                  <button type="button" title="The session server checks when the room opens" onClick={() => navigate(liveRoomPath('booking', booking._id))} className="rounded-xl bg-green-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-green-700">
                     <i className="fas fa-video mr-2" aria-hidden="true" />Join session
                   </button>
                   {/* Completion deliberately requires a tutor action: only then

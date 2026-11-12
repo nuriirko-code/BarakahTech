@@ -13,8 +13,10 @@ const messageRoutes = require("./routes/messageRoutes")
 const liveTutorRoutes = require("./routes/liveTutorRoutes")
 const availabilityRoutes = require("./routes/availabilityRoutes")
 const bookingRoutes = require("./routes/bookingRoutes")
+const liveRoutes = require("./routes/liveRoutes")
 const landingRoutes = require("./routes/landingRoutes")
 const communityRoutes = require("./routes/communityRoutes")
+const contactRoutes = require("./routes/contactRoutes")
 
 const app = express()
 const port = process.env.PORT || 5000
@@ -70,9 +72,12 @@ app.use("/api/messages", messageRoutes)
 app.use("/api/live-tutors", liveTutorRoutes)
 app.use("/api/availability", availabilityRoutes)
 app.use("/api/bookings", bookingRoutes)
+// Unified LiveKit access checks for supported booking and community rooms.
+app.use("/api/live", liveRoutes)
 // Community sessions start with idea labs and connect problem discovery to
 // learning, building, mentorship, and future work opportunities.
 app.use("/api/community", communityRoutes)
+app.use("/api/contact", contactRoutes)
 // User-management routes are isolated behind the /api/admin prefix.
 app.use("/api/admin", adminRoutes)
 
@@ -88,7 +93,7 @@ app.use((error, req, res, next) => {
   if (error.message?.startsWith('CORS policy:')) {
     return res.status(403).json({ message: 'CORS error: Origin not allowed' })
   }
-
+ 
   const statusCode = error.statusCode || 500
   const message = process.env.NODE_ENV === 'production'
     ? 'An unexpected error occurred'

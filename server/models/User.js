@@ -1,5 +1,24 @@
 const mongoose = require('mongoose')
 
+const policyAcceptanceSchema = new mongoose.Schema(
+  {
+    policy: {
+      type: String,
+      enum: ['terms', 'privacy', 'community'],
+      required: true,
+    },
+    version: {
+      type: String,
+      required: true,
+    },
+    acceptedAt: {
+      type: Date,
+      required: true,
+    },
+  },
+  { _id: false }
+)
+
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -25,6 +44,21 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Password is required'],
       minlength: [6, 'Password must be at least 6 characters'],
+    },
+    dateOfBirth: {
+      type: Date,
+      default: null,
+    },
+    policyAcceptances: {
+      type: [policyAcceptanceSchema],
+      default: [],
+    },
+    guardianConsent: {
+      guardianName: { type: String, trim: true, default: '' },
+      guardianEmail: { type: String, trim: true, lowercase: true, default: '' },
+      version: { type: String, default: '' },
+      consentedAt: { type: Date, default: null },
+      method: { type: String, enum: ['', 'guardian_self_attestation'], default: '' },
     },
 
     // Only the SHA-256 digest is stored. A database leak therefore does not reveal

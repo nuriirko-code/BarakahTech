@@ -54,7 +54,7 @@ Portfolio and opportunity-matching features are future work; the platform does n
 
 - Live-tutor applications and administrator approval.
 - Public tutor profiles, weekly availability, and booking.
-- Browser-based video sessions using Jitsi Meet.
+- Browser-based video sessions using LiveKit.
 - Session feedback and payment/earning workflows.
 
 ### Platform
@@ -73,7 +73,7 @@ Portfolio and opportunity-matching features are future work; the platform does n
 | Backend | Node.js, Express |
 | Database | MongoDB with Mongoose |
 | Authentication | JSON Web Tokens and bcryptjs |
-| Video | Jitsi Meet |
+| Video | LiveKit |
 | Email | Resend |
 
 ## Project Structure
@@ -176,7 +176,7 @@ Create student and teacher accounts through the registration pages. Administrato
 ## Known Limitations
 
 - Payments are verified manually by an administrator; automated payment processing is not currently available.
-- Jitsi video sessions work best when the application is deployed over HTTPS.
+- Live video sessions require valid LiveKit credentials and work best when the application is deployed over HTTPS.
 - Amharic and Afaan Oromo translations should be reviewed by native speakers.
 - Course titles, tutor bios, and other user-created content remain in the language in which they were entered.
 - Portfolio and opportunity-matching features are planned, not currently implemented.

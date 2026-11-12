@@ -7,7 +7,9 @@ const {
   getSession,
   registerForSession,
   cancelRegistration,
-  getJoinLink,
+  createMentorshipSession,
+  getMyMentorshipSessions,
+  getEnrolledMentorshipSessions,
   createSession,
   updateSessionStatus,
   saveOutcomes,
@@ -21,12 +23,14 @@ router.get('/', optionalAuth, listSessions)
 router.post('/', authMiddleware, authorize('admin'), createSession)
 
 // Keep fixed subpaths registered before the catch-all session detail path.
-router.get('/:id/join', authMiddleware, getJoinLink)
+router.post('/mentorship', authMiddleware, authorize('teacher'), createMentorshipSession)
+router.get('/mentorship/mine', authMiddleware, authorize('teacher'), getMyMentorshipSessions)
+router.get('/mentorship/enrolled', authMiddleware, authorize('student'), getEnrolledMentorshipSessions)
 router.post('/:id/register', authMiddleware, registerForSession)
 router.delete('/:id/register', authMiddleware, cancelRegistration)
-router.put('/:id/status', authMiddleware, authorize('admin'), updateSessionStatus)
-router.put('/:id/outcomes', authMiddleware, authorize('admin'), saveOutcomes)
-router.get('/:id/participants', authMiddleware, authorize('admin'), getSessionParticipants)
+router.put('/:id/status', authMiddleware, updateSessionStatus)
+router.put('/:id/outcomes', authMiddleware, saveOutcomes)
+router.get('/:id/participants', authMiddleware, getSessionParticipants)
 router.get('/:id', optionalAuth, getSession)
 
 module.exports = router

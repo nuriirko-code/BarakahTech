@@ -10,7 +10,10 @@ const numberOrDefault = (value, fallback, minimum = 0) => {
 
 const getMyAvailability = async (req, res) => {
   try {
-    const availability = await TutorAvailability.findOne({ tutor: req.user.userId })
+    const availability = await TutorAvailability.findOne({
+      tutor: req.user.userId,
+      isTestSchedule: { $ne: true },
+    })
 
     // null is a valid first-time state, not an error: the tutor simply has not
     // created a working schedule yet.
@@ -32,12 +35,7 @@ const saveAvailability = async (req, res) => {
       bufferMinutes,
       maxDailySession,
       isAcceptingBookings,
-      isTestSchedule,
     } = req.body
-
-    if (isTestSchedule && process.env.NODE_ENV === 'production') {
-      return res.status(403).json({ message: 'Testing availability can only be enabled in a development environment.' })
-    }
 
     if (!timezone) {
       return res.status(400).json({ message: 'Choose the timezone where you teach.' })
@@ -63,22 +61,6 @@ const saveAvailability = async (req, res) => {
       return res.status(400).json({ message: 'Each day can appear only once in your weekly schedule.' })
     }
 
-    const isFullDayTestSchedule = weeklySlots.length === validDays.length &&
-      validDays.every((day) => weeklySlots.some((slot) => (
-        slot.day === day && slot.startTime === '00:00' && slot.endTime === '23:59'
-      )))
-    if (isFullDayTestSchedule && process.env.NODE_ENV === 'production') {
-      return res.status(403).json({ message: 'A 24/7 testing schedule cannot be published in production.' })
-    }
-
-    if (isTestSchedule && (
-      !isFullDayTestSchedule ||
-      Number(advanceBookingHours) !== 0 ||
-      Number(bufferMinutes) !== 0
-    )) {
-      return res.status(400).json({ message: 'The 24/7 testing schedule must include all seven days, no advance notice, and no buffer.' })
-    }
-
     const liveTutorProfile = await LiveTutorProfile.findOne({ user: tutorId })
     if (!liveTutorProfile) {
       return res.status(404).json({ message: 'Approved live tutor profile not found.' })
@@ -89,18 +71,21 @@ const saveAvailability = async (req, res) => {
     const availability = await TutorAvailability.findOneAndUpdate(
       { tutor: tutorId },
       {
-        tutor: tutorId,
-        liveTutorProfile: liveTutorProfile._id,
-        timezone,
-        weeklySlots,
-        advanceBookingHours: numberOrDefault(advanceBookingHours, 24),
-        cancellationHours: numberOrDefault(cancellationHours, 24),
-        // Zero is a valid choice here, so || cannot be used: it would turn a
-        // deliberate 0-minute buffer back into the default 15 minutes.
-        bufferMinutes: numberOrDefault(bufferMinutes, 15),
-        maxDailySession: numberOrDefault(maxDailySession, 8, 1),
-        isAcceptingBookings: isAcceptingBookings !== undefined ? isAcceptingBookings : true,
-        isTestSchedule: Boolean(isTestSchedule),
+        $set: {
+          tutor: tutorId,
+          liveTutorProfile: liveTutorProfile._id,
+          timezone,
+          weeklySlots,
+          advanceBookingHours: numberOrDefault(advanceBookingHours, 24),
+          cancellationHours: numberOrDefault(cancellationHours, 24),
+          // Zero is a valid choice here, so || cannot be used: it would turn a
+          // deliberate 0-minute buffer back into the default 15 minutes.
+          bufferMinutes: numberOrDefault(bufferMinutes, 15),
+          maxDailySession: numberOrDefault(maxDailySession, 8, 1),
+          isAcceptingBookings: isAcceptingBookings !== undefined ? isAcceptingBookings : true,
+        },
+        // Clear legacy test schedules the next time a tutor saves real hours.
+        $unset: { isTestSchedule: 1 },
       },
       { upsert: true, new: true, runValidators: true }
     )
@@ -114,13 +99,13 @@ const saveAvailability = async (req, res) => {
 
 const getTutorAvailability = async (req, res) => {
   try {
-    const availability = await TutorAvailability.findOne({ tutor: req.params.tutorId })
+    const availability = await TutorAvailability.findOne({
+      tutor: req.params.tutorId,
+      isTestSchedule: { $ne: true },
+    })
 
     if (!availability) {
       return res.status(404).json({ message: 'This tutor has not set their availability yet' })
-    }
-    if (availability.isTestSchedule && process.env.NODE_ENV === 'production') {
-      return res.status(404).json({ message: 'This tutor has not published availability yet.' })
     }
 
     // This endpoint is public because students must be able to inspect a

@@ -33,7 +33,7 @@ const Testimonials = ({ feedback = [], loading = false, error = "" }) => {
           {t('landing.testimonialDescription')}
         </p>
       </div>
-
+               
       {feedback.length ? (
         <div className="relative">
           <div

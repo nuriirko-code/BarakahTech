@@ -29,7 +29,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
   const hasAllowedRole = allowedRoles.length === 0
     || allowedRoles.includes(user.role)
     || (allowedRoles.includes('live_tutor') && Boolean(user.isLiveTutor))
-
+          
   if (!hasAllowedRole) {
     if (user.role === 'admin') return <Navigate to="/dashboard/admin" replace />
     if (user.role === 'teacher' || user.isLiveTutor) {

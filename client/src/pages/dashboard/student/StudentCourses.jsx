@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import Avatar from '../../../components/common/Avatar'
+import WeeklyMentorship from '../../../components/learning/WeeklyMentorship'
 import { useAuth } from '../../../context/AuthContext'
 import { getCategoryIcon, getCategoryGradient } from '../../../utils/courseUtils'
 
@@ -69,6 +70,10 @@ const StudentCourses = () => {
 			</header>
 
 			{error && <div role="alert" className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800"><i className="fas fa-circle-exclamation mt-0.5" aria-hidden="true" />{error}</div>}
+
+			<WeeklyMentorship
+				hasFullyEnrolledCourses={loading ? undefined : enrollments.some((enrollment) => enrollment.isFullyEnrolled)}
+			/>
 
 			{loading ? (
 				<div className="flex items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white py-16 text-slate-500" role="status">

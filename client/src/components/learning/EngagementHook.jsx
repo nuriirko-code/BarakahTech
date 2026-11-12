@@ -39,7 +39,7 @@ const EngagementHook = ({ engagementMessage, completedCount, totalLessons, trial
               <div className="flex items-center gap-2 text-green-800">
                 <i className="fas fa-star" aria-hidden="true" />
                 <p className="text-sm font-bold">{engagementMessage.title}</p>
-              </div>
+              </div> 
               <p className="mt-2 text-sm leading-6 text-slate-700">{engagementMessage.message}</p>
             </div>
           )}

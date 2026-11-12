@@ -60,7 +60,7 @@ const RichTextEditor = ({ content = '', onChange = () => {}, placeholder = 'Writ
             className={`rounded-lg p-2 text-sm font-semibold transition ${button.active ? 'bg-[#F0FDF4] text-[#16A34A]' : 'text-slate-600 hover:bg-slate-100'}`}
           >
             {button.label === 'H2' || button.label === 'H3' ? button.icon : <i className={button.icon} aria-hidden="true" />}
-          </button>
+          </button> 
         ))}
       </div>
 

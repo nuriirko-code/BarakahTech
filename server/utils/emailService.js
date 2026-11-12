@@ -14,7 +14,7 @@ const getFrontendUrl = () => String(process.env.FRONTEND_URL || 'http://localhos
 // The template centralizes responsive inline styles and trusted platform chrome. Dynamic
 // values are escaped by callers so names, notes, and announcements cannot inject markup.
 const getEmailTemplate = (title, bodyContent) => {
-  const supportEmail = process.env.SUPPORT_EMAIL || process.env.FROM_EMAIL || 'support@barakah-academy.com'
+  const supportEmail = process.env.SUPPORT_EMAIL || process.env.FROM_EMAIL || 'nuriirko@gmail.com'
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -50,7 +50,7 @@ const getResendClient = () => {
 
 // Email is secondary to the operation that triggered it. Catch and log provider failures
 // here so an outage or unconfigured key never rolls back registration, payment, or messaging.
-const sendEmail = async ({ to, subject, html }) => {
+const sendEmail = async ({ to, subject, html, replyTo }) => {
   try {
     const client = getResendClient()
     const from = process.env.FROM_EMAIL
@@ -62,13 +62,29 @@ const sendEmail = async ({ to, subject, html }) => {
       return false
     }
 
-    const { error } = await client.emails.send({ from, to, subject, html })
+    const { error } = await client.emails.send({ from, to, subject, html, ...(replyTo ? { replyTo } : {}) })
     if (error) throw error
     return true
   } catch (error) {
     console.error('Email delivery failed:', error.message || error)
     return false
   }
+}
+
+const sendContactFormEmail = async ({ name, email, subject, message }) => {
+  const supportEmail = process.env.SUPPORT_EMAIL || 'nuriirko@gmail.com'
+  const title = `Contact form: ${subject}`
+  const body = `<p><strong>From:</strong> ${escapeHtml(name)} (${escapeHtml(email)})</p>
+    <p><strong>Subject:</strong> ${escapeHtml(subject)}</p>
+    <p><strong>Message:</strong></p>
+    <p style="white-space:pre-wrap;">${escapeHtml(message)}</p>`
+
+  return sendEmail({
+    to: supportEmail,
+    subject: title,
+    html: getEmailTemplate(title, body),
+    replyTo: email,
+  })
 }
 
 const formatCurrency = (amount, currency = 'ETB') => {
@@ -150,7 +166,8 @@ const sendLiveSessionConfirmedEmails = async (student, tutor, booking) => {
   }).format(new Date(booking.sessionDate))
   const sessionDetails = `<p><strong>Date:</strong> ${escapeHtml(date)}</p>
     <p><strong>Time:</strong> ${escapeHtml(booking.startTime)} - ${escapeHtml(booking.endTime)} (${escapeHtml(booking.timezone)})</p>
-    <p><strong>Duration:</strong> ${escapeHtml(booking.duration)} minutes</p>`
+    <p><strong>Duration:</strong> ${escapeHtml(booking.duration)} minutes</p>
+    <p>The session room opens 30 minutes before the scheduled start. Join from your live sessions dashboard.</p>`
   const trialNote = booking.isTrialSession
     ? '<p>This is a free 30-minute introductory session.</p>'
     : '<p>Your payment has been verified and the session is confirmed.</p>'
@@ -173,13 +190,13 @@ const sendLiveSessionConfirmedEmails = async (student, tutor, booking) => {
 
 // Message notifications intentionally include no message body: email inboxes can be shared
 // or forwarded, while the actual conversation remains behind authenticated platform access.
-const sendNewMessageEmail = async (recipient, sender, conversationSubject = '') => {
+const sendNewMessageEmail = async (recipient, sender, conversationSubject = '', recipientEmail = recipient.email) => {
   const subject = `New message from ${sender.name} on Barakah Academy`
   const body = `<p>Hello ${escapeHtml(recipient.name)},</p>
     <p>${escapeHtml(sender.name)} sent you a new message${conversationSubject ? ` about <strong>${escapeHtml(conversationSubject)}</strong>` : ''}.</p>
     <p><a href="${getFrontendUrl()}/messages" style="color:#15803d;font-weight:700;">Open your messages</a></p>`
 
-  return sendEmail({ to: recipient.email, subject, html: getEmailTemplate(subject, body) })
+  return sendEmail({ to: recipientEmail, subject, html: getEmailTemplate(subject, body) })
 }
 
 const sendPasswordResetEmail = async (user, resetToken) => {
@@ -231,6 +248,7 @@ const sendAdminAnnouncementEmail = async (recipients, subject, content) => {
 
 module.exports = {
   sendWelcomeEmail,
+  sendContactFormEmail,
   sendTeacherApprovalEmail,
   sendEnrollmentConfirmationEmail,
   sendPaymentVerifiedEmail,

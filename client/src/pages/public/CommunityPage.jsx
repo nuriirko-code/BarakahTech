@@ -18,6 +18,14 @@ const sessionTypes = {
 const journeySteps = ['brainstorm', 'analyze', 'learn', 'build', 'launch']
 const sessionHeaders = (token) => (token ? { Authorization: ['Bearer ', token].join('') } : {})
 
+const getLocalCalendarDayDifference = (dateValue) => {
+  const target = new Date(dateValue)
+  const now = new Date()
+  const targetDay = new Date(target.getFullYear(), target.getMonth(), target.getDate())
+  const currentDay = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  return Math.round((targetDay.getTime() - currentDay.getTime()) / 86_400_000)
+}
+
 const CommunityPage = () => {
   const { t, i18n } = useTranslation()
   const { token } = useAuth()
@@ -68,7 +76,7 @@ const CommunityPage = () => {
           const next = upcoming.find((session) => session.status === 'scheduled') || null
           setNextSession({
             session: next,
-            days: next ? Math.max(0, Math.ceil((new Date(next.startsAt).getTime() - Date.now()) / 86_400_000)) : null,
+            days: next ? Math.max(0, getLocalCalendarDayDifference(next.startsAt)) : null,
           })
           setStats({
             upcoming: upcoming.length,
@@ -138,7 +146,9 @@ const CommunityPage = () => {
                     {featuredSession
                       ? daysUntilNext === 0
                         ? t('community.nextSessionToday', { title: featuredSession.title })
-                        : t('community.nextSession', { title: featuredSession.title, days: daysUntilNext })
+                        : daysUntilNext === 1
+                          ? t('community.nextSessionTomorrow', { title: featuredSession.title })
+                          : t('community.nextSession', { title: featuredSession.title, days: daysUntilNext })
                       : t('community.noUpcoming')}
                   </p>
                 </div>

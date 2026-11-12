@@ -1,0 +1,242 @@
+{
+  "meta": {
+    "version": "Version {{version}}",
+    "updated": "Updated 11 November 2026",
+    "support": "For support, please use our",
+    "related": "Related policies"
+  },
+  "pages": {
+    "terms": {
+      "title": "Terms of Service",
+      "intro": "These Terms explain the rules for using Barakah Academy.",
+      "sections": [
+        {
+          "title": "Operator and eligibility",
+          "paragraphs": [
+            "Barakah Academy is an education initiative started by Nuri Irko in Ethiopia.",
+            "The service is initially intended for users in Ethiopia. Users must provide accurate account information and protect their sign-in credentials.",
+            "Users under 18 may use student features only with the parent or legal guardian declaration collected at signup. The platform currently records that declaration but does not independently verify it. Teacher and live-tutor applicants must be at least 18."
+          ]
+        },
+        {
+          "title": "How the service works",
+          "paragraphs": [
+            "The Academy provides course discovery, learning tools, tutor listings, bookings, messaging, and community sessions as available. Specific features can change, and availability may vary.",
+            "Course teachers and tutors are independent educators unless a separate written agreement says otherwise. The Academy reviews applications but cannot guarantee a particular learning outcome or uninterrupted availability.",
+            "Users must not misrepresent identity, qualifications, course content, prices, availability, or payment status."
+          ]
+        },
+        {
+          "title": "Bookings, payments, cancellations, and refunds",
+          "paragraphs": [
+            "Before paying, review the displayed provider, session length, price, currency, time, and cancellation terms. A booking is confirmed only when the platform shows it as confirmed.",
+            "Review cancellation and refund eligibility before booking or paying. Refund requests are reviewed based on the circumstances and applicable law.",
+            "If an educator cancels or does not attend, refund or rescheduling requests are reviewed based on the circumstances and applicable law.",
+            "Payment processing times, provider fees, currency conversion, and refund methods may vary."
+          ]
+        },
+        {
+          "title": "Acceptable use and safety",
+          "paragraphs": [
+            "Users must follow the Community Code of Conduct and the role-specific student or teacher guidelines.",
+            "Do not harass, threaten, discriminate against, exploit, impersonate, spam, or share another person’s private information. Do not use the platform to distribute unlawful, harmful, or infringing material.",
+            "Do not record, photograph, redistribute, or publish a live session or another person’s work without permission and any required guardian consent.",
+            "The Academy may investigate reports and restrict or suspend accounts for safety, fraud, payment abuse, or serious policy violations. Users may request a review of an account decision."
+          ]
+        },
+        {
+          "title": "Content, privacy, and service availability",
+          "paragraphs": [
+            "Users retain rights they have in material they create. They grant the Academy permission to host and display submitted material only as needed to provide and operate the service, subject to the Privacy Policy.",
+            "The Privacy Policy explains data handling. Do not submit sensitive personal information unless a form specifically requires it.",
+            "The service is provided as available. To the extent allowed by applicable law, the Academy does not promise uninterrupted access or a specific educational result."
+          ]
+        },
+        {
+          "title": "Complaints and applicable law",
+          "paragraphs": [
+            "These Terms are subject to mandatory rights under applicable law."
+          ]
+        }
+      ]
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "intro": "This Privacy Policy explains how Barakah Academy handles personal information when you use the service.",
+      "sections": [
+        {
+          "title": "Who is responsible",
+          "paragraphs": [
+            "Barakah Academy is an education initiative started by Nuri Irko in Ethiopia.",
+            "The service is initially intended for users in Ethiopia. Applicable privacy rights may depend on where you live."
+          ]
+        },
+        {
+          "title": "Information we collect",
+          "paragraphs": [
+            "Account data: name, email address, password hash, role, account status, date of birth, and, for minors, parent/guardian name and email plus the guardian declaration.",
+            "Learning and educator data: course activity, enrollment, progress, profiles, teaching applications, qualifications, availability, and communications sent through the service.",
+            "Booking and payment data: appointment details, payment references or proof users submit, verification status, and related support records. Do not store full card details in this application.",
+            "Live-session data: audio and video are transmitted to the configured live-session provider when you join a session. Check any notices shown for a session for information about recording.",
+            "Technical data: information needed to secure and operate the site may be processed by the hosting, database, email, analytics, and video-service providers configured for the service."
+          ]
+        },
+        {
+          "title": "Why and how long we use it",
+          "paragraphs": [
+            "Data is used to create accounts, deliver learning and live sessions, process bookings and payment verification, moderate the service, provide support, prevent abuse, and meet legal obligations.",
+            "We retain information for as long as needed to provide the service, meet legal obligations, resolve disputes, and protect the platform. Retention periods depend on the type of information.",
+            "Barakah Academy does not sell personal information."
+          ]
+        },
+        {
+          "title": "Sharing and international processing",
+          "paragraphs": [
+            "The current codebase uses MongoDB for application data, Resend when transactional email is configured, and LiveKit for live sessions. Information may be shared with educators and students as needed to deliver a course, booking, or community session; with configured hosting and service providers; and where required to protect users or comply with law.",
+            "Service providers may process information in Ethiopia or other countries, depending on the service configuration."
+          ]
+        },
+        {
+          "title": "Children, choices, and requests",
+          "paragraphs": [
+            "For a user under 18, the signup flow collects a parent or guardian contact and a consent declaration. This declaration is a self-attestation and is not independently verified.",
+            "Users may request access, correction, or deletion of personal information. Some information may need to be retained where required by law or to resolve disputes."
+          ]
+        },
+        {
+          "title": "Security and updates",
+          "paragraphs": [
+            "The app uses password hashing and authenticated access controls, but no online service can promise perfect security. Report suspected security concerns promptly.",
+            "We may update this Policy from time to time. The current version and date are shown on this page. Where required, we will request renewed consent."
+          ]
+        }
+      ]
+    },
+    "community-code": {
+      "title": "Community Code of Conduct",
+      "intro": "Every student, teacher, tutor, host, and administrator is expected to help make Barakah Academy respectful, safe, and focused on learning.",
+      "sections": [
+        {
+          "title": "Treat people with respect",
+          "paragraphs": [
+            "Use welcoming language. Listen without ridicule, insults, bullying, threats, discrimination, or unwanted personal comments.",
+            "Disagree with ideas respectfully. Do not target people based on identity, background, disability, religion, language, age, or experience."
+          ]
+        },
+        {
+          "title": "Protect privacy and safety",
+          "paragraphs": [
+            "Do not share another person’s contact details, private messages, identity documents, images, or personal story without permission.",
+            "Do not record, screenshot, livestream, or redistribute a class or community meeting without permission from everyone involved and any required guardian consent.",
+            "Keep conversations on-platform when possible. Never pressure a learner to move to private or unsupervised channels, share credentials, or make an off-platform payment.",
+            "Adults must maintain appropriate professional boundaries with minors. Do not ask minors to meet privately or communicate secretly."
+          ]
+        },
+        {
+          "title": "Participate constructively",
+          "paragraphs": [
+            "Stay on topic, allow others to contribute, respect session hosts, and do not spam, advertise repeatedly, or disrupt a live class.",
+            "Share only content you may lawfully use. Cite sources where appropriate and do not submit copied work as your own.",
+            "Use the report/contact route to raise concerns. Do not retaliate against someone for making a good-faith report."
+          ]
+        },
+        {
+          "title": "Reporting and response",
+          "paragraphs": [
+            "Report urgent safety concerns promptly. If someone may be in immediate danger, contact local emergency services or a trusted adult.",
+            "The Academy may review reports, preserve relevant information, restrict access, remove content, or suspend an account while assessing a concern."
+          ]
+        }
+      ]
+    },
+    "student-guidelines": {
+      "title": "Student Guidelines",
+      "intro": "A practical guide to using courses, tutoring, and community sessions. These are platform rules, not a guarantee of academic or professional results.",
+      "sections": [
+        {
+          "title": "1. Create your account safely",
+          "paragraphs": [
+            "Use an email address you control, choose a unique password, and keep it private.",
+            "If you are under 18, ask your parent or legal guardian to complete the guardian declaration. Do not enter their details or accept on their behalf.",
+            "Review the course or tutor profile, language, price, schedule, and requirements before enrolling or booking."
+          ]
+        },
+        {
+          "title": "2. Enroll or book",
+          "paragraphs": [
+            "Follow the checkout instructions and submit only the payment reference or proof requested by the platform.",
+            "Wait for the account page to show the enrollment or booking as active/confirmed before relying on it.",
+            "Raise a concern promptly if the displayed amount, currency, time, or payment state looks wrong. Never send a password, one-time code, or full bank-card number in a message."
+          ]
+        },
+        {
+          "title": "3. Attend and learn",
+          "paragraphs": [
+            "Join on time, test your microphone and connection, and choose a quiet place when possible.",
+            "Treat teachers and other students respectfully. Ask questions, participate, and submit your own work.",
+            "Do not record or share lessons or another learner’s information without permission."
+          ]
+        },
+        {
+          "title": "4. Changes, cancellations, and help",
+          "paragraphs": [
+            "Review cancellation and refund eligibility before booking or paying.",
+            "Use the platform’s available booking or support actions; notify the educator through approved channels if you cannot attend.",
+            "Report safety, conduct, access, or payment problems promptly."
+          ]
+        }
+      ]
+    },
+    "teacher-guidelines": {
+      "title": "Teacher and Tutor Guidelines",
+      "intro": "These educator standards apply to course teachers and live tutors using Barakah Academy.",
+      "sections": [
+        {
+          "title": "1. Apply honestly",
+          "paragraphs": [
+            "Applicants must be at least 18, provide accurate identity and qualification information, and submit only documents they are authorized to share.",
+            "The Academy reviews applications; approval is not guaranteed. Keep application information accurate and notify the Academy about material changes."
+          ]
+        },
+        {
+          "title": "2. Prepare quality learning",
+          "paragraphs": [
+            "Publish accurate course descriptions, level, language, requirements, pricing, and lesson content. Do not promise guaranteed grades, employment, income, or outcomes.",
+            "Use material you own, have permission to use, or may lawfully include. Respect student work and intellectual property.",
+            "Keep courses and teaching materials age-appropriate for the intended learners."
+          ]
+        },
+        {
+          "title": "3. Manage availability and sessions",
+          "paragraphs": [
+            "Keep availability, prices, and profile information current. Accept only sessions you can attend and prepare for.",
+            "Join on time, test your device, explain relevant technical issues, and communicate cancellations promptly through platform-supported channels.",
+            "Do not request or accept off-platform payment for a platform booking. Follow the published payment and cancellation rules."
+          ]
+        },
+        {
+          "title": "4. Maintain professional boundaries",
+          "paragraphs": [
+            "Treat all learners fairly and respectfully. Do not harass, discriminate, exploit, or request personal favors or sensitive information.",
+            "When working with minors, keep communication professional, transparent, and on approved platform channels. Do not arrange secret private contact.",
+            "Do not record, screenshot, or redistribute a student or live session without appropriate permission and any required guardian consent."
+          ]
+        },
+        {
+          "title": "5. Resolve issues responsibly",
+          "paragraphs": [
+            "Respond to learner questions and concerns in a reasonable time, give constructive feedback, and report safety concerns promptly.",
+            "Do not retaliate against students who complain or leave honest feedback. Raise disputes or suspected abuse promptly."
+          ]
+        },
+        {
+          "title": "6. Follow platform decisions",
+          "paragraphs": [
+            "Cooperate with reasonable application or safety reviews. The Academy may suspend access while investigating a serious concern, subject to applicable law and a fair review process.",
+            "Review the terms provided with your educator application for information about commission, payout timing, refund responsibilities, background checks, and disputes."
+          ]
+        }
+      ]
+    }
+  }
+}

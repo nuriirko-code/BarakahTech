@@ -4,6 +4,9 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
+import AccountPolicyFields from '../../components/legal/AccountPolicyFields'
+import { POLICY_VERSIONS } from '../../config/policyVersions'
+import { ageOnDate } from '../../utils/legalAge'
 
 const StudentRegister = () => {
   // Controlled inputs keep form values in React so validation and submission use
@@ -13,6 +16,12 @@ const StudentRegister = () => {
     email: '',
     password: '',
     confirmPassword: '',
+    dateOfBirth: '',
+    guardianName: '',
+    guardianEmail: '',
+    guardianConsent: false,
+    acceptedTerms: false,
+    acknowledgedPrivacy: false,
   })
   const [error, setError] = useState('')
   const [fieldErrors, setFieldErrors] = useState({})
@@ -28,12 +37,17 @@ const StudentRegister = () => {
     setFormData((currentData) => ({ ...currentData, [name]: value }))
   }
 
+  const handlePolicyChange = (field, value) => {
+    setFormData((currentData) => ({ ...currentData, [field]: value }))
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError('')
     setFieldErrors({})
 
-    const missingField = Object.keys(formData).find((field) => !formData[field].trim())
+    const requiredFields = ['name', 'email', 'password', 'confirmPassword', 'dateOfBirth']
+    const missingField = requiredFields.find((field) => !formData[field].trim())
     if (missingField) {
       setError(t('auth.fillAllFields'))
       setFieldErrors({ [missingField]: t('auth.required') })
@@ -52,6 +66,20 @@ const StudentRegister = () => {
       return
     }
 
+    const age = ageOnDate(formData.dateOfBirth)
+    if (age === null || age < 0 || age > 120) {
+      setError(t('auth.invalidDateOfBirth'))
+      return
+    }
+    if (!formData.acceptedTerms || !formData.acknowledgedPrivacy) {
+      setError(t('auth.acceptPoliciesToContinue'))
+      return
+    }
+    if (age < 18 && (!formData.guardianName.trim() || !formData.guardianEmail.trim() || !formData.guardianConsent)) {
+      setError(t('auth.guardianDeclarationRequired'))
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -63,6 +91,15 @@ const StudentRegister = () => {
         password: formData.password,
         // The page defines the role so users cannot choose another flow's role.
         role: 'student',
+        dateOfBirth: formData.dateOfBirth,
+        acceptedTermsVersion: POLICY_VERSIONS.terms,
+        acknowledgedPrivacyVersion: POLICY_VERSIONS.privacy,
+        acceptedCommunityCodeVersion: POLICY_VERSIONS.community,
+        guardianConsent: {
+          guardianName: formData.guardianName,
+          guardianEmail: formData.guardianEmail,
+          confirmed: formData.guardianConsent,
+        },
       })
       setSuccess(t('auth.accountCreated'))
       navigate('/login')
@@ -95,6 +132,7 @@ const StudentRegister = () => {
           <label className="block space-y-1"><span className="sr-only">{t('auth.email')}</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="email" value={formData.email} onChange={handleChange} placeholder={t('auth.email')} type="email" autoComplete="email" />{renderFieldError('email')}</label>
           <label className="block space-y-1"><span className="sr-only">{t('auth.password')}</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="password" value={formData.password} onChange={handleChange} placeholder={t('auth.password')} type="password" autoComplete="new-password" />{renderFieldError('password')}</label>
           <label className="block space-y-1"><span className="sr-only">{t('auth.confirmPassword')}</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder={t('auth.confirmPassword')} type="password" autoComplete="new-password" />{renderFieldError('confirmPassword')}</label>
+          <AccountPolicyFields values={formData} onChange={handlePolicyChange} />
           <button className="w-full rounded-xl bg-[#22C55E] p-3 font-bold text-white shadow-md shadow-[#22C55E]/25 transition hover:bg-[#16A34A] disabled:opacity-60" type="submit" disabled={loading}>
             {loading ? t('auth.creatingAccount') : t('auth.createAccount')}
           </button>

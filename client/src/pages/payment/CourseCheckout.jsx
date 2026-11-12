@@ -148,7 +148,7 @@ const CourseCheckout = () => {
   // Vite exposes VITE_ values to the browser, so these must be student-facing details, never secrets.
   const telebirrNumber = import.meta.env.VITE_TELEBIRR_NUMBER
   const cbeAccount = import.meta.env.VITE_CBE_ACCOUNT
-  const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL || 'support@barakah-academy.com'
+  const supportEmail = import.meta.env.VITE_SUPPORT_EMAIL || 'nuriirko@gmail.com'
   const paymentDestination = selectedMethod === 'telebirr'
     ? telebirrNumber || `Payment number is not configured. Contact ${supportEmail}.`
     : selectedMethod === 'cbe_birr'

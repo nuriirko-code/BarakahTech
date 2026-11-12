@@ -1,5 +1,4 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') })
-const crypto = require('crypto')
 const mongoose = require('mongoose')
 const CommunitySession = require('../models/CommunitySession')
 const User = require('../models/User')
@@ -10,10 +9,6 @@ const getDateAt = (daysFromNow, hour = 15) => {
   date.setHours(hour, 0, 0, 0)
   return date
 }
-
-const getMeetingUrl = () => (
-  `https://meet.jit.si/barakah-community-${crypto.randomBytes(6).toString('hex')}`
-)
 
 const seedCommunity = async () => {
   const mongoUri = process.env.MONGODB_URI || process.env.MONGO_URI
@@ -73,7 +68,6 @@ const seedCommunity = async () => {
         ],
       },
       createdBy: admin._id,
-      meetingUrl: getMeetingUrl(),
     },
     {
       title: '[Demo] Weekly Idea Lab: From local problem to first test',
@@ -95,7 +89,6 @@ const seedCommunity = async () => {
       status: 'scheduled',
       recommendedCategory: 'business',
       createdBy: admin._id,
-      meetingUrl: getMeetingUrl(),
     },
     {
       title: '[Demo] Build Your First Project',
@@ -115,7 +108,6 @@ const seedCommunity = async () => {
       status: 'scheduled',
       recommendedCategory: 'technology',
       createdBy: admin._id,
-      meetingUrl: getMeetingUrl(),
     },
   ]
 

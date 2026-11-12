@@ -3,6 +3,8 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const crypto = require('crypto')
 const { sendPasswordResetEmail, sendWelcomeEmail } = require('../utils/emailService')
+const policyVersions = require('../config/policyVersions')
+const { getAge } = require('../utils/legalAge')
 
 // A JWT is a signed snapshot of the account details middleware needs on every
 // protected request. Including isLiveTutor lets authorization decide whether a
@@ -23,13 +25,62 @@ const generateToken = (userId, role, isLiveTutor = false) => {
 
 const registerUser = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body
+    const {
+      name,
+      email,
+      password,
+      role,
+      dateOfBirth: submittedDateOfBirth,
+      acceptedTermsVersion,
+      acknowledgedPrivacyVersion,
+      acceptedCommunityCodeVersion,
+      guardianConsent,
+    } = req.body
 
     // 1. Check all fields exist
     if (!name || !email || !password) {
       return res.status(400).json({
         message: 'Please provide name, email and password'
       })
+    }
+
+    if (
+      acceptedTermsVersion !== policyVersions.terms ||
+      acknowledgedPrivacyVersion !== policyVersions.privacy ||
+      acceptedCommunityCodeVersion !== policyVersions.community
+    ) {
+      return res.status(400).json({ message: 'Please review and accept the current Terms of Service and Community Code and acknowledge the Privacy Policy.' })
+    }
+
+    const dateOfBirth = new Date(submittedDateOfBirth)
+    if (!submittedDateOfBirth || Number.isNaN(dateOfBirth.getTime()) || dateOfBirth >= new Date()) {
+      return res.status(400).json({ message: 'A valid date of birth is required.' })
+    }
+    const age = getAge(dateOfBirth)
+    if (age === null || age < 0 || age > 120) {
+      return res.status(400).json({ message: 'Enter a valid date of birth.' })
+    }
+
+    const safeRole = role === 'teacher' ? 'pending_teacher' : 'student'
+    if (safeRole === 'pending_teacher' && age < 18) {
+      return res.status(400).json({ message: 'Teacher and live tutor applicants must be at least 18 years old.' })
+    }
+
+    let normalizedGuardianConsent = null
+    if (age < 18) {
+      const guardianName = String(guardianConsent?.guardianName || '').trim()
+      const guardianEmail = String(guardianConsent?.guardianEmail || '').trim().toLowerCase()
+      const emailIsValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guardianEmail)
+      if (guardianConsent?.confirmed !== true || guardianName.length < 2 || !emailIsValid) {
+        return res.status(400).json({ message: 'A parent or legal guardian must provide their name and email and confirm the guardian declaration.' })
+      }
+      normalizedGuardianConsent = {
+        guardianName,
+        guardianEmail,
+        version: policyVersions.terms,
+        consentedAt: new Date(),
+        method: 'guardian_self_attestation',
+      }
     }
 
     // 2. Check if email already registered
@@ -43,9 +94,6 @@ const registerUser = async (req, res) => {
     // 3. Determine safe role
     // Never trust role from frontend directly
     // Only allow student or pending_teacher from registration
-    const safeRole =
-      role === 'teacher' ? 'pending_teacher' : 'student'
-
     // 4. Hash the password
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
@@ -56,6 +104,13 @@ const registerUser = async (req, res) => {
       email,
       password: hashedPassword,
       role: safeRole,
+      dateOfBirth,
+      policyAcceptances: [
+        { policy: 'terms', version: policyVersions.terms, acceptedAt: new Date() },
+        { policy: 'privacy', version: policyVersions.privacy, acceptedAt: new Date() },
+        { policy: 'community', version: policyVersions.community, acceptedAt: new Date() },
+      ],
+      guardianConsent: normalizedGuardianConsent || undefined,
     })
 
     void sendWelcomeEmail(user)
@@ -78,6 +133,7 @@ const registerUser = async (req, res) => {
         // login, rather than waiting for a full-page refresh and /me request.
         isLiveTutor: user.isLiveTutor,
         liveTutorStatus: user.liveTutorStatus,
+        dateOfBirth: user.dateOfBirth,
       }
     })
 
@@ -123,6 +179,7 @@ const loginUser = async (req, res) => {
         // They let the frontend select the appropriate live-tutoring menu.
         isLiveTutor: user.isLiveTutor,
         liveTutorStatus: user.liveTutorStatus,
+        dateOfBirth: user.dateOfBirth,
       }
     })
   } catch (error) {
@@ -138,7 +195,7 @@ const loginUser = async (req, res) => {
 // req.user.userId. The database lookup lets us return the user's current data.
 const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.userId).select('-password')
+    const user = await User.findById(req.user.userId).select('-password -guardianConsent')
 
     if (!user) {
       return res.status(404).json({

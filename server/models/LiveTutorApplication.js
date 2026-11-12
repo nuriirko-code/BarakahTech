@@ -157,6 +157,14 @@ const liveTutorApplicationSchema = new mongoose.Schema(
       type: Number,
       default: 24,
     },
+    teacherAgreementVersion: {
+      type: String,
+      required: true,
+    },
+    teacherAgreementAcceptedAt: {
+      type: Date,
+      required: true,
+    },
 
     // An application begins pending. Admin review moves it to approved or
     // rejected; approval later creates the corresponding public profile.

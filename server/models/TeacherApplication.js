@@ -149,6 +149,14 @@ const teacherApplicationSchema = new mongoose.Schema(
         message: 'Availability confirmation is required',
       },
     },
+    teacherAgreementVersion: {
+      type: String,
+      required: true,
+    },
+    teacherAgreementAcceptedAt: {
+      type: Date,
+      required: true,
+    },
 
     // Applications begin pending and move to approved or rejected after review.
     status: {

@@ -5,10 +5,9 @@ const Payment = require('../models/Payment')
 const User = require('../models/User')
 const { calculateFees, generatePaymentCode } = require('../utils/paymentUtils')
 const { sendLiveSessionConfirmedEmails } = require('../utils/emailService')
-const { createVideoRoom, isJitsiRoom, JITSI_DOMAIN } = require('../utils/videoRoomUtils')
-const isLiveTutorTestModeEnabled = require('../utils/liveTutorTestMode')
 
 const FREE_TRIAL_DURATION = 30
+const BOOKING_HORIZON_DAYS = 15
 const validLevels = ['beginner', 'intermediate', 'advanced']
 const validPaymentMethods = ['telebirr', 'cbe_birr', 'other_mobile', 'manual']
 
@@ -48,6 +47,12 @@ const getZonedDateParts = (date, timezone) => {
   return { date: `${values.year}-${values.month}-${values.day}`, weekday: values.weekday }
 }
 
+const addCalendarDays = (dateString, offset) => {
+  const [year, month, day] = dateString.split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1, day + offset))
+  return date.toISOString().slice(0, 10)
+}
+
 // Turns a tutor-local date and time into a UTC instant for advance-notice checks.
 const zonedDateTimeToUtc = (date, time, timezone) => {
   const [year, month, day] = date.split('-').map(Number)
@@ -62,46 +67,17 @@ const zonedDateTimeToUtc = (date, time, timezone) => {
   return new Date(utcGuess - offset)
 }
 
-// Persist an unguessable Jitsi room only for confirmed bookings. This avoids
-// exposing meeting links for abandoned or unapproved paid bookings.
-const addRoomToConfirmedBooking = async (booking) => {
-  if (booking.roomName && isJitsiRoom(booking.roomUrl)) return booking
-
-  const generatedRoom = createVideoRoom(booking._id)
-  const updatedBooking = await SessionBooking.findOneAndUpdate(
-    { _id: booking._id, roomUrl: booking.roomUrl, roomName: booking.roomName },
-    { $set: generatedRoom },
-    { new: true }
-  )
-
-  if (updatedBooking) {
-    booking.roomUrl = updatedBooking.roomUrl
-    booking.roomName = updatedBooking.roomName
-    return booking
-  }
-
-  // If both participants request the room during migration, only one update
-  // wins; the other uses that same persisted room instead of creating a split.
-  const persistedBooking = await SessionBooking.findById(booking._id)
-  if (!persistedBooking || !persistedBooking.roomName || !isJitsiRoom(persistedBooking.roomUrl)) {
-    throw new Error('Unable to persist the Jitsi room for this booking.')
-  }
-  booking.roomUrl = persistedBooking.roomUrl
-  booking.roomName = persistedBooking.roomName
-  return booking
-}
-
 // Produces the next bookable appointments from recurring tutor availability.
 const getUpcomingAppointments = async (availability, tutorId, duration) => {
   const now = Date.now()
   const noticeMilliseconds = Number(availability.advanceBookingHours || 0) * 60 * 60 * 1000
   const appointments = []
-  const seenDates = new Set()
+  const firstLocalDate = getZonedDateParts(new Date(now), availability.timezone).date
 
-  for (let offset = 0; offset < 35; offset += 1) {
-    const localDate = getZonedDateParts(new Date(now + (offset * 24 * 60 * 60 * 1000)), availability.timezone)
-    if (seenDates.has(localDate.date)) continue
-    seenDates.add(localDate.date)
+  for (let offset = 0; offset < BOOKING_HORIZON_DAYS; offset += 1) {
+    const date = addCalendarDays(firstLocalDate, offset)
+    const localDate = getZonedDateParts(new Date(`${date}T12:00:00.000Z`), 'UTC')
+    localDate.date = date
 
     const slot = availability.weeklySlots.find((item) => item.day === localDate.weekday && item.isActive !== false)
     if (!slot) continue
@@ -186,15 +162,13 @@ const getBookingOffer = async (req, res) => {
     const tutorProfile = await LiveTutorProfile.findById(req.params.tutorProfileId)
     if (!tutorProfile) return res.status(404).json({ message: 'Tutor profile not found.' })
 
-    const isAnytimeTestMode = isLiveTutorTestModeEnabled()
-    const savedAvailability = await TutorAvailability.findOne({ tutor: tutorProfile.user })
-    if ((!savedAvailability || !savedAvailability.isAcceptingBookings) && !isAnytimeTestMode) {
+    const savedAvailability = await TutorAvailability.findOne({
+      tutor: tutorProfile.user,
+      isTestSchedule: { $ne: true },
+    })
+    if (!savedAvailability || !savedAvailability.isAcceptingBookings) {
       return res.status(400).json({ message: 'This tutor is not accepting bookings at the moment.' })
     }
-    if (savedAvailability?.isTestSchedule && process.env.NODE_ENV === 'production') {
-      return res.status(400).json({ message: 'This tutor’s testing schedule is disabled in production.' })
-    }
-    const availability = savedAvailability || { timezone: 'UTC' }
 
     const trialAlreadyUsed = await hasUsedFreeTrial(getCurrentUserId(req), tutorProfile.user)
     const paidOffer = getPaidOffer(tutorProfile)
@@ -202,15 +176,13 @@ const getBookingOffer = async (req, res) => {
     const offer = isTrialEligible
       ? { label: 'Free introductory session', duration: FREE_TRIAL_DURATION, price: 0, currency: paidOffer.currency }
       : { label: 'Paid session', ...paidOffer }
-    const appointments = isAnytimeTestMode
-      ? []
-      : await getUpcomingAppointments(availability, tutorProfile.user, offer.duration)
+    const appointments = await getUpcomingAppointments(savedAvailability, tutorProfile.user, offer.duration)
 
     return res.status(200).json({
       isTrialEligible,
-      isAnytimeTestMode,
       offer,
-      timezone: availability.timezone,
+      timezone: savedAvailability.timezone,
+      weeklySlots: savedAvailability.weeklySlots.filter((slot) => slot.isActive !== false),
       appointments,
     })
   } catch (error) {
@@ -226,7 +198,6 @@ const createBooking = async (req, res) => {
     const studentId = getCurrentUserId(req)
     const { tutorProfileId } = req.params
     const { sessionDate, startTime, studentGoals, studentLevel } = req.body
-    const isAnytimeTestMode = isLiveTutorTestModeEnabled()
     if (studentLevel && !validLevels.includes(studentLevel)) {
       return res.status(400).json({ message: 'Choose a valid current level.' })
     }
@@ -235,102 +206,77 @@ const createBooking = async (req, res) => {
     if (!tutorProfile) return res.status(404).json({ message: 'Tutor profile not found.' })
     if (String(tutorProfile.user) === String(studentId)) return res.status(400).json({ message: 'You cannot book a session with yourself.' })
 
-    const savedAvailability = await TutorAvailability.findOne({ tutor: tutorProfile.user })
-    if ((!savedAvailability || !savedAvailability.isAcceptingBookings) && !isAnytimeTestMode) {
+    const savedAvailability = await TutorAvailability.findOne({
+      tutor: tutorProfile.user,
+      isTestSchedule: { $ne: true },
+    })
+    if (!savedAvailability || !savedAvailability.isAcceptingBookings) {
       return res.status(400).json({ message: 'This tutor is not accepting bookings at the moment.' })
     }
-    if (savedAvailability?.isTestSchedule && process.env.NODE_ENV === 'production') {
-      return res.status(400).json({ message: 'This tutor’s testing schedule is disabled in production.' })
-    }
-    const availability = savedAvailability || { timezone: 'UTC' }
 
-    let bookedSessionDate = sessionDate
-    let bookedStartTime = startTime
-    let date
+    const availability = savedAvailability
+    const date = new Date(`${sessionDate}T00:00:00.000Z`)
+    if (!sessionDate || Number.isNaN(date.getTime())) {
+      return res.status(400).json({ message: 'Choose a published appointment date.' })
+    }
+    const bookedSessionDate = sessionDate
+    const bookedStartTime = startTime
     let sessionStart
-
-    if (isAnytimeTestMode) {
-      const now = new Date()
-      const localDate = getZonedDateParts(now, availability.timezone || 'UTC')
-      const localTimeParts = new Intl.DateTimeFormat('en-GB', {
-        timeZone: availability.timezone || 'UTC',
-        hour: '2-digit',
-        minute: '2-digit',
-        hourCycle: 'h23',
-      }).formatToParts(now)
-      const localTime = Object.fromEntries(
-        localTimeParts
-          .filter((part) => part.type !== 'literal')
-          .map((part) => [part.type, part.value])
-      )
-      bookedSessionDate = localDate.date
-      bookedStartTime = `${localTime.hour}:${localTime.minute}`
-      date = new Date(`${bookedSessionDate}T00:00:00.000Z`)
-      sessionStart = now
-    } else {
-      date = new Date(`${sessionDate}T00:00:00.000Z`)
-      if (!sessionDate || Number.isNaN(date.getTime())) {
-        return res.status(400).json({ message: 'Choose a published appointment date.' })
-      }
-    }
 
     const isTrialSession = !(await hasUsedFreeTrial(studentId, tutorProfile.user))
     const paidOffer = getPaidOffer(tutorProfile)
     const duration = isTrialSession ? FREE_TRIAL_DURATION : paidOffer.duration
     const price = isTrialSession ? 0 : paidOffer.price
-    const daySlot = isAnytimeTestMode
-      ? null
-      : availability.weeklySlots.find((slot) => slot.day === bookingDayName(date) && slot.isActive !== false)
-    if (!isAnytimeTestMode && !daySlot) {
+    const daySlot = availability.weeklySlots.find((slot) => slot.day === bookingDayName(date) && slot.isActive !== false)
+    if (!daySlot) {
       return res.status(400).json({ message: 'Choose a published appointment date.' })
     }
 
     const startMinutes = toMinutes(bookedStartTime)
-    const endMinutes = startMinutes + duration
-
-    if (startMinutes === null || (!isAnytimeTestMode && startMinutes < toMinutes(daySlot.startTime))) {
+    if (startMinutes === null) {
       return res.status(400).json({ message: 'Choose a published appointment time.' })
     }
-    if (!isAnytimeTestMode && endMinutes > (24 * 60)) {
+    const endMinutes = startMinutes + duration
+
+    if (startMinutes < toMinutes(daySlot.startTime)) {
+      return res.status(400).json({ message: 'Choose a published appointment time.' })
+    }
+    if (endMinutes > (24 * 60)) {
       return res.status(400).json({ message: 'This session would end after midnight.' })
     }
 
-    if (!isAnytimeTestMode && endMinutes > toMinutes(daySlot.endTime)) {
+    if (endMinutes > toMinutes(daySlot.endTime)) {
       return res.status(400).json({ message: 'Choose a time inside the tutor’s available hours.' })
     }
 
-    if (!isAnytimeTestMode) {
-      const noticeTime = new Date(Date.now() + (Number(availability.advanceBookingHours || 0) * 60 * 60 * 1000))
-      const sessionStartForNotice = zonedDateTimeToUtc(bookedSessionDate, bookedStartTime, availability.timezone)
-      if (sessionStartForNotice <= noticeTime) {
-        return res.status(400).json({ message: `Sessions must be booked at least ${availability.advanceBookingHours} hours ahead.` })
-      }
+    const noticeTime = new Date(Date.now() + (Number(availability.advanceBookingHours || 0) * 60 * 60 * 1000))
+    const sessionStartForNotice = zonedDateTimeToUtc(bookedSessionDate, bookedStartTime, availability.timezone)
+    if (sessionStartForNotice <= noticeTime) {
+      return res.status(400).json({ message: `Sessions must be booked at least ${availability.advanceBookingHours} hours ahead.` })
     }
 
-    if (!isAnytimeTestMode) {
-      const { start: dateStart, end: dateEnd } = dateBounds(date)
-      const possibleConflicts = await SessionBooking.find({
-        tutor: tutorProfile.user,
-        sessionDate: { $gte: dateStart, $lt: dateEnd },
-        status: { $nin: ['cancelled'] },
-      }).select('startTime endTime status')
-      const bufferMinutes = Number(availability.bufferMinutes || 0)
-      const hasConflict = possibleConflicts.some((booking) => (
-        startMinutes < toMinutes(booking.endTime) + bufferMinutes
-        && endMinutes + bufferMinutes > toMinutes(booking.startTime)
-      ))
-      if (hasConflict) return res.status(409).json({ message: 'This time slot is already booked. Please choose a different time.' })
+    const { start: dateStart, end: dateEnd } = dateBounds(date)
+    const possibleConflicts = await SessionBooking.find({
+      tutor: tutorProfile.user,
+      sessionDate: { $gte: dateStart, $lt: dateEnd },
+      status: { $nin: ['cancelled'] },
+    }).select('startTime endTime status')
+    const bufferMinutes = Number(availability.bufferMinutes || 0)
+    const hasConflict = possibleConflicts.some((booking) => (
+      startMinutes < toMinutes(booking.endTime) + bufferMinutes
+      && endMinutes + bufferMinutes > toMinutes(booking.startTime)
+    ))
+    if (hasConflict) return res.status(409).json({ message: 'This time slot is already booked. Please choose a different time.' })
 
-      const dailyBookings = possibleConflicts.filter((booking) => booking.status !== 'cancelled').length
-      if (dailyBookings >= availability.maxDailySession) {
-        return res.status(409).json({ message: 'This tutor has reached their session limit for that day.' })
-      }
+    const dailyBookings = possibleConflicts.filter((booking) => booking.status !== 'cancelled').length
+    if (dailyBookings >= availability.maxDailySession) {
+      return res.status(409).json({ message: 'This tutor has reached their session limit for that day.' })
+    }
 
-      sessionStart = zonedDateTimeToUtc(bookedSessionDate, bookedStartTime, availability.timezone)
-      const matchingAppointment = await getUpcomingAppointments(availability, tutorProfile.user, duration)
-      if (!matchingAppointment.some((appointment) => appointment.date === bookedSessionDate && appointment.startTime === bookedStartTime)) {
-        return res.status(400).json({ message: 'That appointment is no longer available. Please choose another time.' })
-      }
+    sessionStart = zonedDateTimeToUtc(bookedSessionDate, bookedStartTime, availability.timezone)
+    const matchingAppointment = await getUpcomingAppointments(availability, tutorProfile.user, duration)
+    if (!matchingAppointment.some((appointment) => appointment.date === bookedSessionDate && appointment.startTime === bookedStartTime)) {
+      return res.status(400).json({ message: 'That appointment is no longer available. Please choose another time.' })
     }
 
     const commission = Number(process.env.PLATFORM_COMMISSION_PERCENTAGE || 20)
@@ -352,23 +298,13 @@ const createBooking = async (req, res) => {
       currency: paidOffer.currency,
       platformFee: isTrialSession ? 0 : fees.platformFeeAmount,
       tutorEarning: isTrialSession ? 0 : fees.teacherEarningAmount,
-      paymentStatus: isTrialSession ? 'not_required' : 'pending',
+      paymentStatus: isTrialSession ? 'paid' : 'pending',
       paymentMethod: isTrialSession ? 'free_trial' : 'manual',
       status: isTrialSession ? 'confirmed' : 'pending_payment',
       isTrialSession,
-      isAnytimeTest: isAnytimeTestMode,
     })
 
     if (isTrialSession) {
-      try {
-        await addRoomToConfirmedBooking(booking)
-        await booking.save()
-      } catch (roomError) {
-        // A room setup problem must not discard a valid free booking.
-        // The room can be created again when a participant joins.
-        console.error('Free-trial room creation failed:', roomError.message)
-      }
-
       const [student, tutor] = await Promise.all([
         User.findById(studentId).select('name email'),
         User.findById(tutorProfile.user).select('name email'),
@@ -459,14 +395,6 @@ const adminConfirmBookingPayment = async (req, res) => {
       payment.status = 'completed'
       payment.verifiedBy = getCurrentUserId(req)
       payment.verifiedAt = new Date()
-
-      try {
-        await addRoomToConfirmedBooking(booking)
-      } catch (roomError) {
-        // Payment confirmation remains successful if room setup fails; losing
-        // a verified booking would be worse than retrying room creation.
-        console.error('Paid-session room creation failed:', roomError.message)
-      }
       await Promise.all([booking.save(), payment.save()])
 
       const [student, tutor] = await Promise.all([
@@ -514,44 +442,13 @@ const getSessionBooking = async (req, res) => {
   }
 }
 
-// The room URL is not an authentication credential: only the booked student
-// and tutor can retrieve it through this authenticated endpoint.
-const getSessionToken = async (req, res) => {
-  try {
-    const booking = await SessionBooking.findById(req.params.bookingId)
-    if (!booking) return res.status(404).json({ message: 'Session booking not found.' })
-
-    const currentUserId = String(getCurrentUserId(req))
-    const isTutor = currentUserId === String(booking.tutor)
-    const isStudent = currentUserId === String(booking.student)
-    if (!isStudent && !isTutor) return res.status(403).json({ message: 'You cannot join this session.' })
-    if (booking.status !== 'confirmed') return res.status(400).json({ message: 'This session has not been confirmed yet.' })
-
-    // Replace old Daily links and repair confirmed bookings without a room.
-    await addRoomToConfirmedBooking(booking)
-    await booking.save()
-    const participant = await User.findById(currentUserId).select('name')
-
-    return res.status(200).json({
-      roomUrl: booking.roomUrl,
-      roomName: booking.roomName,
-      jitsiDomain: JITSI_DOMAIN,
-      participantName: participant?.name || (isTutor ? 'Tutor' : 'Student'),
-      role: isTutor ? 'tutor' : 'student',
-    })
-  } catch (error) {
-    console.error('Create session token error:', error)
-    return res.status(500).json({ message: 'Unable to prepare the session room.' })
-  }
-}
-
 const getMyBookingsAsStudent = async (req, res) => {
   try {
     const bookings = await SessionBooking.find({ student: getCurrentUserId(req) })
       .populate('tutor', 'name')
       .populate('tutorProfile', 'bio subjects sessionDuration sessionPrice currency profilePhoto')
       .sort({ sessionDate: -1 })
-    return res.status(200).json({ bookings, isAnytimeTestMode: isLiveTutorTestModeEnabled() })
+    return res.status(200).json({ bookings })
   } catch (error) {
     console.error('Get student bookings error:', error)
     return res.status(500).json({ message: 'Server error while fetching sessions.' })
@@ -568,7 +465,7 @@ const getMyBookingsAsTutor = async (req, res) => {
     const bookings = await SessionBooking.find(bookingFilter)
       .populate('student', 'name')
       .sort({ sessionDate: 1, startTime: 1 })
-    return res.status(200).json({ bookings, isAnytimeTestMode: isLiveTutorTestModeEnabled() })
+    return res.status(200).json({ bookings })
   } catch (error) {
     console.error('Get tutor bookings error:', error)
     return res.status(500).json({ message: 'Server error while fetching sessions.' })
@@ -618,6 +515,5 @@ module.exports = {
   getMyBookingsAsStudent,
   getMyBookingsAsTutor,
   getSessionBooking,
-  getSessionToken,
   cancelBooking,
 }

@@ -2,12 +2,14 @@ const Payment = require('../models/Payment')
 const Enrollment = require('../models/Enrollment')
 const Course = require('../models/Course')
 const EarningsLedger = require('../models/EarningsLedger')
+const SessionBooking = require('../models/SessionBooking')
 const User = require('../models/User')
 const { calculateFees, calculateDiscountedPrice, generatePaymentCode } = require('../utils/paymentUtils')
 const {
   sendEnrollmentConfirmationEmail,
   sendPaymentReceivedNotificationEmail,
   sendPaymentVerifiedEmail,
+  sendLiveSessionConfirmedEmails,
 } = require('../utils/emailService')
 
 // Auth tokens in this app store the account identifier as userId. Accept id as a fallback
@@ -169,6 +171,48 @@ const adminVerifyPayment = async (req, res) => {
       return res.status(400).json({ message: 'Only submitted pending payments can be verified' })
     }
 
+    if (payment.type === 'session_booking') {
+      const booking = await SessionBooking.findById(payment.booking)
+      if (!booking) {
+        return res.status(404).json({ message: 'Session booking not found for this payment' })
+      }
+      if (booking.status !== 'pending_payment' || booking.paymentStatus !== 'pending') {
+        return res.status(409).json({ message: 'This session booking is no longer awaiting payment verification' })
+      }
+
+      payment.verifiedBy = getCurrentUserId(req)
+      payment.verifiedAt = new Date()
+      payment.adminNote = String(adminNote || '').trim()
+
+      if (action === 'reject') {
+        payment.status = 'failed'
+        booking.status = 'cancelled'
+        booking.cancelledBy = 'admin'
+        booking.cancelledAt = new Date()
+        await Promise.all([booking.save(), payment.save()])
+        return res.status(200).json({ message: 'Session booking payment rejected.', booking, payment })
+      }
+
+      booking.status = 'confirmed'
+      booking.paymentStatus = 'paid'
+      payment.status = 'completed'
+      await Promise.all([booking.save(), payment.save()])
+
+      const [student, tutor] = await Promise.all([
+        User.findById(booking.student).select('name email'),
+        User.findById(booking.tutor).select('name email'),
+      ])
+      sendLiveSessionConfirmedEmails(student, tutor, booking).catch((error) => {
+        console.error('Paid booking confirmation email error:', error)
+      })
+
+      return res.status(200).json({ message: 'Session booking payment approved.', booking, payment })
+    }
+
+    if (payment.type !== 'course_purchase') {
+      return res.status(400).json({ message: 'This payment type cannot be verified from the admin payment queue' })
+    }
+
     // Admin review is the trust boundary: a student can submit a transaction ID, but only
     // staff comparing it with actual account activity can grant course access.
     payment.verifiedBy = getCurrentUserId(req)
@@ -260,6 +304,8 @@ const getPendingPayments = async (req, res) => {
     })
       .populate('payer', 'name email')
       .populate('course', 'title price currency')
+      .populate('booking', 'sessionDate startAt startTime tutor')
+      .populate('booking.tutor', 'name')
       .sort({ createdAt: 1 })
 
     return res.status(200).json({ payments, count: payments.length })

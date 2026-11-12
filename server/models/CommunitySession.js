@@ -30,21 +30,31 @@ const communitySessionSchema = new mongoose.Schema(
     description: { type: String, required: true, trim: true },
     type: {
       type: String,
-      enum: ['idea_lab', 'build_project', 'mentor_review', 'showcase'],
+      enum: ['idea_lab', 'build_project', 'mentor_review', 'showcase', 'course_mentorship'],
       default: 'idea_lab',
+    },
+    // Mentorship reuses the same seat limit, atomic registration, and live room
+    // as community sessions, with only course ownership and host fields added.
+    course: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Course',
+      default: null,
+    },
+    hostUser: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
     },
     startsAt: { type: Date, required: true, index: true },
     durationMinutes: { type: Number, default: 60, min: 1 },
-    capacity: { type: Number, default: 10, min: 2, max: 50 },
+    capacity: { type: Number, default: 10, min: 1, max: 50 },
     facilitatorName: { type: String, required: true, trim: true },
     guestMentor: {
       name: { type: String, trim: true },
       title: { type: String, trim: true },
     },
     agenda: { type: [agendaItemSchema], default: [] },
-    // Keep the room URL in the database, but expose it only through the
-    // authenticated join endpoint after registration and the opening time.
-    meetingUrl: { type: String, required: true, select: false },
+    meetingUrl: { type: String, default: '', select: false },
     // scheduled: announced; live: in progress; completed: outcomes available;
     // cancelled: will not take place. This lifecycle controls registration/join.
     status: {
@@ -60,7 +70,7 @@ const communitySessionSchema = new mongoose.Schema(
     },
     recommendedCategory: {
       type: String,
-      enum: ['technology', 'languages', 'sciences', 'business', 'leadership'],
+      trim: true,
       default: 'business',
     },
     outcomes: {

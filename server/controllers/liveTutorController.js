@@ -4,6 +4,8 @@ const SessionFeedback = require('../models/SessionFeedback')
 const TutorAvailability = require('../models/TutorAvailability')
 const SessionBooking = require('../models/SessionBooking')
 const User = require('../models/User')
+const policyVersions = require('../config/policyVersions')
+const { isAdult } = require('../utils/legalAge')
 const supportedCategories = ['technology', 'languages', 'sciences', 'business', 'leadership']
 const supportedLevels = ['beginner', 'intermediate', 'advanced', 'all']
 const supportedCurrencies = ['USD', 'EUR', 'GBP', 'ETB', 'CAD', 'AUD', 'SAR', 'AED']
@@ -19,9 +21,6 @@ const toMinutes = (time) => {
 const getTutorAvailabilityStatus = async (profile, availability) => {
   const unavailable = { state: 'unknown', presenceAvailable: false, tutorPresent: false }
   if (!availability || !availability.isAcceptingBookings) {
-    return { state: 'offline', presenceAvailable: false, tutorPresent: false }
-  }
-  if (availability.isTestSchedule && process.env.NODE_ENV === 'production') {
     return { state: 'offline', presenceAvailable: false, tutorPresent: false }
   }
 
@@ -107,7 +106,25 @@ const submitLiveTutorApplication = async (req, res) => {
       timezone,
       minimumSessionsPerWeek,
       advanceBookingHours,
+      acceptedTermsVersion,
+      acknowledgedPrivacyVersion,
+      acceptedCommunityCodeVersion,
+      teacherAgreementVersion,
+      dateOfBirth,
     } = req.body
+
+    const applicantDateOfBirth = dateOfBirth || user.dateOfBirth
+    if (!isAdult(applicantDateOfBirth)) {
+      return res.status(403).json({ message: 'Live tutor applicants must be at least 18 years old.' })
+    }
+    if (
+      acceptedTermsVersion !== policyVersions.terms ||
+      acknowledgedPrivacyVersion !== policyVersions.privacy ||
+      acceptedCommunityCodeVersion !== policyVersions.community ||
+      teacherAgreementVersion !== policyVersions.teacher
+    ) {
+      return res.status(400).json({ message: 'Please accept the current account and teacher policies before applying.' })
+    }
 
     // Array fields need a non-empty check rather than a simple truthiness
     // check because an empty array is truthy in JavaScript.
@@ -191,11 +208,19 @@ const submitLiveTutorApplication = async (req, res) => {
       timezone,
       minimumSessionsPerWeek,
       advanceBookingHours,
+      teacherAgreementVersion,
+      teacherAgreementAcceptedAt: new Date(),
     })
 
     // The User owns the photo because it is reused in navigation, messaging,
     // and the approved public profile. The application remains private.
     user.profilePhoto = profilePhoto
+    user.dateOfBirth = new Date(applicantDateOfBirth)
+    user.policyAcceptances.push(
+      { policy: 'terms', version: policyVersions.terms, acceptedAt: new Date() },
+      { policy: 'privacy', version: policyVersions.privacy, acceptedAt: new Date() },
+      { policy: 'community', version: policyVersions.community, acceptedAt: new Date() },
+    )
 
     // Storing the status on User gives the frontend a quick, reliable account
     // state without first fetching the full private application document.
@@ -386,7 +411,10 @@ const getApprovedTutors = async (req, res) => {
       .lean()
 
     const tutorIds = profiles.map((profile) => profile.user?._id || profile.user).filter(Boolean)
-    const availabilityRecords = await TutorAvailability.find({ tutor: { $in: tutorIds } })
+    const availabilityRecords = await TutorAvailability.find({
+      tutor: { $in: tutorIds },
+      isTestSchedule: { $ne: true },
+    })
       .select('tutor isAcceptingBookings')
       .lean()
     const availabilityByTutor = new Map(availabilityRecords.map((record) => [String(record.tutor), record.isAcceptingBookings]))
@@ -413,10 +441,10 @@ const getTutorPublicProfile = async (req, res) => {
 
     if (!profile) return res.status(404).json({ message: 'Tutor profile not found' })
 
-    let availability = await TutorAvailability.findOne({ tutor: profile.user?._id || profile.user }).lean()
-    if (availability?.isTestSchedule && process.env.NODE_ENV === 'production') {
-      availability = null
-    }
+    const availability = await TutorAvailability.findOne({
+      tutor: profile.user?._id || profile.user,
+      isTestSchedule: { $ne: true },
+    }).lean()
     const liveStatus = await getTutorAvailabilityStatus(profile, availability)
     return res.status(200).json({ profile, availability, liveStatus })
   } catch (error) {

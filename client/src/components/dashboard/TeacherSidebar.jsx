@@ -8,6 +8,7 @@ const navigationItems = [
   // `end` ensures Overview is active only at the exact dashboard root URL.
   { to: '/dashboard/teacher', label: 'overview', icon: 'fas fa-chart-pie', end: true },
   { to: '/dashboard/teacher/courses', label: 'myCourses', icon: 'fas fa-book-open' },
+  { to: '/dashboard/teacher/sessions', label: 'weeklyMentorship', icon: 'fas fa-calendar-check' },
   { to: '/messages', label: 'messages', icon: 'fas fa-comments' },
   { to: '/dashboard/teacher/profile', label: 'myProfile', icon: 'fas fa-user' },
 ]
@@ -142,7 +143,7 @@ const TeacherSidebar = ({ onClose = () => {} }) => {
                     <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm ${isActive ? 'bg-[#22C55E] text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'}`} aria-hidden="true">
                       <i className="fas fa-video" />
                     </span>
-                    <span className="truncate">{t('sidebar.liveSessions')}</span>
+                    <span className="truncate">{t('sidebar.liveTutoringSessions')}</span>
                     {isActive && <i className="fas fa-chevron-right ml-auto text-[10px] text-[#22C55E]" aria-hidden="true" />}
                   </>
                 )}
@@ -217,10 +218,10 @@ const TeacherSidebar = ({ onClose = () => {} }) => {
             <Avatar name={user?.name || 'Teacher'} imageUrl={user?.profilePhoto} size="md" />
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-900">
-                {user?.name || t('auth.teacher')}
+                {user?.name || t('auth.teacherRole')}
               </p>
               <p className="mt-0.5 inline-block rounded-full bg-[#F0FDF4] px-2 py-0.5 text-[11px] font-semibold capitalize text-[#16A34A] ring-1 ring-[#22C55E]/20">
-                {user?.isLiveTutor && user?.role !== 'teacher' ? t('sidebar.liveTutor') : (user?.role === 'teacher' ? t('auth.teacher') : user?.role || t('auth.teacher'))}
+                {user?.isLiveTutor && user?.role !== 'teacher' ? t('sidebar.liveTutor') : (user?.role === 'teacher' ? t('auth.teacherRole') : user?.role || t('auth.teacherRole'))}
               </p>
             </div>
           </div>

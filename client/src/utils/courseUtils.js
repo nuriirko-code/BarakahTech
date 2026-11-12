@@ -40,3 +40,8 @@ export const getCategoryEmoji = (category) => {
 export const getCategoryLabel = (category, t) => (
   t(`categories.${category}`, { defaultValue: category })
 )
+
+export const getSubjectLabel = (subject, t) => {
+  const key = subject.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')
+  return t(`auth.teacher.subjectLabels.${key}`, { defaultValue: subject })
+}

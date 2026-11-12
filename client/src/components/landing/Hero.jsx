@@ -102,7 +102,7 @@ const Hero = () => {
       if (displayedHeading.length < slide.heading.length) {
         typewriterRef.current = window.setTimeout(() => {
           setDisplayedHeading(slide.heading.substring(0, displayedHeading.length + 1))
-        }, 90)
+        }, 115)
       } else {
         typewriterRef.current = window.setTimeout(() => {
           setPhase('typing-sub')
@@ -117,7 +117,7 @@ const Hero = () => {
       if (displayedSub.length < subText.length) {
         typewriterRef.current = window.setTimeout(() => {
           setDisplayedSub(subText.substring(0, displayedSub.length + 1))
-        }, 60)
+        }, 80)
       } else if (currentSubIndex < slide.subLines.length - 1) {
         typewriterRef.current = window.setTimeout(() => {
           setCurrentSubIndex((previous) => previous + 1)
@@ -132,7 +132,7 @@ const Hero = () => {
       if (displayedSub.length > 0) {
         typewriterRef.current = window.setTimeout(() => {
           setDisplayedSub((previous) => previous.substring(0, previous.length - 1))
-        }, 45)
+        }, 70)
       } else {
         typewriterRef.current = window.setTimeout(() => setPhase('deleting-heading'), 0)
       }
@@ -142,7 +142,7 @@ const Hero = () => {
       if (displayedHeading.length > 0) {
         typewriterRef.current = window.setTimeout(() => {
           setDisplayedHeading((previous) => previous.substring(0, previous.length - 1))
-        }, 50)
+        }, 75)
       } else {
         typewriterRef.current = window.setTimeout(() => {
           setNextSlide((currentSlide + 1) % slides.length)
@@ -191,11 +191,11 @@ const Hero = () => {
               {t('hero.badge')}
             </span>
 
-            <h1 className="mt-7 min-h-[3.4em] max-w-2xl text-4xl font-black leading-tight text-white sm:text-5xl lg:text-6xl">
+            <h1 className="mt-7 min-h-[2.5em] max-w-2xl text-4xl font-black leading-tight text-white sm:text-5xl lg:text-6xl">
               {displayedHeading}
               {(phase === 'typing-heading' || phase === 'deleting-heading') && <span className="typewriter-cursor" aria-hidden="true" />}
             </h1>
-            <div className="mt-5 min-h-[5rem] max-w-xl text-lg leading-8 text-violet-100 sm:text-xl">
+            <div className="mt-5 min-h-[8rem] max-w-xl text-lg leading-8 text-violet-100 sm:text-xl">
               {displayedSub}
               {(phase === 'typing-sub' || phase === 'deleting-sub') && <span className="typewriter-cursor" aria-hidden="true" />}
             </div>

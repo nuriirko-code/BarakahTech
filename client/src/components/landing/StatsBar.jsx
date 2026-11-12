@@ -25,7 +25,7 @@ const StatCounter = ({ item, value, t, language }) => {
   )
 }
 
-const StatsBar = ({ stats }) => {
+ const StatsBar = ({ stats }) => {
   const { t, i18n } = useTranslation()
   return (
     <section className="px-6 py-16" style={{ backgroundColor: "#0a2416" }}>

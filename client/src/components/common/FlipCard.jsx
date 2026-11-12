@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 const colorClasses = {
   emerald: {
@@ -33,6 +34,7 @@ const colorClasses = {
 
 const FlipCard = ({ icon, title, summary, details, color = 'emerald', axis = 'y' }) => {
   const [isFlipped, setIsFlipped] = useState(false)
+  const { t } = useTranslation()
   const rotation = axis === 'x' ? 'rotateX(180deg)' : 'rotateY(180deg)'
   const theme = colorClasses[color] || colorClasses.emerald
 
@@ -58,7 +60,7 @@ const FlipCard = ({ icon, title, summary, details, color = 'emerald', axis = 'y'
           <span className="mt-6 text-xl font-extrabold text-slate-900">{title}</span>
           <span className="mt-3 flex-1 text-sm leading-6 text-slate-600">{summary}</span>
           <span className={`mt-4 inline-flex items-center gap-2 text-sm font-bold ${theme.action}`}>
-            Tap to explore <i className="fas fa-rotate text-xs" aria-hidden="true" />
+            {t('common.tapToExplore')} <i className="fas fa-rotate text-xs" aria-hidden="true" />
           </span>
         </span>
         <span
@@ -69,7 +71,7 @@ const FlipCard = ({ icon, title, summary, details, color = 'emerald', axis = 'y'
           <span className="text-sm font-bold uppercase tracking-widest text-white/70">{title}</span>
           <span className="mt-4 text-base leading-7">{details}</span>
           <span className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-white/80">
-            <i className="fas fa-rotate-left text-xs" aria-hidden="true" /> Back
+            <i className="fas fa-rotate-left text-xs" aria-hidden="true" /> {t('common.back')}
           </span>
         </span>
       </span>

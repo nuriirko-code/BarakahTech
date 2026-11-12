@@ -5,8 +5,10 @@ import axios from "axios"
 import Avatar from "../../components/common/Avatar"
 import Footer from "../../components/common/Footer"
 import Navbar from "../../components/common/Navbar"
+import { useTranslation } from "react-i18next"
 
 const TeacherProfilePage = () => {
+  const { t } = useTranslation()
   const { teacherId } = useParams()
   const [teacher, setTeacher] = useState(null)
   const [courses, setCourses] = useState([])
@@ -28,7 +30,7 @@ const TeacherProfilePage = () => {
         }
       } catch (requestError) {
         if (isCurrent) {
-          setError(requestError.response?.data?.message || "Could not load this teacher profile.")
+          setError(requestError.response?.data?.message || t("teacherProfile.loadError"))
         }
       } finally {
         if (isCurrent) setLoading(false)
@@ -37,30 +39,30 @@ const TeacherProfilePage = () => {
 
     loadProfile()
     return () => { isCurrent = false }
-  }, [teacherId])
+  }, [teacherId, t])
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900">
       <Navbar />
       <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-10 sm:px-8">
         {loading ? (
-          <div className="space-y-5" aria-label="Loading teacher profile">
+          <div className="space-y-5" aria-label={t("teacherProfile.loading")}>
             <div className="h-48 animate-pulse rounded-2xl bg-slate-200" />
             <div className="h-64 animate-pulse rounded-2xl bg-slate-200" />
           </div>
         ) : error ? (
           <section role="alert" className="rounded-2xl border border-red-200 bg-white p-8 text-center">
-            <h1 className="text-2xl font-bold">Teacher profile unavailable</h1>
+            <h1 className="text-2xl font-bold">{t("teacherProfile.unavailable")}</h1>
             <p className="mt-3 text-slate-600">{error}</p>
             <Link to="/courses" className="mt-6 inline-flex font-semibold text-green-700 hover:underline">
-              Browse published courses
+              {t("teacherProfile.browseCourses")}
             </Link>
           </section>
         ) : teacher ? (
           <>
             <Link to="/" className="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-green-700 hover:underline">
               <i className="fas fa-arrow-left" aria-hidden="true" />
-              Back to homepage
+              {t("common.goHome")}
             </Link>
 
             <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-9">
@@ -75,7 +77,7 @@ const TeacherProfilePage = () => {
                   )}
                   {teacher.yearsOfExperience !== null && (
                     <p className="mt-2 text-sm text-slate-600">
-                      {teacher.yearsOfExperience} {teacher.yearsOfExperience === 1 ? "year" : "years"} of experience
+                      {t("teacherProfile.experience", { count: teacher.yearsOfExperience })}
                     </p>
                   )}
                 </div>
@@ -85,7 +87,7 @@ const TeacherProfilePage = () => {
 
             {courses.length > 0 && (
               <section className="mt-10">
-                <h2 className="text-2xl font-bold">Published courses</h2>
+                <h2 className="text-2xl font-bold">{t("teacherProfile.publishedCourses")}</h2>
                 <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                   {courses.map((course) => (
                     <Link

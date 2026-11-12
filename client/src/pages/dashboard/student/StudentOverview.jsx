@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
 import Avatar from '../../../components/common/Avatar'
+import WeeklyMentorship from '../../../components/learning/WeeklyMentorship'
 import { useAuth } from '../../../context/AuthContext'
 import { getCategoryIcon, getCategoryGradient } from '../../../utils/courseUtils'
 
@@ -19,6 +20,7 @@ const StudentOverview = () => {
 	const [stats, setStats] = useState(emptyStats)
 	const [recentEnrollments, setRecentEnrollments] = useState([])
 	const [loading, setLoading] = useState(true)
+	const [hasFullyEnrolledCourses, setHasFullyEnrolledCourses] = useState(false)
 	const { user, token, loading: authLoading } = useAuth()
 
 	useEffect(() => {
@@ -40,6 +42,7 @@ const StudentOverview = () => {
 						hoursLearned: 0,
 						streak: 0,
 					})
+					setHasFullyEnrolledCourses(enrollments.some((enrollment) => enrollment.isFullyEnrolled))
 					// Limit the overview to three recent records; the My Learning page
 					// remains the place to browse the full enrollment list.
 					setRecentEnrollments(enrollments.slice(0, 3))
@@ -97,6 +100,10 @@ const StudentOverview = () => {
 					</article>
 				))}
 			</section>
+
+			<WeeklyMentorship
+				hasFullyEnrolledCourses={loading ? undefined : hasFullyEnrolledCourses}
+			/>
 
 			{recentEnrollments.length > 0 ? (
 				<section>

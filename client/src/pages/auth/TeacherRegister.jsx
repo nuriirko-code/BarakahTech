@@ -1,6 +1,6 @@
 import API_BASE_URL from '../../config/api.js'
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
@@ -8,7 +8,8 @@ import teachingCategories from '../../utils/teachingCategories'
 import subjectQuestions from '../../utils/subjectQuestions'
 import Avatar from '../../components/common/Avatar'
 import { resizeImageFile } from '../../utils/imageUtils'
-import { getCategoryLabel } from '../../utils/courseUtils'
+import { getCategoryLabel, getSubjectLabel } from '../../utils/courseUtils'
+import { POLICY_VERSIONS } from '../../config/policyVersions'
 
 const teachingLanguages = [
   { value: 'amharic', key: 'amharic' },
@@ -76,6 +77,7 @@ const TeacherRegister = () => {
     agreedToStandards: false,
     agreedToBackgroundCheck: false,
     confirmedAvailability: false,
+    agreedToTeacherAgreement: false,
   })
   const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
@@ -283,9 +285,9 @@ const TeacherRegister = () => {
       }
     }
 
-    if (step === 6 && (!formData.confirmedAvailability || !formData.agreedToStandards || !formData.agreedToBackgroundCheck)) {
+    if (step === 6 && (!formData.confirmedAvailability || !formData.agreedToStandards || !formData.agreedToBackgroundCheck || !formData.agreedToTeacherAgreement)) {
       message = t('auth.teacher.validation.commitments')
-      invalidField = !formData.confirmedAvailability ? 'confirmedAvailability' : !formData.agreedToStandards ? 'agreedToStandards' : 'agreedToBackgroundCheck'
+      invalidField = !formData.confirmedAvailability ? 'confirmedAvailability' : !formData.agreedToStandards ? 'agreedToStandards' : !formData.agreedToBackgroundCheck ? 'agreedToBackgroundCheck' : 'agreedToTeacherAgreement'
     }
 
     if (message) {
@@ -332,6 +334,10 @@ const TeacherRegister = () => {
           email: formData.email,
           password: formData.password,
           role: 'teacher',
+          dateOfBirth: formData.dateOfBirth,
+          acceptedTermsVersion: POLICY_VERSIONS.terms,
+          acknowledgedPrivacyVersion: POLICY_VERSIONS.privacy,
+          acceptedCommunityCodeVersion: POLICY_VERSIONS.community,
         })
         //Pull user and token out of the response. 
         const { user: registeredUser, token: registeredToken } = registrationResponse.data
@@ -360,6 +366,10 @@ const TeacherRegister = () => {
       // this is the final step where we submit the teacher application. We send a POST request to the teacher applications endpoint with the prepared application data. We also convert certain fields to numbers as required by the backend. If the submission is successful, we navigate to the application submitted page. If there is an error, we display an appropriate error message.
       await axios.post(`${API_BASE_URL}/teacher-applications`, {
         ...applicationData,
+        acceptedTermsVersion: POLICY_VERSIONS.terms,
+        acknowledgedPrivacyVersion: POLICY_VERSIONS.privacy,
+        acceptedCommunityCodeVersion: POLICY_VERSIONS.community,
+        teacherAgreementVersion: POLICY_VERSIONS.teacher,
         availableHoursPerWeek: Number(formData.availableHoursPerWeek),
         yearsOfExperience: Number(formData.yearsOfExperience),
         yearsInSpecificSubject: Number(formData.yearsInSpecificSubject),
@@ -467,7 +477,7 @@ const TeacherRegister = () => {
                     }}>
                       <option value="">{t('auth.teacher.selectSubject')}</option>
                       {teachingCategories[formData.mainCategory].subjects.map((subject) => (
-                        <option key={subject} value={subject}>{subject}</option>
+                        <option key={subject} value={subject}>{getSubjectLabel(subject, t)}</option>
                       ))}
                       <option value="other-custom">{t('auth.teacher.addSubject')}</option>
                     </select>
@@ -590,6 +600,17 @@ const TeacherRegister = () => {
                   <div><dt className="text-gray-500">{t('auth.teacher.teachingMethod')}</dt><dd className="font-medium">{t(`auth.teacher.methods.${teachingMethods.find((method) => method.value === formData.teachingMethod)?.key}`)}</dd></div>
                 </dl>
               </section>
+              <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
+                {t('auth.teacher.policyDraft')}{' '}
+                {t('auth.teacher.reviewPolicies')}{' '}
+                <Link className="font-bold underline" to="/policies/terms">{t('footer.terms')}</Link>,{' '}
+                <Link className="font-bold underline" to="/policies/privacy">{t('footer.privacy')}</Link>, {t('legal.and')}{' '}
+                <Link className="font-bold underline" to="/policies/teacher-guidelines">{t('footer.teacherGuidelines')}</Link>.
+              </p>
+              <label className="flex items-start gap-3 rounded-lg border p-4">
+                <input className="mt-1 accent-[#22C55E]" type="checkbox" checked={formData.agreedToTeacherAgreement} onChange={(event) => handleChange('agreedToTeacherAgreement', event.target.checked)} />
+                <span>{t('auth.teacher.agreeToTeacherAgreement')}{renderFieldError('agreedToTeacherAgreement')}</span>
+              </label>
               <label className="flex items-start gap-3 rounded-lg border p-4">
                 <input className="mt-1 accent-[#22C55E]" type="checkbox" checked={formData.confirmedAvailability} onChange={(event) => handleChange('confirmedAvailability', event.target.checked)} />
                 <span>{t('auth.teacher.confirmAvailability')}{renderFieldError('confirmedAvailability')}</span>

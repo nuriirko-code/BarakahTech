@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 const JourneyCTA = ({ to, label, tone = 'emerald' }) => {
+  const { t } = useTranslation()
   const toneClasses = {
     emerald: 'border-emerald-200 bg-emerald-50 text-emerald-950',
     blue: 'border-blue-200 bg-blue-50 text-blue-950',
@@ -16,7 +18,7 @@ const JourneyCTA = ({ to, label, tone = 'emerald' }) => {
 
   return (
     <div className={`mt-8 flex flex-col items-center justify-between gap-4 rounded-2xl border p-5 sm:flex-row sm:px-7 ${toneClasses[tone] || toneClasses.emerald}`}>
-      <p className="text-center text-sm font-semibold sm:text-left">Ready to take the next step?</p>
+      <p className="text-center text-sm font-semibold sm:text-left">{t('common.readyNextStep')}</p>
       <Link
         to={to}
         className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-colors ${buttonClasses[tone] || buttonClasses.emerald}`}

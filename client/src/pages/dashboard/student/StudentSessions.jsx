@@ -5,6 +5,7 @@ import axios from 'axios'
 import { useAuth } from '../../../context/AuthContext'
 import { formatCurrency } from '../../../utils/currencyUtils'
 import Avatar from '../../../components/common/Avatar'
+import { liveRoomPath } from '../../../config/live'
 
 
 // Convert the tutor's date, time, and timezone to one real instant. This keeps
@@ -60,28 +61,38 @@ const StudentSessions = () => {
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState('upcoming')
   const [now, setNow] = useState(Date.now())
-  const [isAnytimeTestMode, setIsAnytimeTestMode] = useState(false)
 
   useEffect(() => {
     let isCurrent = true
+    let requestPending = false
     const loadBookings = async () => {
+      if (requestPending || !token) return
+      requestPending = true
       try {
         const response = await axios.get(`${API_BASE_URL}/bookings/my-sessions/student`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (isCurrent) {
           setBookings(response.data.bookings || [])
-          setIsAnytimeTestMode(Boolean(response.data.isAnytimeTestMode))
         }
       } catch (requestError) {
         if (isCurrent) setError(requestError.response?.data?.message || 'Could not load your sessions.')
       } finally {
+        requestPending = false
         if (isCurrent) setLoading(false)
       }
     }
 
-    if (token) loadBookings()
-    return () => { isCurrent = false }
+    if (!token) return () => { isCurrent = false }
+
+    loadBookings()
+    const refreshInterval = window.setInterval(loadBookings, 15000)
+    window.addEventListener('focus', loadBookings)
+    return () => {
+      isCurrent = false
+      window.clearInterval(refreshInterval)
+      window.removeEventListener('focus', loadBookings)
+    }
   }, [token])
 
   useEffect(() => {
@@ -93,7 +104,7 @@ const StudentSessions = () => {
   // not started. Past is intentionally limited to final completed/cancelled states.
   const upcomingBookings = bookings.filter((booking) => (
     (['confirmed', 'in_progress'].includes(booking.status)
-      && (isAnytimeTestMode || getSessionStart(booking).getTime() + Number(booking.duration || 0) * 60000 > now))
+      && getSessionStart(booking).getTime() + Number(booking.duration || 0) * 60000 > now)
     || (booking.status === 'pending_payment' && getSessionStart(booking).getTime() > now)
   ))
   const pastBookings = bookings.filter((booking) => ['completed', 'cancelled'].includes(booking.status))
@@ -120,12 +131,6 @@ const StudentSessions = () => {
       <div className="space-y-4">
         {displayedBookings.map((booking) => {
           const sessionStart = getSessionStart(booking)
-          const minutesUntilStart = Math.floor((sessionStart.getTime() - now) / 60000)
-          // Joining opens 30 minutes before the lesson and stays available while
-          // the planned lesson duration is still running, preventing wrong-time joins.
-          const canJoin = ['confirmed', 'in_progress'].includes(booking.status) && (
-            isAnytimeTestMode || (minutesUntilStart <= 30 && minutesUntilStart >= -Number(booking.duration || 0))
-          )
           const endsAt = new Date(sessionStart.getTime() + Number(booking.duration || 0) * 60000)
           const feedbackAvailable = booking.status === 'completed' && !booking.feedbackSubmitted
           const style = statusStyles[booking.status] || 'bg-slate-100 text-slate-700 ring-slate-200'
@@ -134,12 +139,12 @@ const StudentSessions = () => {
           return (
             <article key={booking._id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex min-w-0 items-start gap-3"><Avatar name={booking.tutor?.name || 'Tutor'} imageUrl={booking.tutorProfile?.profilePhoto} size="md" /><div className="min-w-0"><h2 className="truncate font-extrabold text-slate-900">{booking.tutor?.name || 'Your tutor'}</h2><p className="mt-1 text-sm font-semibold text-green-700">{booking.subject || 'Live tutoring'}</p>{!isAnytimeTestMode && <p className="mt-2 text-sm leading-6 text-slate-600">{formatSessionDate(sessionStart)} · {formatTime(sessionStart)} — {formatTime(endsAt)} (your local time)</p>}{booking.status === 'confirmed' && <p className="mt-1 text-sm font-bold text-green-700">{isAnytimeTestMode ? 'Available to join anytime (local testing)' : formatCountdown(sessionStart.getTime() - now)}</p>}</div></div>
+                <div className="flex min-w-0 items-start gap-3"><Avatar name={booking.tutor?.name || 'Tutor'} imageUrl={booking.tutorProfile?.profilePhoto} size="md" /><div className="min-w-0"><h2 className="truncate font-extrabold text-slate-900">{booking.tutor?.name || 'Your tutor'}</h2><p className="mt-1 text-sm font-semibold text-green-700">{booking.subject || 'Live tutoring'}</p><p className="mt-2 text-sm leading-6 text-slate-600">{formatSessionDate(sessionStart)} · {formatTime(sessionStart)} — {formatTime(endsAt)} (your local time)</p>{booking.status === 'confirmed' && <p className="mt-1 text-sm font-bold text-green-700">{formatCountdown(sessionStart.getTime() - now)}</p>}</div></div>
                 <span className={`inline-flex w-fit rounded-full px-3 py-1.5 text-xs font-bold ring-1 ${style}`}>{label}</span>
               </div>
               <div className="mt-5 flex flex-wrap items-center gap-3 text-sm"><span className="rounded-lg bg-slate-100 px-3 py-2 font-semibold text-slate-700"><i className="fas fa-clock mr-2 text-slate-400" aria-hidden="true" />{booking.duration} min</span><span className="rounded-lg bg-slate-100 px-3 py-2 font-semibold text-slate-700"><i className="fas fa-tag mr-2 text-slate-400" aria-hidden="true" />{Number(booking.price) === 0 ? 'Free introductory session' : formatCurrency(booking.price, booking.currency)}</span></div>
               <div className="mt-5 flex flex-wrap gap-3">
-                {['confirmed', 'in_progress'].includes(booking.status) && <button type="button" disabled={!canJoin} title={canJoin ? 'Join your live session' : 'Available 30 minutes before the session'} onClick={() => navigate(`/session/${booking._id}`)} className="rounded-xl bg-green-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-slate-300"><i className="fas fa-video mr-2" aria-hidden="true" />Join Session</button>}
+                {['confirmed', 'in_progress'].includes(booking.status) && <button type="button" title="The session server checks when the room opens" onClick={() => navigate(liveRoomPath('booking', booking._id))} className="rounded-xl bg-green-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-green-700"><i className="fas fa-video mr-2" aria-hidden="true" />Join Session</button>}
                 {booking.status === 'pending_payment' && <button type="button" disabled className="rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-bold text-slate-500">Payment Pending</button>}
                 {feedbackAvailable && <button type="button" onClick={() => navigate(`/session/${booking._id}/feedback`)} className="rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-white hover:bg-amber-600"><i className="fas fa-star mr-2" aria-hidden="true" />Submit Feedback</button>}
                 {booking.status === 'completed' && booking.feedbackSubmitted && <button type="button" disabled className="rounded-xl bg-green-50 px-4 py-2.5 text-sm font-bold text-green-700"><i className="fas fa-circle-check mr-2" aria-hidden="true" />Feedback Submitted</button>}

@@ -7,7 +7,7 @@ const User = require('../models/User')
 const getAllUsers = async (req, res) => {
   try {
     const users = await User.find()
-      .select('-password')
+      .select('-password -dateOfBirth -policyAcceptances -guardianConsent')
       .sort({ createdAt: -1 })
 
     return res.status(200).json({ users, count: users.length })
@@ -37,6 +37,9 @@ const toggleUserActive = async (req, res) => {
 
     const safeUser = user.toObject()
     delete safeUser.password
+    delete safeUser.dateOfBirth
+    delete safeUser.policyAcceptances
+    delete safeUser.guardianConsent
 
     return res.status(200).json({
       message: safeUser.isActive ? 'User reactivated successfully' : 'User deactivated successfully',

@@ -1,34 +1,18 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import axios from 'axios'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useAuth } from '../../context/AuthContext'
 import API_BASE_URL from '../../config/api'
-
-const formatDate = (value, language) => new Date(value).toLocaleString(language, {
-  weekday: 'long',
-  month: 'long',
-  day: 'numeric',
-  hour: 'numeric',
-  minute: '2-digit',
-})
+import { liveRoomPath } from '../../config/live'
 
 const CommunitySessionActions = ({ session, token, onChange }) => {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
+  const { user } = useAuth()
+  const navigate = useNavigate()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
-  const [now, setNow] = useState(0)
   const headers = token ? { Authorization: `Bearer ${token}` } : {}
-  const openingSoon = session.status === 'live' || (
-    session.status === 'scheduled'
-    && now >= new Date(session.startsAt).getTime() - (15 * 60 * 1000)
-  )
-
-  useEffect(() => {
-    const updateTime = () => setNow(Date.now())
-    updateTime()
-    const timer = window.setInterval(updateTime, 30_000)
-    return () => window.clearInterval(timer)
-  }, [])
 
   const register = async () => {
     setBusy(true)
@@ -56,30 +40,15 @@ const CommunitySessionActions = ({ session, token, onChange }) => {
     }
   }
 
-  const join = async () => {
-    const popup = window.open('about:blank', '_blank')
-    if (popup) popup.opener = null
-    setBusy(true)
-    setError('')
-    try {
-      const response = await axios.get(`${API_BASE_URL}/community/${session._id}/join`, { headers })
-      if (popup) {
-        popup.location.href = response.data.meetingUrl
-      } else {
-        window.open(response.data.meetingUrl, '_blank', 'noopener,noreferrer')
-      }
-    } catch (requestError) {
-      if (popup) popup.close()
-      const opensAt = requestError.response?.data?.opensAt
-      const message = requestError.response?.data?.message || t('actions.joinError')
-      setError(opensAt ? `${message} ${t('actions.opensAt', { date: formatDate(opensAt, i18n.language) })}` : message)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  // The available action is derived from authentication, registration, and remaining seats.
-  const action = !token ? (
+  const join = () => navigate(liveRoomPath('community', session._id))
+  const isLiveJoinable = ['scheduled', 'live'].includes(session.status)
+  const isCancelled = session.status === 'cancelled'
+  // The button only navigates; the server decides whether the community room is open.
+  const action = isCancelled ? (
+    <span className="rounded-xl bg-red-50 px-4 py-2.5 text-sm font-bold text-red-800">
+      {t('community.status.cancelled', { defaultValue: 'This session was cancelled' })}
+    </span>
+  ) : !token ? (
     <Link
       to="/login"
       state={{ from: '/community' }}
@@ -87,12 +56,16 @@ const CommunitySessionActions = ({ session, token, onChange }) => {
     >
       {t('actions.signUpToJoin')}
     </Link>
+  ) : user?.role === 'admin' && isLiveJoinable ? (
+    <button type="button" onClick={join} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800">
+      {t('actions.startSession')}
+    </button>
   ) : session.isRegistered ? (
     <div className="flex flex-wrap items-center gap-2">
       <span className="rounded-xl bg-emerald-100 px-4 py-2.5 text-sm font-bold text-emerald-900">{t('actions.youAreIn')}</span>
-      {openingSoon && (
-        <button type="button" onClick={join} disabled={busy} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800 disabled:opacity-60">
-          {busy ? t('actions.opening') : t('actions.joinSession')}
+      {isLiveJoinable && (
+        <button type="button" onClick={join} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-800">
+          {t('actions.joinSession')}
         </button>
       )}
       {session.status === 'scheduled' && (

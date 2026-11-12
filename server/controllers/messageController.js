@@ -321,7 +321,7 @@ const createSupportTicket = async (req, res) => {
 
     const sender = await User.findById(currentUserId).select('name email')
     if (sender) {
-      void sendNewMessageEmail(admin, sender, subject)
+      void sendNewMessageEmail(admin, sender, subject, process.env.SUPPORT_EMAIL || 'nuriirko@gmail.com')
         .catch((error) => console.error('Support notification error:', error))
     }
 

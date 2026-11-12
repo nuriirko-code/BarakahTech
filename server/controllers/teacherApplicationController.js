@@ -1,6 +1,8 @@
 const TeacherApplication = require('../models/TeacherApplication')
 const User = require('../models/User')
 const { sendTeacherApprovalEmail } = require('../utils/emailService')
+const policyVersions = require('../config/policyVersions')
+const { isAdult } = require('../utils/legalAge')
 
 // A verified JWT from authMiddleware puts the user's ID in req.user.userId.
 // Checking for an existing application prevents duplicate submissions for the
@@ -43,7 +45,26 @@ const submitApplication = async (req, res) => {
       agreedToStandards,
       agreedToBackgroundCheck,
       confirmedAvailability,
+      acceptedTermsVersion,
+      acknowledgedPrivacyVersion,
+      acceptedCommunityCodeVersion,
+      teacherAgreementVersion,
     } = req.body
+
+    if (!isAdult(dateOfBirth)) {
+      return res.status(403).json({ message: 'Teacher applicants must be at least 18 years old.' })
+    }
+    if (
+      acceptedTermsVersion !== policyVersions.terms ||
+      acknowledgedPrivacyVersion !== policyVersions.privacy ||
+      acceptedCommunityCodeVersion !== policyVersions.community ||
+      teacherAgreementVersion !== policyVersions.teacher
+    ) {
+      return res.status(400).json({ message: 'Please accept the current account and teacher policies before submitting.' })
+    }
+    if (agreedToStandards !== true || agreedToBackgroundCheck !== true || confirmedAvailability !== true) {
+      return res.status(400).json({ message: 'Confirm the teacher standards, background check, and availability declarations before submitting.' })
+    }
 
     if (profilePhoto && profilePhoto.length > 2_500_000) {
       return res.status(400).json({ message: 'Profile photo must be smaller than 2 MB after compression.' })
@@ -78,7 +99,19 @@ const submitApplication = async (req, res) => {
       agreedToStandards,
       agreedToBackgroundCheck,
       confirmedAvailability,
+      teacherAgreementVersion,
+      teacherAgreementAcceptedAt: new Date(),
     })
+
+    const user = await User.findById(userId)
+    if (!user) return res.status(404).json({ message: 'User not found' })
+    user.dateOfBirth = new Date(dateOfBirth)
+    user.policyAcceptances.push(
+      { policy: 'terms', version: policyVersions.terms, acceptedAt: new Date() },
+      { policy: 'privacy', version: policyVersions.privacy, acceptedAt: new Date() },
+      { policy: 'community', version: policyVersions.community, acceptedAt: new Date() },
+    )
+    await user.save()
 
     if (profilePhoto) {
       await User.findByIdAndUpdate(userId, { profilePhoto })

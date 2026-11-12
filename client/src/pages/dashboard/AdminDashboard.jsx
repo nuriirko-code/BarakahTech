@@ -401,7 +401,7 @@ const AdminDashboard = () => {
                     <thead className="bg-slate-50 text-xs uppercase text-slate-600">
                       <tr>
                         <th className="px-4 py-3 font-semibold">Student</th>
-                        <th className="px-4 py-3 font-semibold">Course</th>
+                        <th className="px-4 py-3 font-semibold">Course / Session</th>
                         <th className="px-4 py-3 font-semibold">Amount</th>
                         <th className="px-4 py-3 font-semibold">Method</th>
                         <th className="px-4 py-3 font-semibold">Platform Code</th>
@@ -431,7 +431,19 @@ const AdminDashboard = () => {
                                 </div>
                               </div>
                             </td>
-                            <td className="max-w-48 px-4 py-4 font-medium text-slate-800">{payment.course?.title || 'Course unavailable'}</td>
+                            <td className="max-w-48 px-4 py-4 font-medium text-slate-800">
+                              {payment.type === 'session_booking' ? (
+                                <>
+                                  <span>1:1 tutor session</span>
+                                  {payment.booking?.startAt && (
+                                    <span className="mt-1 block text-xs font-normal text-slate-500">
+                                      {new Date(payment.booking.startAt).toLocaleString()}
+                                      {payment.booking.tutor?.name ? ` · ${payment.booking.tutor.name}` : ''}
+                                    </span>
+                                  )}
+                                </>
+                              ) : payment.course?.title || 'Course unavailable'}
+                            </td>
                             <td className="px-4 py-4 font-bold text-green-800">{formatCurrency(payment.amount, payment.currency || 'ETB')}</td>
                             <td className="px-4 py-4">
                               <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-800">

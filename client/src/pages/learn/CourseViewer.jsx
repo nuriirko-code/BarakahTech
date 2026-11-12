@@ -5,6 +5,7 @@ import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
 import LessonAssessment from '../../components/learning/LessonAssessment'
 import EngagementHook from '../../components/learning/EngagementHook'
+import WeeklyMentorship from '../../components/learning/WeeklyMentorship'
 import { getGoogleDriveEmbedUrl, getYouTubeEmbedUrl } from '../../utils/videoUtils'
 
 const calculateTrialLessonCount = (totalLessons, isFree) => {
@@ -390,6 +391,10 @@ const CourseViewer = () => {
 
                 {activeLesson.description && <p className="mt-4 max-w-3xl leading-7 text-slate-600">{activeLesson.description}</p>}
               </header>
+
+              {enrollment?.isFullyEnrolled && (
+                <WeeklyMentorship hasFullyEnrolledCourses courseId={courseId} compact />
+              )}
 
               {isCurrentLessonLocked && (
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-slate-800 shadow-sm">

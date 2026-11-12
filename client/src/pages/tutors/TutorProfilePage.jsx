@@ -91,7 +91,12 @@ const TutorProfilePage = () => {
   // the tutor's fixed paid offer after it securely checks their booking history.
   const handleBookSession = () => {
     if (!user) {
-      navigate('/login', { state: { message: t('tutors.profile.loginToBook') } })
+      navigate('/login', {
+        state: {
+          message: t('tutors.profile.loginToBook'),
+          from: `/book/${profile._id}`,
+        },
+      })
       return
     }
     navigate(`/book/${profile._id}`)

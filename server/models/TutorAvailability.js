@@ -80,6 +80,8 @@ const tutorAvailabilitySchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    // Kept only to identify legacy development schedules until the tutor saves
+    // a real schedule; new schedules remove this marker.
     isTestSchedule: {
       type: Boolean,
       default: false,
