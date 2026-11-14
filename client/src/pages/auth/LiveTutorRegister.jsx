@@ -7,6 +7,12 @@ import { useAuth } from '../../context/AuthContext'
 import AccountPolicyFields from '../../components/legal/AccountPolicyFields'
 import { POLICY_VERSIONS } from '../../config/policyVersions'
 import { ageOnDate } from '../../utils/legalAge'
+import {
+  getPersonNameError,
+  isValidEmail,
+  normalizeEmail,
+  normalizePersonName,
+} from '../../utils/registrationValidation'
 
 // A live tutor starts as a standard account. Live tutoring is approved later as
 // a separate capability, so this account can also become a course teacher.
@@ -36,6 +42,11 @@ const LiveTutorRegister = () => {
   const handleSubmit = async (event) => {
     event.preventDefault()
     if (!formData.name.trim() || !formData.email.trim() || !formData.password) return setError(t('auth.liveTutorRegistration.completeFields'))
+    const nameError = getPersonNameError(formData.name)
+    if (nameError) {
+      return setError(t(nameError === 'invalid' ? 'auth.teacher.validation.nameCharacters' : 'auth.teacher.validation.nameLength'))
+    }
+    if (!isValidEmail(formData.email)) return setError(t('auth.validEmail'))
     if (formData.password !== formData.confirmPassword) return setError(t('auth.passwordMismatch'))
     if (formData.password.length < 6) return setError(t('auth.passwordTooShort'))
     const age = ageOnDate(formData.dateOfBirth)
@@ -49,8 +60,8 @@ const LiveTutorRegister = () => {
       // Registering as student is intentional: live tutoring is a capability,
       // not a second account role, and the apply API accepts student accounts.
       const response = await axios.post(`${API_BASE_URL}/auth/register`, {
-        name: formData.name,
-        email: formData.email,
+        name: normalizePersonName(formData.name),
+        email: normalizeEmail(formData.email),
         password: formData.password,
         role: 'student',
         dateOfBirth: formData.dateOfBirth,
@@ -79,7 +90,7 @@ const LiveTutorRegister = () => {
         {error && <p role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-base text-red-700">{error}</p>}
         <form onSubmit={handleSubmit} className="mt-7 grid gap-5">
           <label className="text-base font-semibold">{t('auth.name')}
-            <input className={`${inputClass} mt-2`} value={formData.name} onChange={(event) => setFormData({ ...formData, name: event.target.value })} autoComplete="name" />
+            <input className={`${inputClass} mt-2`} value={formData.name} onChange={(event) => setFormData({ ...formData, name: event.target.value })} autoComplete="name" maxLength={80} />
           </label>
           <label className="text-base font-semibold">{t('auth.email')}
             <input className={`${inputClass} mt-2`} type="email" value={formData.email} onChange={(event) => setFormData({ ...formData, email: event.target.value })} autoComplete="email" />

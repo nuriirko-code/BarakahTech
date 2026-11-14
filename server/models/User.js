@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const { getPersonNameError, isValidEmail } = require('../utils/registrationValidation')
 
 const policyAcceptanceSchema = new mongoose.Schema(
   {
@@ -25,6 +26,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Name is required'],
       trim: true,
+      validate: {
+        validator: (value) => !getPersonNameError(value),
+        message: 'Enter a valid name with at least 3 letters and no more than 80 characters.',
+      },
     },
 
     email: {
@@ -33,6 +38,10 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
+      validate: {
+        validator: isValidEmail,
+        message: 'Enter a valid email address.',
+      },
     },
 
     profilePhoto: {

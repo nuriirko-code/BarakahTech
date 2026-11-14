@@ -732,8 +732,8 @@
       "submitApplication": "Iyyannoo ergi",
       "validation": {
         "personalRequired": "Maaloo odeeffannoo dhuunfaa hunda guuti.",
-        "nameLength": "Maaloo maqaa guutuu qubee 3 yoo xiqqaate qabu galchi.",
-        "nameCharacters": "Maqaan kee qubee fi bakka duwwaa qofa qabaachuu danda'a.",
+        "nameLength": "Maqaa qubee 3 hanga 80 qabu, yoo xiqqaate qubee sadii of keessaa qabu galchi.",
+        "nameCharacters": "Maqaan kee qubee, bakka duwwaa, mallattoo apostiroofii, tuqaa yookaan sarara gabaabaa qabaachuu danda'a.",
         "email": "Maaloo teessoo imeelii sirrii galchi.",
         "passwordStrength": "Jecha icciitii qubee 8 yoo xiqqaate, qubee fi lakkoofsa qabu fayyadami.",
         "phone": "Lakkoofsa bilbilaa Itoophiyaa +251 fi lakkoofsa 9 itti aanan qabu galchi.",

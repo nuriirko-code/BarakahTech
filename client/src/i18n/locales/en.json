@@ -732,8 +732,8 @@
       "submitApplication": "Submit Application",
       "validation": {
         "personalRequired": "Please complete all personal information fields.",
-        "nameLength": "Please enter your full name using at least 3 characters.",
-        "nameCharacters": "Your name can contain letters and spaces only.",
+        "nameLength": "Enter a name between 3 and 80 characters with at least three letters.",
+        "nameCharacters": "Use letters, spaces, apostrophes, periods, or hyphens in your name.",
         "email": "Please enter a valid email address.",
         "passwordStrength": "Use a password with at least 8 characters, including a letter and a number.",
         "phone": "Enter an Ethiopian phone number starting with +251 followed by 9 digits.",

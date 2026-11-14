@@ -7,6 +7,12 @@ import { useAuth } from '../../context/AuthContext'
 import AccountPolicyFields from '../../components/legal/AccountPolicyFields'
 import { POLICY_VERSIONS } from '../../config/policyVersions'
 import { ageOnDate } from '../../utils/legalAge'
+import {
+  getPersonNameError,
+  isValidEmail,
+  normalizeEmail,
+  normalizePersonName,
+} from '../../utils/registrationValidation'
 
 const StudentRegister = () => {
   // Controlled inputs keep form values in React so validation and submission use
@@ -54,6 +60,21 @@ const StudentRegister = () => {
       return
     }
 
+    const nameError = getPersonNameError(formData.name)
+    if (nameError) {
+      const message = t(nameError === 'invalid' ? 'auth.teacher.validation.nameCharacters' : 'auth.teacher.validation.nameLength')
+      setError(message)
+      setFieldErrors({ name: message })
+      return
+    }
+
+    if (!isValidEmail(formData.email)) {
+      const message = t('auth.validEmail')
+      setError(message)
+      setFieldErrors({ email: message })
+      return
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError(t('auth.passwordMismatch'))
       setFieldErrors({ confirmPassword: t('auth.passwordMismatch') })
@@ -75,9 +96,24 @@ const StudentRegister = () => {
       setError(t('auth.acceptPoliciesToContinue'))
       return
     }
-    if (age < 18 && (!formData.guardianName.trim() || !formData.guardianEmail.trim() || !formData.guardianConsent)) {
-      setError(t('auth.guardianDeclarationRequired'))
-      return
+    if (age < 18) {
+      const guardianNameError = getPersonNameError(formData.guardianName)
+      if (guardianNameError) {
+        const message = t(guardianNameError === 'invalid' ? 'auth.teacher.validation.nameCharacters' : 'auth.teacher.validation.nameLength')
+        setError(message)
+        setFieldErrors({ guardianName: message })
+        return
+      }
+      if (!isValidEmail(formData.guardianEmail)) {
+        const message = t('auth.validEmail')
+        setError(message)
+        setFieldErrors({ guardianEmail: message })
+        return
+      }
+      if (!formData.guardianConsent) {
+        setError(t('auth.guardianDeclarationRequired'))
+        return
+      }
     }
 
     setLoading(true)
@@ -86,8 +122,8 @@ const StudentRegister = () => {
       // Frontend validation gives immediate feedback; the backend still validates
       // independently because client-side checks cannot be trusted for security.
       await axios.post(`${API_BASE_URL}/auth/register`, {
-        name: formData.name,
-        email: formData.email,
+        name: normalizePersonName(formData.name),
+        email: normalizeEmail(formData.email),
         password: formData.password,
         // The page defines the role so users cannot choose another flow's role.
         role: 'student',
@@ -96,8 +132,8 @@ const StudentRegister = () => {
         acknowledgedPrivacyVersion: POLICY_VERSIONS.privacy,
         acceptedCommunityCodeVersion: POLICY_VERSIONS.community,
         guardianConsent: {
-          guardianName: formData.guardianName,
-          guardianEmail: formData.guardianEmail,
+          guardianName: normalizePersonName(formData.guardianName),
+          guardianEmail: normalizeEmail(formData.guardianEmail),
           confirmed: formData.guardianConsent,
         },
       })
@@ -128,11 +164,11 @@ const StudentRegister = () => {
         {error && !Object.values(fieldErrors).some(Boolean) && <div role="alert" className="mt-6 rounded-xl border border-red-200 bg-red-50 p-3 text-red-700">{error}</div>}
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-          <label className="block space-y-1"><span className="sr-only">{t('auth.name')}</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="name" value={formData.name} onChange={handleChange} placeholder={t('auth.name')} autoComplete="name" />{renderFieldError('name')}</label>
+          <label className="block space-y-1"><span className="sr-only">{t('auth.name')}</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="name" value={formData.name} onChange={handleChange} placeholder={t('auth.name')} autoComplete="name" maxLength={80} />{renderFieldError('name')}</label>
           <label className="block space-y-1"><span className="sr-only">{t('auth.email')}</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="email" value={formData.email} onChange={handleChange} placeholder={t('auth.email')} type="email" autoComplete="email" />{renderFieldError('email')}</label>
           <label className="block space-y-1"><span className="sr-only">{t('auth.password')}</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="password" value={formData.password} onChange={handleChange} placeholder={t('auth.password')} type="password" autoComplete="new-password" />{renderFieldError('password')}</label>
           <label className="block space-y-1"><span className="sr-only">{t('auth.confirmPassword')}</span><input className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder={t('auth.confirmPassword')} type="password" autoComplete="new-password" />{renderFieldError('confirmPassword')}</label>
-          <AccountPolicyFields values={formData} onChange={handlePolicyChange} />
+          <AccountPolicyFields values={formData} onChange={handlePolicyChange} fieldErrors={fieldErrors} />
           <button className="w-full rounded-xl bg-[#22C55E] p-3 font-bold text-white shadow-md shadow-[#22C55E]/25 transition hover:bg-[#16A34A] disabled:opacity-60" type="submit" disabled={loading}>
             {loading ? t('auth.creatingAccount') : t('auth.createAccount')}
           </button>

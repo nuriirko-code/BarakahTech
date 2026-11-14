@@ -10,6 +10,7 @@ import Avatar from '../../components/common/Avatar'
 import { resizeImageFile } from '../../utils/imageUtils'
 import { getCategoryLabel, getSubjectLabel } from '../../utils/courseUtils'
 import { POLICY_VERSIONS } from '../../config/policyVersions'
+import { getPersonNameError, isValidEmail } from '../../utils/registrationValidation'
 
 const teachingLanguages = [
   { value: 'amharic', key: 'amharic' },
@@ -183,13 +184,11 @@ const TeacherRegister = () => {
       if (personalFields.some((field) => !String(formData[field]).trim())) {
         message = t('auth.teacher.validation.personalRequired')
         invalidField = personalFields.find((field) => !String(formData[field]).trim())
-      } else if (formData.name.trim().length < 3) {
-        message = t('auth.teacher.validation.nameLength')
+      } else if (getPersonNameError(formData.name)) {
+        const nameError = getPersonNameError(formData.name)
+        message = t(nameError === 'invalid' ? 'auth.teacher.validation.nameCharacters' : 'auth.teacher.validation.nameLength')
         invalidField = 'name'
-      } else if (!/^\p{L}[\p{L}\p{M} ]*$/u.test(formData.name.trim())) {
-        message = t('auth.teacher.validation.nameCharacters')
-        invalidField = 'name'
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      } else if (!isValidEmail(formData.email)) {
         message = t('auth.teacher.validation.email')
         invalidField = 'email'
       } else if (!user && formData.password !== formData.confirmPassword) {

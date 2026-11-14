@@ -5,6 +5,12 @@ const crypto = require('crypto')
 const { sendPasswordResetEmail, sendWelcomeEmail } = require('../utils/emailService')
 const policyVersions = require('../config/policyVersions')
 const { getAge } = require('../utils/legalAge')
+const {
+  getPersonNameError,
+  isValidEmail,
+  normalizeEmail,
+  normalizePersonName,
+} = require('../utils/registrationValidation')
 
 // A JWT is a signed snapshot of the account details middleware needs on every
 // protected request. Including isLiveTutor lets authorization decide whether a
@@ -26,8 +32,8 @@ const generateToken = (userId, role, isLiveTutor = false) => {
 const registerUser = async (req, res) => {
   try {
     const {
-      name,
-      email,
+      name: submittedName,
+      email: submittedEmail,
       password,
       role,
       dateOfBirth: submittedDateOfBirth,
@@ -35,13 +41,30 @@ const registerUser = async (req, res) => {
       acknowledgedPrivacyVersion,
       acceptedCommunityCodeVersion,
       guardianConsent,
-    } = req.body
+    } = req.body || {}
 
-    // 1. Check all fields exist
-    if (!name || !email || !password) {
+    const name = normalizePersonName(submittedName)
+    const email = normalizeEmail(submittedEmail)
+
+    if (!name || !email || typeof password !== 'string' || !password) {
       return res.status(400).json({
         message: 'Please provide name, email and password'
       })
+    }
+
+    const nameError = getPersonNameError(name)
+    if (nameError) {
+      return res.status(400).json({
+        message: 'Enter a valid name with at least 3 letters and no more than 80 characters.'
+      })
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: 'Please enter a valid email address.' })
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters.' })
     }
 
     if (
@@ -52,8 +75,16 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Please review and accept the current Terms of Service and Community Code and acknowledge the Privacy Policy.' })
     }
 
-    const dateOfBirth = new Date(submittedDateOfBirth)
-    if (!submittedDateOfBirth || Number.isNaN(dateOfBirth.getTime()) || dateOfBirth >= new Date()) {
+    const dateIsValid = typeof submittedDateOfBirth === 'string'
+      && /^\d{4}-\d{2}-\d{2}$/.test(submittedDateOfBirth)
+    const dateOfBirth = dateIsValid
+      ? new Date(`${submittedDateOfBirth}T00:00:00.000Z`)
+      : new Date(Number.NaN)
+    if (
+      Number.isNaN(dateOfBirth.getTime())
+      || dateOfBirth.toISOString().slice(0, 10) !== submittedDateOfBirth
+      || dateOfBirth >= new Date()
+    ) {
       return res.status(400).json({ message: 'A valid date of birth is required.' })
     }
     const age = getAge(dateOfBirth)
@@ -68,10 +99,13 @@ const registerUser = async (req, res) => {
 
     let normalizedGuardianConsent = null
     if (age < 18) {
-      const guardianName = String(guardianConsent?.guardianName || '').trim()
-      const guardianEmail = String(guardianConsent?.guardianEmail || '').trim().toLowerCase()
-      const emailIsValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guardianEmail)
-      if (guardianConsent?.confirmed !== true || guardianName.length < 2 || !emailIsValid) {
+      const guardianName = normalizePersonName(guardianConsent?.guardianName)
+      const guardianEmail = normalizeEmail(guardianConsent?.guardianEmail)
+      if (
+        guardianConsent?.confirmed !== true
+        || getPersonNameError(guardianName)
+        || !isValidEmail(guardianEmail)
+      ) {
         return res.status(400).json({ message: 'A parent or legal guardian must provide their name and email and confirm the guardian declaration.' })
       }
       normalizedGuardianConsent = {

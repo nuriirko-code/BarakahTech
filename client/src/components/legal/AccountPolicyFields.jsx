@@ -4,7 +4,7 @@ import { isMinorOnDate } from '../../utils/legalAge'
 
 const fieldClass = 'mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-green-600 focus:ring-4 focus:ring-green-600/10'
 
-const AccountPolicyFields = ({ values, onChange, requireAdult = false }) => {
+const AccountPolicyFields = ({ values, onChange, requireAdult = false, fieldErrors = {} }) => {
   const { t } = useTranslation()
   const isMinor = isMinorOnDate(values.dateOfBirth)
 
@@ -68,7 +68,9 @@ const AccountPolicyFields = ({ values, onChange, requireAdult = false }) => {
               onChange={(event) => onChange('guardianName', event.target.value)}
               className={fieldClass}
               autoComplete="name"
+              maxLength={80}
             />
+            {fieldErrors.guardianName && <span role="alert" className="block text-sm font-medium text-red-700">{fieldErrors.guardianName}</span>}
           </label>
           <label className="block text-sm font-medium text-slate-800">
             {t('legal.guardianEmail')}
@@ -80,6 +82,7 @@ const AccountPolicyFields = ({ values, onChange, requireAdult = false }) => {
               className={fieldClass}
               autoComplete="email"
             />
+            {fieldErrors.guardianEmail && <span role="alert" className="block text-sm font-medium text-red-700">{fieldErrors.guardianEmail}</span>}
           </label>
           <label className="flex items-start gap-3 text-sm leading-6 text-slate-800">
             <input
