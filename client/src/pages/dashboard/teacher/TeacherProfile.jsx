@@ -106,6 +106,11 @@ const TeacherProfile = () => {
 	}
 
 	const handleSave = async () => {
+		if (!profile.profilePhoto?.trim()) {
+			setError('A profile photo is required. Upload one before saving your teacher profile.')
+			return
+		}
+
 		setSaving(true)
 		setError('')
 		setSuccess('')
@@ -229,8 +234,9 @@ const TeacherProfile = () => {
 					)}
 					{editing && (
 						<label className="text-left text-sm font-semibold text-slate-700">
-							Change profile photo
+							{profile.profilePhoto ? 'Change profile photo' : 'Profile photo (required)'}
 							<input className="mt-2 block w-full text-xs text-slate-600 file:mr-2 file:rounded-lg file:border-0 file:bg-green-50 file:px-3 file:py-2 file:font-semibold file:text-green-800" type="file" accept="image/*" onChange={handleProfilePhotoChange} />
+							<span className="mt-2 block text-xs font-normal text-slate-500">Students see this photo on your public teacher profile.</span>
 						</label>
 					)}
 					<h2 className="mt-5 text-2xl font-extrabold tracking-tight text-slate-900">{user?.name || 'Teacher'}</h2>

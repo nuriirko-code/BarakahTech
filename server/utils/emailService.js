@@ -120,7 +120,7 @@ const sendTeacherApprovalEmail = async (user, approved, adminNote = '') => {
     : 'Update on your Barakah Academy teacher application'
   const body = approved
     ? `<p>Hello ${escapeHtml(user.name)},</p><p>Congratulations! Your teacher application was approved. You can now log in and create courses.</p><p><a href="${getFrontendUrl()}/login" style="color:#15803d;font-weight:700;">Log in to your teacher account</a></p>`
-    : `<p>Hello ${escapeHtml(user.name)},</p><p>We are unable to approve your teacher application at this time.</p><p><strong>Review note:</strong> ${escapeHtml(adminNote || 'Please contact support for more information.')}</p><p>You are welcome to address the feedback and reapply.</p>`
+    : `<p>Hello ${escapeHtml(user.name)},</p><p>We are unable to approve your teacher application at this time.</p><p><strong>Review note:</strong> ${escapeHtml(adminNote || 'Please contact support for more information.')}</p><p>You can sign in to review the feedback, update your application, and submit it again.</p><p><a href="${getFrontendUrl()}/teacher-application-status" style="color:#15803d;font-weight:700;">Review your application</a></p>`
 
   return sendEmail({ to: user.email, subject: title, html: getEmailTemplate(title, body) })
 }

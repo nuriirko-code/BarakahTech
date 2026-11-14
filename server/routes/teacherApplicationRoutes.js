@@ -4,6 +4,7 @@ const authMiddleware = require('../middleware/authMiddleware')
 const authorize = require('../middleware/roleMiddleware')
 const {
   submitApplication,
+  updateRejectedApplication,
   getMyApplication,
   getAllApplications,
   reviewApplication,
@@ -18,8 +19,15 @@ router.post('/', authMiddleware, authorize('student', 'pending_teacher', 'teache
 router.get(
   '/my-application',
   authMiddleware,
-  authorize('pending_teacher', 'teacher'),
+  authorize('student', 'pending_teacher', 'teacher'),
   getMyApplication
+)
+
+router.put(
+  '/my-application',
+  authMiddleware,
+  authorize('student', 'pending_teacher', 'teacher'),
+  updateRejectedApplication
 )
 
 // Admin endpoints require both a valid identity and explicit admin permission.

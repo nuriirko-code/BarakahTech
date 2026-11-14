@@ -1,6 +1,6 @@
 import API_BASE_URL from '../../config/api.js'
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 import { useAuth } from '../../context/AuthContext'
@@ -86,8 +86,13 @@ const TeacherRegister = () => {
   const [fieldErrors, setFieldErrors] = useState({})
   const [otherSubjectSelected, setOtherSubjectSelected] = useState(false)
   const [accountCreated, setAccountCreated] = useState(false)
+  const [editLoading, setEditLoading] = useState(true)
+  const [editLoadError, setEditLoadError] = useState('')
+  const [rejectionNote, setRejectionNote] = useState('')
+  const [searchParams] = useSearchParams()
+  const isEditing = searchParams.get('edit') === '1'
   const navigate = useNavigate()
-  const { login, updateUser, user, token } = useAuth()
+  const { login, updateUser, user, token, loading: authLoading } = useAuth()
 
   // An existing learner or live tutor keeps the same User account when adding
   // course teaching. Account details are reused, while this separate form
@@ -102,6 +107,81 @@ const TeacherRegister = () => {
       profilePhoto: currentData.profilePhoto || user.profilePhoto || '',
     }))
   }, [user])
+
+  useEffect(() => {
+    if (!isEditing || authLoading) return
+    if (!token) return
+
+    let isCurrent = true
+
+    const loadRejectedApplication = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/teacher-applications/my-application`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!isCurrent) return
+
+        const application = response.data.application
+        if (application.status !== 'rejected') {
+          setEditLoadError(t('auth.teacherApplicationStatus.notRejected'))
+          return
+        }
+
+        const validSubjects = teachingCategories[application.mainCategory]?.subjects || []
+        setOtherSubjectSelected(Boolean(
+          application.specificSubject && !validSubjects.includes(application.specificSubject)
+        ))
+        setRejectionNote(application.adminNote || '')
+        setFormData((currentData) => ({
+          ...currentData,
+          name: user?.name || currentData.name,
+          email: user?.email || currentData.email,
+          profilePhoto: user?.profilePhoto || currentData.profilePhoto,
+          phone: application.phone || '',
+          city: application.city || '',
+          region: application.region || '',
+          dateOfBirth: application.dateOfBirth
+            ? new Date(application.dateOfBirth).toISOString().slice(0, 10)
+            : '',
+          nationalId: application.nationalId || '',
+          mainCategory: application.mainCategory || '',
+          specificSubject: application.specificSubject || '',
+          teachingLanguage: application.teachingLanguage || '',
+          teachingMethod: application.teachingMethod || '',
+          hourlyRate: application.hourlyRate ?? 0,
+          availableHoursPerWeek: String(application.availableHoursPerWeek ?? ''),
+          availableDays: Array.isArray(application.availableDays) ? application.availableDays : [],
+          educationLevel: application.educationLevel || '',
+          institutionName: application.institutionName || '',
+          yearsOfExperience: String(application.yearsOfExperience ?? ''),
+          bio: application.bio || '',
+          assessmentAnswers: Array.isArray(application.assessmentAnswers)
+            ? application.assessmentAnswers.map(({ question, answer }) => ({ question, answer }))
+            : [],
+          yearsInSpecificSubject: String(application.yearsInSpecificSubject ?? ''),
+          portfolioLink: application.portfolioLink || '',
+          demoVideoLink: application.demoVideoLink || '',
+          agreedToStandards: false,
+          agreedToBackgroundCheck: false,
+          confirmedAvailability: false,
+          agreedToTeacherAgreement: false,
+        }))
+      } catch (requestError) {
+        if (isCurrent) {
+          setEditLoadError(
+            requestError.response?.data?.message || t('auth.teacherApplicationStatus.loadError')
+          )
+        }
+      } finally {
+        if (isCurrent) setEditLoading(false)
+      }
+    }
+
+    loadRejectedApplication()
+    return () => {
+      isCurrent = false
+    }
+  }, [authLoading, isEditing, t, token, user?.email, user?.name, user?.profilePhoto])
 
   // This single updater handles ordinary inputs and also clears answers when
   // the subject changes, because answers to the former subject no longer apply.
@@ -184,6 +264,9 @@ const TeacherRegister = () => {
       if (personalFields.some((field) => !String(formData[field]).trim())) {
         message = t('auth.teacher.validation.personalRequired')
         invalidField = personalFields.find((field) => !String(formData[field]).trim())
+      } else if (!String(formData.profilePhoto || user?.profilePhoto || '').trim()) {
+        message = t('auth.teacher.validation.profilePhoto')
+        invalidField = 'profilePhoto'
       } else if (getPersonNameError(formData.name)) {
         const nameError = getPersonNameError(formData.name)
         message = t(nameError === 'invalid' ? 'auth.teacher.validation.nameCharacters' : 'auth.teacher.validation.nameLength')
@@ -363,7 +446,7 @@ const TeacherRegister = () => {
         })
       )
       // this is the final step where we submit the teacher application. We send a POST request to the teacher applications endpoint with the prepared application data. We also convert certain fields to numbers as required by the backend. If the submission is successful, we navigate to the application submitted page. If there is an error, we display an appropriate error message.
-      await axios.post(`${API_BASE_URL}/teacher-applications`, {
+      const applicationDataToSubmit = {
         ...applicationData,
         acceptedTermsVersion: POLICY_VERSIONS.terms,
         acknowledgedPrivacyVersion: POLICY_VERSIONS.privacy,
@@ -373,11 +456,26 @@ const TeacherRegister = () => {
         yearsOfExperience: Number(formData.yearsOfExperience),
         yearsInSpecificSubject: Number(formData.yearsInSpecificSubject),
         hourlyRate: Number(formData.hourlyRate) || 0,
-      })
+      }
+      const requestConfig = { headers: { Authorization: `Bearer ${accessToken}` } }
+
+      if (isEditing) {
+        await axios.put(
+          `${API_BASE_URL}/teacher-applications/my-application`,
+          applicationDataToSubmit,
+          requestConfig
+        )
+      } else {
+        await axios.post(
+          `${API_BASE_URL}/teacher-applications`,
+          applicationDataToSubmit,
+          requestConfig
+        )
+      }
 
       if (formData.profilePhoto) updateUser({ profilePhoto: formData.profilePhoto })
      
-      navigate('/application-submitted')
+      navigate('/teacher-application-status')
     } catch (requestError) {
       // API-provided error messages remain in English until server-side localization is implemented.
       setError(requestError.response?.data?.message || requestError.message || 'Unable to submit the application.')
@@ -388,6 +486,11 @@ const TeacherRegister = () => {
 
   const inputClass = 'w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#22C55E] focus:ring-4 focus:ring-[#22C55E]/10'
   const optionClass = (selected) => `rounded-xl border p-4 text-left transition-colors ${selected ? 'border-[#22C55E] bg-[#F0FDF4] text-slate-900 ring-1 ring-[#22C55E]/20' : 'border-slate-200 bg-white text-slate-700 hover:border-[#22C55E]/50'}`
+  const currentEditLoadError = editLoadError || (
+    isEditing && !authLoading && !token
+      ? t('auth.teacherApplicationStatus.signInToEdit')
+      : ''
+  )
 
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-900 sm:px-6">
@@ -412,14 +515,29 @@ const TeacherRegister = () => {
         </div>
 
         {error && <div role="alert" className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">{error}</div>}
+        {isEditing && (authLoading || (token && editLoading)) && <p className="mt-6 text-slate-600" role="status">{t('auth.teacherApplicationStatus.loading')}</p>}
+        {isEditing && currentEditLoadError && (
+          <div className="mt-6 space-y-4">
+            <p className="rounded-xl border border-red-200 bg-red-50 p-4 text-red-800" role="alert">{currentEditLoadError}</p>
+            <Link to="/teacher-application-status" className="font-semibold text-green-800 underline">
+              {t('auth.teacherApplicationStatus.backToStatus')}
+            </Link>
+          </div>
+        )}
+        {isEditing && rejectionNote && !currentEditLoadError && (
+          <section className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950">
+            <h2 className="font-bold">{t('auth.teacherApplicationStatus.reviewNote')}</h2>
+            <p className="mt-2 whitespace-pre-wrap leading-6">{rejectionNote}</p>
+          </section>
+        )}
 
-        <form onSubmit={currentStep === 6 ? handleSubmit : (event) => { event.preventDefault(); handleNext() }} className="mt-8">
+        <form hidden={isEditing && (authLoading || (token && editLoading) || Boolean(currentEditLoadError))} onSubmit={currentStep === 6 ? handleSubmit : (event) => { event.preventDefault(); handleNext() }} className="mt-8">
           {currentStep === 1 && (
             <>
             {user && <p className="mb-5 rounded-xl border border-green-200 bg-green-50 p-4 text-sm leading-6 text-green-900">{t('auth.teacher.existingAccount')}</p>}
             <div className="grid gap-5 sm:grid-cols-2">
-                <label className="space-y-2 text-sm font-medium">{t('auth.name')}<input className={inputClass} value={formData.name} onChange={(event) => handleChange('name', event.target.value)} autoComplete="name" />{renderFieldError('name')}</label>
-                <label className="space-y-2 text-sm font-medium">{t('auth.email')}<input className={inputClass} type="email" value={formData.email} onChange={(event) => handleChange('email', event.target.value)} autoComplete="email" />{renderFieldError('email')}</label>
+                <label className="space-y-2 text-sm font-medium">{t('auth.name')}<input className={inputClass} value={formData.name} onChange={(event) => handleChange('name', event.target.value)} autoComplete="name" readOnly={isEditing} />{renderFieldError('name')}</label>
+                <label className="space-y-2 text-sm font-medium">{t('auth.email')}<input className={inputClass} type="email" value={formData.email} onChange={(event) => handleChange('email', event.target.value)} autoComplete="email" readOnly={isEditing} />{renderFieldError('email')}</label>
                 {!user && <><label className="space-y-2 text-sm font-medium">{t('auth.password')}<input className={inputClass} type="password" value={formData.password} onChange={(event) => handleChange('password', event.target.value)} autoComplete="new-password" />{renderFieldError('password')}</label>
                 <label className="space-y-2 text-sm font-medium">{t('auth.confirmPassword')}<input className={inputClass} type="password" value={formData.confirmPassword} onChange={(event) => handleChange('confirmPassword', event.target.value)} autoComplete="new-password" />{renderFieldError('confirmPassword')}</label></>}
                 <label className="space-y-2 text-sm font-medium">{t('auth.teacher.phone')}<input className={inputClass} type="tel" value={formData.phone} onChange={(event) => handleChange('phone', event.target.value)} autoComplete="tel" placeholder="+2519xxxxxxxx" />{renderFieldError('phone')}</label>
@@ -430,9 +548,10 @@ const TeacherRegister = () => {
               <div className="flex flex-wrap items-center gap-4 sm:col-span-2">
                 <Avatar name={formData.name || 'Teacher'} imageUrl={formData.profilePhoto || user?.profilePhoto} size="xl" />
                 <label className="space-y-2 text-sm font-medium">
-                  <span className="block">{user?.profilePhoto ? t('auth.teacher.profilePhotoReplacement') : t('auth.teacher.profilePhoto')}</span>
-                  <input className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-green-50 file:px-4 file:py-2 file:font-semibold file:text-green-800 hover:file:bg-green-100" type="file" accept="image/*" onChange={handleProfilePhotoChange} />
+                  <span className="block">{user?.profilePhoto ? t('auth.teacher.profilePhotoReplacement') : t('auth.teacher.profilePhoto')} <span className="text-red-600" aria-hidden="true">*</span></span>
+                  <input className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-green-50 file:px-4 file:py-2 file:font-semibold file:text-green-800 hover:file:bg-green-100" type="file" accept="image/*" aria-required="true" onChange={handleProfilePhotoChange} />
                   <span className="block text-xs font-normal text-slate-500">{t('auth.teacher.photoHelp')}</span>
+                  {renderFieldError('profilePhoto')}
                 </label>
               </div>
             </div>
@@ -633,7 +752,7 @@ const TeacherRegister = () => {
               <button type="submit" className="rounded-xl bg-[#22C55E] px-6 py-3 font-bold text-white shadow-md shadow-[#22C55E]/25 transition hover:bg-[#16A34A]">{t('auth.continue')}</button>
             ) : (
               <button type="submit" disabled={loading} className="rounded-xl bg-[#22C55E] px-6 py-3 font-bold text-white shadow-md shadow-[#22C55E]/25 transition hover:bg-[#16A34A] disabled:cursor-wait disabled:opacity-60">
-                {loading ? t('auth.teacher.submitting') : t('auth.teacher.submitApplication')}
+                {loading ? t('auth.teacher.submitting') : isEditing ? t('auth.teacherApplicationStatus.updateAndResubmit') : t('auth.teacher.submitApplication')}
               </button>
             )}
           </div>

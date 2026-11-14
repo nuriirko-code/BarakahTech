@@ -20,6 +20,7 @@ const Login = () => {
   const getDashboardPath = (role, isLiveTutor) => {
     if (role === 'admin') return '/dashboard/admin'
     if (role === 'teacher') return '/dashboard/teacher'
+    if (role === 'pending_teacher') return '/teacher-application-status'
     if (isLiveTutor) return '/dashboard/teacher/live-schedule'
     return '/dashboard/student'
   }
@@ -52,13 +53,6 @@ const Login = () => {
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/login`, formData)
       const { user, token } = response.data
-
-      if (user.role === 'pending_teacher') {
-        // Pending teachers must wait for review and cannot enter a dashboard yet.
-        setError(t('auth.pendingTeacher'))
-        navigate('/login')
-        return
-      }
 
       login(user, token)
 

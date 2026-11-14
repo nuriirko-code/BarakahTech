@@ -32,6 +32,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
           
   if (!hasAllowedRole) {
     if (user.role === 'admin') return <Navigate to="/dashboard/admin" replace />
+    if (user.role === 'pending_teacher') return <Navigate to="/teacher-application-status" replace />
     if (user.role === 'teacher' || user.isLiveTutor) {
       return <Navigate to="/dashboard/teacher" replace />
     }

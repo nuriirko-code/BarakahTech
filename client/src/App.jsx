@@ -16,6 +16,7 @@ const LiveTutorWelcome = lazy(() => import('./pages/auth/LiveTutorWelcome'))
 const LiveTutorRegister = lazy(() => import('./pages/auth/LiveTutorRegister'))
 const StudentWelcome = lazy(() => import('./pages/auth/StudentWelcome'))
 const ApplicationSubmitted = lazy(() => import('./pages/auth/ApplicationSubmitted'))
+const TeacherApplicationStatus = lazy(() => import('./pages/auth/TeacherApplicationStatus'))
 const Login = lazy(() => import('./pages/auth/Login'))
 const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'))
 const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'))
@@ -112,8 +113,13 @@ function App() {
           <Route path="/become-a-live-tutor" element={<LiveTutorWelcome />} />
           <Route path="/register/live-tutor" element={<LiveTutorRegister />} />
 
-          {/* Confirmation page for teachers whose application was submitted successfully. */}
+          {/* Confirmation page for live-tutor applications. */}
           <Route path="/application-submitted" element={<ApplicationSubmitted />} />
+          <Route path="/teacher-application-status" element={(
+            <ProtectedRoute allowedRoles={['student', 'pending_teacher', 'teacher']}>
+              <TeacherApplicationStatus />
+            </ProtectedRoute>
+          )} />
 
           {/* Login page for existing users signing into their accounts. */}
           <Route path="/login" element={<Login />} />
